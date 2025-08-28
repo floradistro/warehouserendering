@@ -1125,12 +1125,12 @@ function SimpleMeasurementLine({
   const firstCenter = {
     x: firstElement.position.x + firstElement.dimensions.width / 2,
     y: firstElement.position.y + firstElement.dimensions.height / 2,
-    z: firstElement.position.z + (firstElement.dimensions.depth || 0) / 2
+    z: (firstElement.position.z || 0) + (firstElement.dimensions.depth || 0) / 2
   }
   const secondCenter = {
     x: secondElement.position.x + secondElement.dimensions.width / 2,
     y: secondElement.position.y + secondElement.dimensions.height / 2,
-    z: secondElement.position.z + (secondElement.dimensions.depth || 0) / 2
+    z: (secondElement.position.z || 0) + (secondElement.dimensions.depth || 0) / 2
   }
   
   // Calculate closest edge points for each measurement type
@@ -1648,7 +1648,9 @@ function WallLabels3D({ floorplan }: { floorplan: FloorplanData }) {
   const buildingWidth = rightWall.position.x - leftWall.position.x + rightWall.dimensions.width
   
   // Calculate bottom wall position - use unified wall or leftmost segment of split wall
-  const effectiveBottomWall = bottomWall || bottomWallLeft
+  const effectiveBottomWall = bottomWall || bottomWallLeft || bottomWallRight
+  if (!effectiveBottomWall) return null
+  
   const buildingHeight = topWall.position.y - effectiveBottomWall.position.y + topWall.dimensions.height
   const centerX = leftWall.position.x + buildingWidth / 2
   const centerY = effectiveBottomWall.position.y + buildingHeight / 2
@@ -1710,7 +1712,9 @@ function DimensionLabels({ floorplan }: { floorplan: FloorplanData }) {
   const buildingWidth = rightWall.position.x - leftWall.position.x + rightWall.dimensions.width
   
   // Calculate bottom wall position - use unified wall or leftmost segment of split wall
-  const effectiveBottomWall = bottomWall || bottomWallLeft
+  const effectiveBottomWall = bottomWall || bottomWallLeft || bottomWallRight
+  if (!effectiveBottomWall) return null
+  
   const buildingHeight = topWall.position.y - effectiveBottomWall.position.y + topWall.dimensions.height
   const centerX = leftWall.position.x + buildingWidth / 2
   const centerY = effectiveBottomWall.position.y + buildingHeight / 2
@@ -1875,7 +1879,7 @@ function FirewallLabels({ floorplan }: { floorplan: FloorplanData }) {
         // Position the label at the center of the firewall
         const centerX = firewall.position.x + firewall.dimensions.width / 2
         const centerY = firewall.position.y
-        const centerZ = firewall.dimensions.depth / 2 + 1 // Slightly above the wall
+        const centerZ = (firewall.dimensions.depth || 0) / 2 + 1 // Slightly above the wall
         
         return (
           <Html key={`firewall-${firewall.id}`} position={[centerX, centerZ, centerY]}>
@@ -1933,7 +1937,7 @@ function SupportTruss({
   
   // Cross-member positions for cross pattern
   const crossMemberCount = 8
-  const crossMembers = []
+  const crossMembers: { position: [number, number, number]; height: number }[] = []
   
   for (let i = 0; i < crossMemberCount; i++) {
     const t = i / (crossMemberCount - 1)
@@ -2667,7 +2671,6 @@ export default function ThreeRenderer() {
         exportedAt: new Date().toISOString(),
         version: '1.0',
         metadata: {
-          ...currentFloorplan.metadata,
           exportSource: 'WarehouseCAD',
           totalElements: currentFloorplan.elements.length
         }

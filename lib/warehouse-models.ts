@@ -8,7 +8,7 @@ import { FloorplanData } from './store'
 export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
   id: 'main-warehouse-building',
   name: 'Warehouse Building - 88\' 7/8" x 198\' (rotated)',
-  dimensions: { width: 138.75, height: 248, depth: 12 }, // Pad extends 25' around rotated building
+  dimensions: { width: 138.75, height: 248 }, // Pad extends 25' around rotated building
   elements: [
     // South wall - LEFT SEGMENT (from west wall to opening)
     // Opening starts at 4.125' from east wall: 112.75 - 4.125 = 108.625
@@ -1904,7 +1904,7 @@ export const MODEL_TEMPLATES = {
   EMPTY_1000: {
     id: 'empty-warehouse-1000',
     name: 'Empty 1000x1000 Warehouse',
-    dimensions: { width: 1000, height: 1000, depth: 40 },
+    dimensions: { width: 1000, height: 1000 },
     elements: [],
     scale: 1,
     units: 'feet' as const,
@@ -1914,7 +1914,7 @@ export const MODEL_TEMPLATES = {
   EMPTY_500: {
     id: 'empty-warehouse-500',
     name: 'Empty 500x500 Warehouse',
-    dimensions: { width: 500, height: 500, depth: 30 },
+    dimensions: { width: 500, height: 500 },
     elements: [],
     scale: 1,
     units: 'feet' as const,
@@ -1924,7 +1924,7 @@ export const MODEL_TEMPLATES = {
   BASIC_100: {
     id: 'basic-warehouse-100',
     name: 'Basic 100x100 Warehouse',
-    dimensions: { width: 100, height: 100, depth: 20 },
+    dimensions: { width: 100, height: 100 },
     elements: [
       {
         id: 'wall-bottom',

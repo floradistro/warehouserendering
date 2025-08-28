@@ -8,7 +8,7 @@ import { FloorplanData } from './store'
 export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
   id: 'main-warehouse-building',
   name: 'Warehouse Building - 88\' 7/8" x 198\' (rotated)',
-  dimensions: { width: 138.75, height: 248, depth: 12 }, // Pad extends 25' around rotated building
+  dimensions: { width: 138.75, height: 248 }, // Pad extends 25' around rotated building
   elements: [
     // South wall - LEFT SEGMENT (from west wall to opening)
     // Opening starts at 4.125' from east wall: 112.75 - 4.125 = 108.625

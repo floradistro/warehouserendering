@@ -63,7 +63,18 @@ export class WarehouseModelManager {
           updatedAt: new Date(),
         }
       } else {
-        newModel = cloneModel(MODEL_TEMPLATES[template])
+        // Map template names to actual MODEL_TEMPLATES keys
+        const templateMap = {
+          'EMPTY': 'EMPTY_1000',
+          'BASIC': 'BASIC_100'
+        }
+        const templateKey = template === 'CUSTOM' ? 'EMPTY_1000' : templateMap[template] || 'EMPTY_1000'
+        // Convert readonly template to mutable FloorplanData
+        const templateModel = MODEL_TEMPLATES[templateKey as keyof typeof MODEL_TEMPLATES]
+        newModel = cloneModel({
+          ...templateModel,
+          elements: [...templateModel.elements] // Convert readonly array to mutable
+        } as FloorplanData)
         newModel.id = `warehouse-${Date.now()}`
         newModel.createdAt = new Date()
         newModel.updatedAt = new Date()
@@ -239,7 +250,10 @@ export class WarehouseModelManager {
     
     if (!currentResult.success || !currentResult.data) {
       console.error('ModelManager: No current model available')
-      return currentResult as ModelOperationResult<FloorplanElement>
+      return {
+        success: false,
+        error: currentResult.error || 'No current model available'
+      }
     }
 
     try {
@@ -260,7 +274,10 @@ export class WarehouseModelManager {
       console.log('ModelManager: Update model result', updateResult)
 
       if (!updateResult.success) {
-        return updateResult as ModelOperationResult<FloorplanElement>
+        return {
+          success: false,
+          error: updateResult.error || 'Failed to update model'
+        }
       }
 
       return {
@@ -283,7 +300,10 @@ export class WarehouseModelManager {
   updateElement(elementId: string, updates: ElementUpdateData): ModelOperationResult<FloorplanElement> {
     const currentResult = this.getCurrentModel()
     if (!currentResult.success || !currentResult.data) {
-      return currentResult as ModelOperationResult<FloorplanElement>
+      return {
+        success: false,
+        error: currentResult.error || 'No current model available'
+      }
     }
 
     try {
@@ -314,7 +334,10 @@ export class WarehouseModelManager {
       })
 
       if (!updateResult.success) {
-        return updateResult as ModelOperationResult<FloorplanElement>
+        return {
+          success: false,
+          error: updateResult.error || 'Failed to update model'
+        }
       }
 
       return {
@@ -336,7 +359,10 @@ export class WarehouseModelManager {
   removeElement(elementId: string): ModelOperationResult<boolean> {
     const currentResult = this.getCurrentModel()
     if (!currentResult.success || !currentResult.data) {
-      return currentResult as ModelOperationResult<boolean>
+      return {
+        success: false,
+        error: currentResult.error || 'No current model available'
+      }
     }
 
     try {
@@ -355,7 +381,10 @@ export class WarehouseModelManager {
       })
 
       if (!updateResult.success) {
-        return updateResult as ModelOperationResult<boolean>
+        return {
+          success: false,
+          error: updateResult.error || 'Failed to update model'
+        }
       }
 
       return {
@@ -377,7 +406,10 @@ export class WarehouseModelManager {
   getElement(elementId: string): ModelOperationResult<FloorplanElement> {
     const currentResult = this.getCurrentModel()
     if (!currentResult.success || !currentResult.data) {
-      return currentResult as ModelOperationResult<FloorplanElement>
+      return {
+        success: false,
+        error: currentResult.error || 'No current model available'
+      }
     }
 
     const element = currentResult.data.elements.find(e => e.id === elementId)
@@ -524,7 +556,10 @@ export class WarehouseModelManager {
   validateCurrentModel(): ModelOperationResult<ModelValidationResult> {
     const currentResult = this.getCurrentModel()
     if (!currentResult.success || !currentResult.data) {
-      return currentResult as ModelOperationResult<ModelValidationResult>
+      return {
+        success: false,
+        error: currentResult.error || 'No current model available'
+      }
     }
 
     const validation = validateWarehouseModel(currentResult.data)
@@ -541,7 +576,10 @@ export class WarehouseModelManager {
   exportModel(id: string): ModelOperationResult<string> {
     const modelResult = this.getModel(id)
     if (!modelResult.success || !modelResult.data) {
-      return modelResult as ModelOperationResult<string>
+      return {
+        success: false,
+        error: modelResult.error || 'Model not found'
+      }
     }
 
     try {

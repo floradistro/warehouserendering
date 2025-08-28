@@ -87,6 +87,8 @@ interface AppState {
     type: string
     confidence: number
     description?: string
+    suggestedRotation?: number
+    suggestedDimensions?: { width: number; height: number; depth: number }
   } | null
   showSnapIndicators: boolean
   snapTolerance: number
@@ -116,14 +118,7 @@ interface AppState {
   setCurrentFloorplan: (floorplan: FloorplanData | null) => void
   updateFloorplan: (updates: Partial<FloorplanData>) => void
   setViewMode: (mode: '2d' | '3d') => void
-  toggleElementSelection: (id: string) => void
-  clearSelection: () => void
-  setCameraPosition: (position: [number, number, number]) => void
-  setCameraTarget: (target: [number, number, number]) => void
   toggleMeasurements: () => void
-  
-  // Measurement actions
-  toggleMeasurementMode: () => void
   selectObjectForMeasurement: (objectId: string) => void
   clearMeasurementSelection: () => void
   setMeasurementType: (type: 'horizontal' | 'vertical' | 'height' | 'direct') => void
@@ -204,7 +199,7 @@ interface AppState {
   selectElementGroup: (elementId: string) => void
 }
 
-export const useAppStore = create<AppState>(
+export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
       // Initial state
@@ -291,21 +286,6 @@ export const useAppStore = create<AppState>(
       
       setViewMode: (mode) => set({ viewMode: mode }),
       
-      toggleElementSelection: (id) => set((state) => {
-        const isSelected = state.selectedElements.includes(id)
-        return {
-          selectedElements: isSelected
-            ? state.selectedElements.filter(elementId => elementId !== id)
-            : [...state.selectedElements, id]
-        }
-      }),
-      
-      clearSelection: () => set({ selectedElements: [] }),
-      
-      setCameraPosition: (position) => set({ cameraPosition: position }),
-      
-      setCameraTarget: (target) => set({ cameraTarget: target }),
-      
       toggleMeasurements: () => set((state) => ({
         showMeasurements: !state.showMeasurements,
       })),
@@ -342,8 +322,8 @@ export const useAppStore = create<AppState>(
               maxX: first.position.x + first.dimensions.width,
               minY: first.position.y, 
               maxY: first.position.y + first.dimensions.height,
-              minZ: first.position.z,
-              maxZ: first.position.z + (first.dimensions.depth || 0)
+              minZ: first.position.z || 0,
+              maxZ: (first.position.z || 0) + (first.dimensions.depth || 0)
             }
             
             const secondBounds = {
@@ -351,8 +331,8 @@ export const useAppStore = create<AppState>(
               maxX: second.position.x + second.dimensions.width,
               minY: second.position.y,
               maxY: second.position.y + second.dimensions.height, 
-              minZ: second.position.z,
-              maxZ: second.position.z + (second.dimensions.depth || 0)
+              minZ: second.position.z || 0,
+              maxZ: (second.position.z || 0) + (second.dimensions.depth || 0)
             }
             
             // Calculate edge-to-edge distances (closest points)
@@ -370,12 +350,12 @@ export const useAppStore = create<AppState>(
             const firstCenter = {
               x: first.position.x + first.dimensions.width / 2,
               y: first.position.y + first.dimensions.height / 2,
-              z: first.position.z + (first.dimensions.depth || 0) / 2
+              z: (first.position.z || 0) + (first.dimensions.depth || 0) / 2
             }
             const secondCenter = {
               x: second.position.x + second.dimensions.width / 2,
               y: second.position.y + second.dimensions.height / 2,
-              z: second.position.z + (second.dimensions.depth || 0) / 2
+              z: (second.position.z || 0) + (second.dimensions.depth || 0) / 2
             }
             
             // Calculate distance based on measurement type
@@ -456,8 +436,8 @@ export const useAppStore = create<AppState>(
               maxX: firstElement.position.x + firstElement.dimensions.width,
               minY: firstElement.position.y, 
               maxY: firstElement.position.y + firstElement.dimensions.height,
-              minZ: firstElement.position.z,
-              maxZ: firstElement.position.z + (firstElement.dimensions.depth || 0)
+              minZ: firstElement.position.z || 0,
+              maxZ: (firstElement.position.z || 0) + (firstElement.dimensions.depth || 0)
             }
             
             const secondBounds = {
@@ -465,8 +445,8 @@ export const useAppStore = create<AppState>(
               maxX: secondElement.position.x + secondElement.dimensions.width,
               minY: secondElement.position.y,
               maxY: secondElement.position.y + secondElement.dimensions.height, 
-              minZ: secondElement.position.z,
-              maxZ: secondElement.position.z + (secondElement.dimensions.depth || 0)
+              minZ: secondElement.position.z || 0,
+              maxZ: (secondElement.position.z || 0) + (secondElement.dimensions.depth || 0)
             }
             
             // Calculate edge-to-edge distances
@@ -500,12 +480,12 @@ export const useAppStore = create<AppState>(
                   const firstCenter = {
                     x: firstElement.position.x + firstElement.dimensions.width / 2,
                     y: firstElement.position.y + firstElement.dimensions.height / 2,
-                    z: firstElement.position.z + (firstElement.dimensions.depth || 0) / 2
+                    z: (firstElement.position.z || 0) + (firstElement.dimensions.depth || 0) / 2
                   }
                   const secondCenter = {
                     x: secondElement.position.x + secondElement.dimensions.width / 2,
                     y: secondElement.position.y + secondElement.dimensions.height / 2,
-                    z: secondElement.position.z + (secondElement.dimensions.depth || 0) / 2
+                    z: (secondElement.position.z || 0) + (secondElement.dimensions.depth || 0) / 2
                   }
                   distance = Math.sqrt(
                     Math.pow(secondCenter.x - firstCenter.x, 2) +
@@ -559,7 +539,7 @@ export const useAppStore = create<AppState>(
             lastError: null,
             selectedElements: [],
             measurementMode: false,
-            measurementObjects: [null, null]
+            selectedObjectsForMeasurement: [null, null]
           })
           get().refreshUndoRedoStatus()
         } else {
@@ -721,7 +701,9 @@ export const useAppStore = create<AppState>(
             position: { x: activeSnapPoint.position.x, y: activeSnapPoint.position.y, z: activeSnapPoint.position.z },
             type: activeSnapPoint.type,
             confidence: activeSnapPoint.confidence,
-            description: activeSnapPoint.description
+            description: activeSnapPoint.description,
+            suggestedRotation: activeSnapPoint.suggestedRotation,
+            suggestedDimensions: activeSnapPoint.suggestedDimensions
           } : null
         })
       },
@@ -815,7 +797,7 @@ export const useAppStore = create<AppState>(
               ...state.previewElement.metadata,
               isExpanded: true,
               expansionDirection: expansionResult.expansionDirection,
-              hitElements: expansionResult.hitElements.map(el => el.id)
+              hitElements: expansionResult.hitElements.map((el: any) => el.id)
             }
           }
           
@@ -869,7 +851,10 @@ export const useAppStore = create<AppState>(
           for (const elementId of targetIds) {
             const result = modelManager.removeElement(elementId)
             if (result.success) {
-              set({ currentFloorplan: modelManager.getCurrentModel() })
+              const currentModelResult = modelManager.getCurrentModel()
+              if (currentModelResult.success && currentModelResult.data) {
+                set({ currentFloorplan: currentModelResult.data })
+              }
             }
           }
           
@@ -910,17 +895,20 @@ export const useAppStore = create<AppState>(
           }
           
           const result = modelManager.addElement(newElement)
-          if (result.success && result.element) {
-            newElementIds.push(result.element.id)
+          if (result.success && result.data) {
+            newElementIds.push(result.data.id)
           }
         }
         
         if (newElementIds.length > 0) {
           // Update floorplan and select pasted elements
-          set({ 
-            currentFloorplan: modelManager.getCurrentModel(),
-            selectedElements: newElementIds
-          })
+          const currentModelResult = modelManager.getCurrentModel()
+          if (currentModelResult.success && currentModelResult.data) {
+            set({ 
+              currentFloorplan: currentModelResult.data,
+              selectedElements: newElementIds
+            })
+          }
           
           console.log(`📌 Pasted ${newElementIds.length} elements at position (${pastePosition.x}, ${pastePosition.y})`)
         }
@@ -985,7 +973,7 @@ export const useAppStore = create<AppState>(
         set({ editingElement: updatedElement })
         
         // REAL-TIME UPDATE: Also update the actual element in the floorplan for immediate visualization
-        const elementIndex = state.currentFloorplan.elements.findIndex(el => el.id === state.editingElement.id)
+        const elementIndex = state.currentFloorplan.elements.findIndex(el => el.id === state.editingElement?.id)
         if (elementIndex !== -1) {
           const updatedElements = [...state.currentFloorplan.elements]
           updatedElements[elementIndex] = { ...updatedElements[elementIndex], ...finalUpdates }
@@ -1035,14 +1023,17 @@ export const useAppStore = create<AppState>(
         })
         
         if (result.success) {
-          set({
-            currentFloorplan: modelManager.getCurrentModel(),
-            isEditing: false,
-            editingElement: null,
-            originalEditingElement: null,
-            selectedElements: [] // Clear selection
-          })
-          console.log('🎉 Element edit completed successfully')
+          const currentModelResult = modelManager.getCurrentModel()
+          if (currentModelResult.success && currentModelResult.data) {
+            set({
+              currentFloorplan: currentModelResult.data,
+              isEditing: false,
+              editingElement: null,
+              originalEditingElement: null,
+              selectedElements: [] // Clear selection
+            })
+            console.log('🎉 Element edit completed successfully')
+          }
         } else {
           console.error('❌ Element edit failed:', result.error)
         }
