@@ -1108,8 +1108,8 @@ function SimpleMeasurementLine({
     maxX: firstElement.position.x + firstElement.dimensions.width,
     minY: firstElement.position.y,
     maxY: firstElement.position.y + firstElement.dimensions.height,
-    minZ: firstElement.position.z,
-    maxZ: firstElement.position.z + (firstElement.dimensions.depth || 0)
+    minZ: firstElement.position.z || 0,
+    maxZ: (firstElement.position.z || 0) + (firstElement.dimensions.depth || 0)
   }
   
   const secondBounds = {
@@ -1117,8 +1117,8 @@ function SimpleMeasurementLine({
     maxX: secondElement.position.x + secondElement.dimensions.width,
     minY: secondElement.position.y,
     maxY: secondElement.position.y + secondElement.dimensions.height,
-    minZ: secondElement.position.z,
-    maxZ: secondElement.position.z + (secondElement.dimensions.depth || 0)
+    minZ: secondElement.position.z || 0,
+    maxZ: (secondElement.position.z || 0) + (secondElement.dimensions.depth || 0)
   }
   
   // Calculate center positions for reference
