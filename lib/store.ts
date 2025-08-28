@@ -86,6 +86,7 @@ interface AppState {
     position: { x: number; y: number; z: number }
     type: string
     confidence: number
+    description?: string
   } | null
   showSnapIndicators: boolean
   snapTolerance: number
@@ -719,7 +720,8 @@ export const useAppStore = create<AppState>(
           activeSnapPoint: activeSnapPoint ? {
             position: { x: activeSnapPoint.position.x, y: activeSnapPoint.position.y, z: activeSnapPoint.position.z },
             type: activeSnapPoint.type,
-            confidence: activeSnapPoint.confidence
+            confidence: activeSnapPoint.confidence,
+            description: activeSnapPoint.description
           } : null
         })
       },
