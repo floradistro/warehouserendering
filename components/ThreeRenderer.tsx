@@ -448,7 +448,7 @@ function FloorplanElementMesh({
       console.log(`🏗️ Showing structural skeleton with bright pink outline for selected tank/tote ${element.id}`)
       
       const containerGroup = new THREE.Group()
-      const { width: containerWidth, height: containerHeight, depth: containerDepth } = element.dimensions
+      const { width: containerWidth, height: containerHeight, depth: containerDepth = containerWidth } = element.dimensions
       
       // Create wireframe structural material
       const structuralMaterial = new THREE.MeshStandardMaterial({
