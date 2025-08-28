@@ -17,8 +17,8 @@ export default function EnhancedLighting({
   // Configure renderer for better quality
   React.useEffect(() => {
     if (gl) {
-      // Enable physically correct lighting
-      gl.physicallyCorrectLights = true
+      // Note: physicallyCorrectLights was removed in Three.js r155+
+      // Physical lighting is now the default behavior
       gl.toneMapping = THREE.ACESFilmicToneMapping
       gl.toneMappingExposure = 1.2
       
@@ -32,8 +32,8 @@ export default function EnhancedLighting({
           : THREE.BasicShadowMap
       }
       
-      // Set output encoding for better colors
-      gl.outputEncoding = THREE.sRGBEncoding
+      // Set output color space for better colors (updated from outputEncoding)
+      gl.outputColorSpace = THREE.SRGBColorSpace
     }
   }, [gl, enableShadows, quality])
 
