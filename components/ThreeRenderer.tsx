@@ -786,7 +786,7 @@ function FloorplanElementMesh({
             <meshBasicMaterial
               color={
                 measurementMode && isSelectedForMeasurement
-                  ? isFirstSelected
+                  ? isMeasurementFirstSelection
                     ? '#00ff00' // Green for first selected
                     : '#ff00ff' // Magenta for second selected
                   : '#00ff00' // Green for normal selection
