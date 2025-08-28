@@ -20,9 +20,19 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       position: { x: 25, y: 25, z: 0 }, // 25' from pad edge
       dimensions: { width: 73.625, height: 1, depth: 12 }, // 12' tall wall, 73.625' wide
       rotation: 0,
-      material: 'concrete',
+      material: 'brick',
       color: '#8B7355',
-      metadata: { category: 'exterior', material_type: 'brick', description: 'South wall left segment - west of opening' }
+      metadata: { 
+        category: 'exterior', 
+        material_type: 'brick', 
+        description: 'South wall left segment - west of opening',
+        framing: {
+          studSize: '2x4',
+          studSpacing: 16, // inches on center
+          studCount: Math.ceil(73.625 * 12 / 16), // calculated stud count
+          hasFraming: true
+        }
+      }
     },
     
     // South wall - RIGHT SEGMENT (from opening to east wall) 
@@ -34,9 +44,19 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       position: { x: 108.625, y: 25, z: 0 }, // Start after opening
       dimensions: { width: 4.125, height: 1, depth: 12 }, // 12' tall wall, 4.125' wide (49.5")
       rotation: 0,
-      material: 'concrete',
+      material: 'brick',
       color: '#8B7355',
-      metadata: { category: 'exterior', material_type: 'brick', description: 'South wall right segment - east of opening (49.5" from east wall)' }
+      metadata: { 
+        category: 'exterior', 
+        material_type: 'brick', 
+        description: 'South wall right segment - east of opening (49.5" from east wall)',
+        framing: {
+          studSize: '2x4',
+          studSpacing: 16, // inches on center  
+          studCount: Math.ceil(4.125 * 12 / 16), // calculated stud count
+          hasFraming: true
+        }
+      }
     },
     
     // SOUTH WALL OPENING - 10' wide by 12' tall opening
@@ -61,7 +81,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       position: { x: 25, y: 222, z: 0 }, // 198' from bottom wall (25 + 197)
       dimensions: { width: 88.75, height: 1, depth: 12 }, // 12' tall wall
       rotation: 0,
-      material: 'concrete',
+      material: 'brick',
       color: '#8B7355',
       metadata: { category: 'exterior', material_type: 'brick' }
     },
@@ -75,7 +95,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       position: { x: 25, y: 205.573, z: 0 }, // Position at south end of north segment
       dimensions: { width: 1, height: 16.427, depth: 12 }, // 16.427' long north segment
       rotation: 0,
-      material: 'concrete',
+      material: 'brick',
       color: '#8B7355',
       metadata: { category: 'exterior', material_type: 'brick', description: 'West wall north segment - north of opening' }
     },
@@ -89,7 +109,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       position: { x: 25, y: 25, z: 0 }, // Start at south exterior wall
       dimensions: { width: 1, height: 180.573, depth: 12 }, // 180.573' long south segment
       rotation: 0,
-      material: 'concrete',
+      material: 'brick',
       color: '#8B7355',
       metadata: { category: 'exterior', material_type: 'brick', description: 'West wall south segment - south of opening' }
     },
@@ -116,7 +136,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       position: { x: 112.75, y: 25, z: 0 }, // 88.75' from left wall (25 + 87.75)
       dimensions: { width: 1, height: 198, depth: 12 }, // 198' long
       rotation: 0,
-      material: 'concrete',
+      material: 'brick',
       color: '#8B7355',
       metadata: { category: 'exterior', material_type: 'brick' }
     },
@@ -297,7 +317,13 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         material_type: 'drywall',
         load_bearing: false,
         room_south: 'dry-room-south',
-        description: 'South dry room north wall - northern boundary (28.5\' long x 10.4792\' wide)'
+        description: 'South dry room north wall - northern boundary (28.5\' long x 10.4792\' wide)',
+        framing: {
+          studSize: '2x4',
+          studSpacing: 16, // inches on center
+          studCount: Math.ceil(28.5 * 12 / 16), // calculated stud count
+          hasFraming: true
+        }
       }
     },
     // Room wall 2 - centered on second I-beam (separates Room 2 from Room 3)
@@ -461,51 +487,51 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
           {
             id: 'room-8-west-opening',
             type: 'door',
-            position: { x: 5.83, z: 0 }, // 5.83' from south end of wall (Room 8 center)
+            position: { x: 11.83, z: 0 }, // Room 8 centered in its section (29 + 23.6667/2 = 40.83 - 29 = 11.83)
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 8 west entrance' }
+            metadata: { doorType: 'double', description: 'Room 8 west entrance - 5\' hallway double door' }
           },
           {
             id: 'room-7-west-opening', 
             type: 'door',
-            position: { x: 28.95, z: 0 }, // Room 7 center position
+            position: { x: 31.77, z: 0 }, // Room 7 centered (75.2292 + 48.6667)/2 - 29 = 31.77
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 7 west entrance' }
+            metadata: { doorType: 'double', description: 'Room 7 west entrance - 5\' hallway double door' }
           },
           {
             id: 'room-6-west-opening',
             type: 'door', 
-            position: { x: 54.51, z: 0 }, // Room 6 center position
+            position: { x: 58.51, z: 0 }, // Room 6 centered (75.2292 + 99.7917)/2 - 29 = 58.51
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 6 west entrance' }
+            metadata: { doorType: 'double', description: 'Room 6 west entrance - 5\' hallway double door' }
           },
           {
             id: 'room-5-west-opening',
             type: 'door',
-            position: { x: 79.07, z: 0 }, // Room 5 center position
+            position: { x: 83.07, z: 0 }, // Room 5 centered (99.7917 + 124.3542)/2 - 29 = 83.07
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 5 west entrance' }
+            metadata: { doorType: 'double', description: 'Room 5 west entrance - 5\' hallway double door' }
           },
           {
             id: 'room-4-west-opening',
             type: 'door',
-            position: { x: 103.64, z: 0 }, // Room 4 center position
+            position: { x: 107.64, z: 0 }, // Room 4 centered (124.3542 + 148.9167)/2 - 29 = 107.64
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 4 west entrance' }
+            metadata: { doorType: 'double', description: 'Room 4 west entrance - 5\' hallway double door' }
           },
           {
             id: 'room-3-west-opening',
             type: 'door',
-            position: { x: 128.20, z: 0 }, // Room 3 center position
+            position: { x: 132.20, z: 0 }, // Room 3 centered (148.9167 + 173.4792)/2 - 29 = 132.20
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 3 west entrance' }
+            metadata: { doorType: 'double', description: 'Room 3 west entrance - 5\' hallway double door' }
           },
           {
             id: 'room-2-west-opening',
             type: 'door',
-            position: { x: 152.76, z: 0 }, // Room 2 center position
+            position: { x: 156.76, z: 0 }, // Room 2 centered (173.4792 + 198.0417)/2 - 29 = 156.76
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 2 west entrance' }
+            metadata: { doorType: 'double', description: 'Room 2 west entrance - 5\' hallway double door' }
           }
         ]
       }
@@ -535,44 +561,44 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
             {
               id: 'room-7-east-opening',
               type: 'door',
-              position: { x: 8.91, z: 0 }, // 8.91' from north end of wall (Room 7 center)
-              dimensions: { width: 8, height: 8 },
-              metadata: { doorType: 'double', description: 'Room 7 east entrance' }
+              position: { x: 13.10, z: 0 }, // Room 7 centered (49.0417 + 75.2292)/2 - 49.0417 = 13.10
+              dimensions: { width: 3, height: 8 },
+              metadata: { doorType: 'single', description: 'Room 7 east entrance - 3\' hallway single door' }
             },
             {
               id: 'room-6-east-opening',
               type: 'door',
-              position: { x: 34.47, z: 0 }, // Room 6 center position
-              dimensions: { width: 8, height: 8 },
-              metadata: { doorType: 'double', description: 'Room 6 east entrance' }
+              position: { x: 38.47, z: 0 }, // Room 6 centered (75.2292 + 99.7917)/2 - 49.0417 = 38.47
+              dimensions: { width: 3, height: 8 },
+              metadata: { doorType: 'single', description: 'Room 6 east entrance - 3\' hallway single door' }
             },
             {
               id: 'room-5-east-opening',
               type: 'door',
-              position: { x: 59.03, z: 0 }, // Room 5 center position
-              dimensions: { width: 8, height: 8 },
-              metadata: { doorType: 'double', description: 'Room 5 east entrance' }
+              position: { x: 63.03, z: 0 }, // Room 5 centered (99.7917 + 124.3542)/2 - 49.0417 = 63.03
+              dimensions: { width: 3, height: 8 },
+              metadata: { doorType: 'single', description: 'Room 5 east entrance - 3\' hallway single door' }
             },
             {
               id: 'room-4-east-opening',
               type: 'door',
-              position: { x: 83.60, z: 0 }, // Room 4 center position
-              dimensions: { width: 8, height: 8 },
-              metadata: { doorType: 'double', description: 'Room 4 east entrance' }
+              position: { x: 87.60, z: 0 }, // Room 4 centered (124.3542 + 148.9167)/2 - 49.0417 = 87.60
+              dimensions: { width: 3, height: 8 },
+              metadata: { doorType: 'single', description: 'Room 4 east entrance - 3\' hallway single door' }
             },
             {
               id: 'room-3-east-opening',
               type: 'door',
-              position: { x: 108.16, z: 0 }, // Room 3 center position
-              dimensions: { width: 8, height: 8 },
-              metadata: { doorType: 'double', description: 'Room 3 east entrance' }
+              position: { x: 112.16, z: 0 }, // Room 3 centered (148.9167 + 173.4792)/2 - 49.0417 = 112.16
+              dimensions: { width: 3, height: 8 },
+              metadata: { doorType: 'single', description: 'Room 3 east entrance - 3\' hallway single door' }
             },
             {
               id: 'room-2-east-opening',
               type: 'door',
-              position: { x: 132.72, z: 0 }, // Room 2 center position
-              dimensions: { width: 8, height: 8 },
-              metadata: { doorType: 'double', description: 'Room 2 east entrance' }
+              position: { x: 136.72, z: 0 }, // Room 2 centered (173.4792 + 198.0417)/2 - 49.0417 = 136.72
+              dimensions: { width: 3, height: 8 },
+              metadata: { doorType: 'single', description: 'Room 2 east entrance - 3\' hallway single door' }
             }
           ]
         }
@@ -1089,6 +1115,258 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       }
     },
 
+    // METAL ROOF PANELS - 8 sections spanning between trusses
+    // Each panel follows the curved profile of the trusses (12' to 14.046875' center)
+    // Positioned 0.1' above the top chord of trusses for clearance
+    
+    // Roof Panel 1 - Between south wall truss (y:25) and seventh I-beam truss (y:48.8542)
+    {
+      id: 'roof-panel-1',
+      type: 'fixture' as const,
+      position: { 
+        x: 25, // Start at west exterior wall
+        y: 36.9271, // Midpoint between y:25 and y:48.8542 = (25 + 48.8542) / 2
+        z: 16.8438 // Exactly at top of truss exterior height (12' base + 4.8438' truss height)
+      },
+      dimensions: { 
+        width: 88.75, // Full building width
+        height: 23.8542, // Distance between trusses (48.8542 - 25)
+        depth: 0.05 // Thin metal roofing - 0.6" thick
+      },
+      rotation: 0,
+      material: 'steel',
+      color: '#708090', // Steel gray color
+      metadata: { 
+        category: 'roof', 
+        material_type: 'corrugated_metal',
+        panel_type: 'standing_seam',
+        load_bearing: false,
+        curved_profile: true,
+        center_height: 14.046875,
+        exterior_height: 12,
+        clearance_above_truss: 0.1,
+        weather_resistant: true,
+        description: 'Metal roof panel #1 - between south wall and seventh I-beam trusses'
+      }
+    },
+
+    // Roof Panel 2 - Between seventh I-beam truss (y:48.8542) and sixth I-beam truss (y:75.4167)
+    {
+      id: 'roof-panel-2',
+      type: 'fixture' as const,
+      position: { 
+        x: 25,
+        y: 62.13545, // Midpoint: (48.8542 + 75.4167) / 2
+        z: 16.9469
+      },
+      dimensions: { 
+        width: 88.75,
+        height: 26.5625, // Distance: 75.4167 - 48.8542
+        depth: 0.05
+      },
+      rotation: 0,
+      material: 'steel',
+      color: '#708090',
+      metadata: { 
+        category: 'roof', 
+        material_type: 'corrugated_metal',
+        panel_type: 'standing_seam',
+        load_bearing: false,
+        curved_profile: true,
+        center_height: 14.046875,
+        exterior_height: 12,
+        clearance_above_truss: 0.1,
+        weather_resistant: true,
+        description: 'Metal roof panel #2 - between seventh and sixth I-beam trusses'
+      }
+    },
+
+    // Roof Panel 3 - Between sixth I-beam truss (y:75.4167) and fifth I-beam truss (y:99.9792)
+    {
+      id: 'roof-panel-3',
+      type: 'fixture' as const,
+      position: { 
+        x: 25,
+        y: 87.69795, // Midpoint: (75.4167 + 99.9792) / 2
+        z: 16.9469
+      },
+      dimensions: { 
+        width: 88.75,
+        height: 24.5625, // Distance: 99.9792 - 75.4167
+        depth: 0.05
+      },
+      rotation: 0,
+      material: 'steel',
+      color: '#708090',
+      metadata: { 
+        category: 'roof', 
+        material_type: 'corrugated_metal',
+        panel_type: 'standing_seam',
+        load_bearing: false,
+        curved_profile: true,
+        center_height: 14.046875,
+        exterior_height: 12,
+        clearance_above_truss: 0.1,
+        weather_resistant: true,
+        description: 'Metal roof panel #3 - between sixth and fifth I-beam trusses'
+      }
+    },
+
+    // Roof Panel 4 - Between fifth I-beam truss (y:99.9792) and fourth I-beam truss (y:124.5417)
+    {
+      id: 'roof-panel-4',
+      type: 'fixture' as const,
+      position: { 
+        x: 25,
+        y: 112.26045, // Midpoint: (99.9792 + 124.5417) / 2
+        z: 16.9469
+      },
+      dimensions: { 
+        width: 88.75,
+        height: 24.5625, // Distance: 124.5417 - 99.9792
+        depth: 0.05
+      },
+      rotation: 0,
+      material: 'steel',
+      color: '#708090',
+      metadata: { 
+        category: 'roof', 
+        material_type: 'corrugated_metal',
+        panel_type: 'standing_seam',
+        load_bearing: false,
+        curved_profile: true,
+        center_height: 14.046875,
+        exterior_height: 12,
+        clearance_above_truss: 0.1,
+        weather_resistant: true,
+        description: 'Metal roof panel #4 - between fifth and fourth I-beam trusses'
+      }
+    },
+
+    // Roof Panel 5 - Between fourth I-beam truss (y:124.5417) and third I-beam truss (y:149.1042)
+    {
+      id: 'roof-panel-5',
+      type: 'fixture' as const,
+      position: { 
+        x: 25,
+        y: 136.82295, // Midpoint: (124.5417 + 149.1042) / 2
+        z: 16.9469
+      },
+      dimensions: { 
+        width: 88.75,
+        height: 24.5625, // Distance: 149.1042 - 124.5417
+        depth: 0.05
+      },
+      rotation: 0,
+      material: 'steel',
+      color: '#708090',
+      metadata: { 
+        category: 'roof', 
+        material_type: 'corrugated_metal',
+        panel_type: 'standing_seam',
+        load_bearing: false,
+        curved_profile: true,
+        center_height: 14.046875,
+        exterior_height: 12,
+        clearance_above_truss: 0.1,
+        weather_resistant: true,
+        description: 'Metal roof panel #5 - between fourth and third I-beam trusses'
+      }
+    },
+
+    // Roof Panel 6 - Between third I-beam truss (y:149.1042) and second I-beam truss (y:173.6667)
+    {
+      id: 'roof-panel-6',
+      type: 'fixture' as const,
+      position: { 
+        x: 25,
+        y: 161.38545, // Midpoint: (149.1042 + 173.6667) / 2
+        z: 16.9469
+      },
+      dimensions: { 
+        width: 88.75,
+        height: 24.5625, // Distance: 173.6667 - 149.1042
+        depth: 0.05
+      },
+      rotation: 0,
+      material: 'steel',
+      color: '#708090',
+      metadata: { 
+        category: 'roof', 
+        material_type: 'corrugated_metal',
+        panel_type: 'standing_seam',
+        load_bearing: false,
+        curved_profile: true,
+        center_height: 14.046875,
+        exterior_height: 12,
+        clearance_above_truss: 0.1,
+        weather_resistant: true,
+        description: 'Metal roof panel #6 - between third and second I-beam trusses'
+      }
+    },
+
+    // Roof Panel 7 - Between second I-beam truss (y:173.6667) and first I-beam truss (y:198.2292)
+    {
+      id: 'roof-panel-7',
+      type: 'fixture' as const,
+      position: { 
+        x: 25,
+        y: 185.94795, // Midpoint: (173.6667 + 198.2292) / 2
+        z: 16.9469
+      },
+      dimensions: { 
+        width: 88.75,
+        height: 24.5625, // Distance: 198.2292 - 173.6667
+        depth: 0.05
+      },
+      rotation: 0,
+      material: 'steel',
+      color: '#708090',
+      metadata: { 
+        category: 'roof', 
+        material_type: 'corrugated_metal',
+        panel_type: 'standing_seam',
+        load_bearing: false,
+        curved_profile: true,
+        center_height: 14.046875,
+        exterior_height: 12,
+        clearance_above_truss: 0.1,
+        weather_resistant: true,
+        description: 'Metal roof panel #7 - between second and first I-beam trusses'
+      }
+    },
+
+    // Roof Panel 8 - Between first I-beam truss (y:198.2292) and north wall truss (y:222)
+    {
+      id: 'roof-panel-8',
+      type: 'fixture' as const,
+      position: { 
+        x: 25,
+        y: 210.1146, // Midpoint: (198.2292 + 222) / 2
+        z: 16.9469
+      },
+      dimensions: { 
+        width: 88.75,
+        height: 23.7708, // Distance: 222 - 198.2292
+        depth: 0.05
+      },
+      rotation: 0,
+      material: 'steel',
+      color: '#708090',
+      metadata: { 
+        category: 'roof', 
+        material_type: 'corrugated_metal',
+        panel_type: 'standing_seam',
+        load_bearing: false,
+        curved_profile: true,
+        center_height: 14.046875,
+        exterior_height: 12,
+        clearance_above_truss: 0.1,
+        weather_resistant: true,
+        description: 'Metal roof panel #8 - between first I-beam and north wall trusses'
+      }
+    },
+
     // LONGITUDINAL TRUSSES - Running along exterior walls to connect cross trusses
     // West wall longitudinal truss - 198' long, flat at 12' height
     {
@@ -1145,6 +1423,68 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         curved_profile: false, // Flat truss
         cross_members: 'cross_pattern',
         description: 'Longitudinal truss along east wall - 198\' long, connects all cross trusses'
+      }
+    },
+
+    // PHASE 1 INDICATOR - Subtle tag for area north of firewall
+    {
+      id: 'phase-1-indicator',
+      type: 'fixture' as const,
+      position: { 
+        x: 111, // Near east wall, unobtrusive location in east hallway
+        y: 173.271, // Centered between firewall (124.3542) and north wall (222): (124.3542 + 222) / 2 = 173.271
+        z: 10 // At 10' height - visible but not intrusive
+      },
+      dimensions: { 
+        width: 2, // 24" wide tag for better visibility
+        height: 0.75, // 9" tall
+        depth: 0.1 // Thin sign plate
+      },
+      rotation: 0,
+      material: 'metal',
+      color: '#4b5563', // Medium gray color for subtle appearance
+      metadata: { 
+        category: 'signage',
+        sign_type: 'phase_indicator',
+        text: 'PHASE 1',
+        font_size: '6_inch',
+        text_color: '#f3f4f6',
+        phase_boundary: 'firewall_north',
+        firewall_y_position: 124.3542,
+        north_wall_y_position: 222,
+        covers_area: 'north_of_firewall',
+        description: 'Phase 1 indicator - Centered between firewall and north exterior wall'
+      }
+    },
+
+    // PHASE 2 INDICATOR - Subtle tag for area south of firewall
+    {
+      id: 'phase-2-indicator',
+      type: 'fixture' as const,
+      position: { 
+        x: 27, // Near west wall, unobtrusive location in west hallway
+        y: 74.6771, // Centered between south wall (25) and firewall (124.3542): (25 + 124.3542) / 2 = 74.6771
+        z: 10 // At 10' height - visible but not intrusive, same as Phase 1
+      },
+      dimensions: { 
+        width: 2, // 24" wide tag for better visibility, same as Phase 1
+        height: 0.75, // 9" tall, same as Phase 1
+        depth: 0.1 // Thin sign plate, same as Phase 1
+      },
+      rotation: 0,
+      material: 'metal',
+      color: '#4b5563', // Medium gray color for subtle appearance, same as Phase 1
+      metadata: { 
+        category: 'signage',
+        sign_type: 'phase_indicator',
+        text: 'PHASE 2',
+        font_size: '6_inch',
+        text_color: '#f3f4f6',
+        phase_boundary: 'firewall_south',
+        firewall_y_position: 124.3542,
+        south_wall_y_position: 25,
+        covers_area: 'south_of_firewall',
+        description: 'Phase 2 indicator - Centered between south exterior wall and firewall'
       }
     },
 

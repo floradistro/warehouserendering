@@ -181,6 +181,11 @@ interface AppState {
   // Selection actions
   toggleElementSelection: (elementId: string) => void
   clearSelection: () => void
+  selectElementWithSnap: (elementId: string) => void
+  
+  // Camera lock system
+  lockedTarget: string | null
+  setLockedTarget: (elementId: string | null) => void
   
   // Measurement actions
   toggleMeasurementMode: () => void
@@ -216,10 +221,13 @@ export const useAppStore = create<AppState>()(
       measurementDistance: null,
       measurementType: 'horizontal',
       
-      cameraPosition: [10, 10, 10],
-      cameraTarget: [0, 0, 0],
+      cameraPosition: [150, 100, 200],
+      cameraTarget: [69.375, 0, 124],
       showMeasurements: false,
       firstPersonMode: false,
+      
+      // Camera lock system
+      lockedTarget: null,
       
       // Layer visibility initial state
       hiddenLayers: new Set<string>(),
@@ -1307,6 +1315,60 @@ export const useAppStore = create<AppState>()(
 
       clearSelection: () => {
         set({ selectedElements: [] })
+      },
+
+      // Camera lock system
+      setLockedTarget: (elementId: string | null) => {
+        console.log('🔓 Setting locked target to:', elementId)
+        if (!elementId) {
+          // Unlock - reset to default warehouse center and clear all selections
+          set({ 
+            lockedTarget: null,
+            selectedElements: [], // Clear selection when unlocking
+            cameraTarget: [69.375, 0, 124]
+          })
+        } else {
+          set({ lockedTarget: elementId })
+        }
+      },
+
+      // Double-click selection with view snapping - single selection only
+      selectElementWithSnap: (elementId: string) => {
+        const { selectedElements, currentFloorplan, lockedTarget } = get()
+        const isSelected = selectedElements.includes(elementId)
+        
+        if (isSelected && lockedTarget === elementId) {
+          // Deselect and unlock if already selected and locked
+          console.log('🔓 Deselecting locked target:', elementId)
+          set({ 
+            selectedElements: [],
+            lockedTarget: null,
+            cameraTarget: [69.375, 0, 124] // Reset to warehouse center
+          })
+        } else {
+          // Quick switch: clear previous selection and select new object
+          console.log('🎯 Quick switching to new selection:', elementId)
+          set({ 
+            selectedElements: [elementId], // Only this element selected
+            lockedTarget: elementId
+          })
+          
+          // Find the element to get its position
+          const element = currentFloorplan?.elements.find(el => el.id === elementId)
+          if (element) {
+            // Calculate element center position
+            const centerX = element.position.x + element.dimensions.width / 2
+            const centerZ = element.position.y + element.dimensions.height / 2
+            const centerY = (element.position.z || 0) + (element.dimensions.depth || 8) / 2
+            
+            console.log('🎯 Locking orbit to element:', elementId, 'at center:', [centerX, centerY, centerZ])
+            
+            // Update camera target to focus on and orbit around the object
+            set({ 
+              cameraTarget: [centerX, centerY, centerZ]
+            })
+          }
+        }
       },
 
       // Measurement actions

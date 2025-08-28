@@ -11,6 +11,7 @@ import { MAIN_WAREHOUSE_MODEL } from '@/lib/warehouse-models'
 import { createDetailedIBCTote, createSimpleIBCTote } from '@/lib/ibc-tote-model'
 import { createDetailedSpiralFeederTank, createSimpleSpiralFeederTank } from '@/lib/spiral-feeder-tank-model'
 import { createDetailedNorwescoTank, createSimpleNorwescoTank } from '@/lib/norwesco-tank-model'
+import { createFramedWallGroup, shouldShowFraming, shouldShowDrywall, updateFramingLOD, updateDrywallLOD, STANDARD_FRAMING_CONFIG, STANDARD_DRYWALL_CONFIG } from '@/lib/wall-framing-system'
 import FirstPersonControls from './FirstPersonControls'
 import SnapIndicators from './SnapIndicators'
 import EnhancedLighting from './EnhancedLighting'
@@ -18,8 +19,15 @@ import EnhancedLighting from './EnhancedLighting'
 // WASD-enabled Orbit Controls
 function WASDOrbitControls({ target, ...props }: any) {
   const orbitRef = useRef<any>()
+  const { camera } = useThree()
   const keysPressed = useRef<Set<string>>(new Set())
   const panSpeed = 2.0
+  
+  // Animation state for smooth target transitions
+  const isAnimating = useRef(false)
+  const animationStart = useRef(0)
+  const startTarget = useRef(new THREE.Vector3())
+  const endTarget = useRef(new THREE.Vector3())
   
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -40,11 +48,53 @@ function WASDOrbitControls({ target, ...props }: any) {
     }
   }, [])
 
+  // Start smooth animation when target changes
+  useEffect(() => {
+    if (orbitRef.current && target) {
+      const controls = orbitRef.current
+      
+      // Store starting target only
+      startTarget.current.copy(controls.target)
+      endTarget.current.set(target[0], target[1], target[2])
+      
+      console.log('📷 Starting smooth focus transition to target:', target)
+      
+      // Start animation
+      isAnimating.current = true
+      animationStart.current = Date.now()
+    }
+  }, [target, camera])
+
   useFrame((state, delta) => {
     if (!orbitRef.current) return
 
     const controls = orbitRef.current
     const camera = state.camera
+    
+    // Handle smooth target focus animation
+    if (isAnimating.current) {
+      const elapsed = Date.now() - animationStart.current
+      const duration = 800 // 0.8 second animation - much faster and smoother
+      const progress = Math.min(elapsed / duration, 1)
+      
+      // Easing function (ease out quadratic for smoother feel)
+      const eased = 1 - Math.pow(1 - progress, 2)
+      
+      // Only interpolate target - let camera position stay where user left it
+      const currentTarget = new THREE.Vector3().lerpVectors(startTarget.current, endTarget.current, eased)
+      
+      // Apply smooth target transition
+      controls.target.copy(currentTarget)
+      controls.update()
+      
+      // End animation
+      if (progress >= 1) {
+        isAnimating.current = false
+        console.log('📷 Focus animation complete')
+      }
+      
+      // Allow WASD movement during focus animation (don't return early)
+    }
     
     // Get camera's right and forward vectors
     const forward = new THREE.Vector3()
@@ -91,6 +141,13 @@ function WASDOrbitControls({ target, ...props }: any) {
       maxDistance={400}
       target={target}
       makeDefault
+      // Zoom settings for smoother, more precise control
+      zoomSpeed={0.5} // Reduced from default 1.0 for less sensitivity
+      zoomToCursor={true} // Zoom towards cursor/touch point
+      screenSpacePanning={false} // Keep panning in world space
+      // Smooth zoom dampening
+      enableDamping={true}
+      dampingFactor={0.05}
       {...props}
     />
   )
@@ -184,15 +241,311 @@ function FloorplanElementMesh({
   onStartDrag,
   isEditing,
   selectedElements,
-  isDragging
-}: FloorplanElementProps) {
+  isDragging,
+  showFraming = false,
+  showDrywall = false,
+  lockedTarget
+}: FloorplanElementProps & { showFraming?: boolean, showDrywall?: boolean, lockedTarget: string | null }) {
   // Load brick texture for walls
   const brickTexture = useLoader(THREE.TextureLoader, '/textures/materials/concrete/Brick/bricktexture.jpg')
+  
+  // Get camera for LOD calculations
+  const { camera } = useThree()
 
   const isPreview = element.metadata?.isPreview === true
 
-  const { geometry, material } = useMemo(() => {
+  const { geometry, material, framedWallGroup } = useMemo(() => {
     const { width, height, depth = 8 } = element.dimensions
+    
+    // Show structural framing for selected walls (structural skeleton as selection indicator)
+    if (element.type === 'wall' && lockedTarget === element.id) {
+      console.log(`🏗️ Showing structural skeleton for selected wall ${element.id}`)
+      const wallPosition = new THREE.Vector3(
+        element.position.x + width / 2,
+        element.position.z || 0,
+        element.position.y + height / 2
+      )
+      
+      console.log(`📐 Displaying structural framework for selected element ${element.id}`)
+      
+      const framingConfig = { 
+        ...STANDARD_FRAMING_CONFIG, 
+        showFraming: true, // Show structural skeleton for selected element
+        minLOD: 1000 // Always show structural skeleton when selected, regardless of distance
+      }
+      
+      const framedWall = createFramedWallGroup(element, framingConfig)
+      
+      // Add bright pink outline to all structural elements
+      framedWall.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          // Create bright pink outline material
+          const outlineMaterial = new THREE.MeshBasicMaterial({
+            color: '#FF1493', // Deep pink/bright magenta
+            side: THREE.BackSide,
+            transparent: true,
+            opacity: 0.8
+          })
+          
+          // Create outline geometry (slightly larger)
+          const outlineGeometry = child.geometry.clone()
+          outlineGeometry.scale(1.05, 1.05, 1.05)
+          
+          // Create outline mesh
+          const outline = new THREE.Mesh(outlineGeometry, outlineMaterial)
+          outline.position.copy(child.position)
+          outline.rotation.copy(child.rotation)
+          outline.scale.copy(child.scale)
+          
+          // Add outline to the same parent
+          if (child.parent) {
+            child.parent.add(outline)
+          }
+        }
+      })
+      console.log(`✅ Structural skeleton with bright pink outline displayed for selected wall ${element.id}`)
+      
+      return {
+        geometry: null,
+        material: null,
+        framedWallGroup: framedWall
+      }
+    }
+    
+    // Show framing/drywall for walls when toggles are enabled
+    if (element.type === 'wall' && (showFraming || showDrywall) && lockedTarget !== element.id) {
+      const isWallSelected = isSelected
+      
+      // Check if this is an exterior brick wall
+      const isExteriorWall = element.metadata?.category === 'exterior' || 
+                            element.material === 'brick' ||
+                            element.metadata?.material_type === 'brick' ||
+                            ['wall-bottom', 'wall-top', 'wall-left', 'wall-right', 'wall-bottom-left', 'wall-bottom-right'].includes(element.id)
+      
+      // Check if this wall should have drywall
+      const shouldShowDrywallOnThisWall = showDrywall && !isExteriorWall && 
+                                          (element.metadata?.material_type === 'drywall' || 
+                                           element.metadata?.category === 'interior' ||
+                                           (!element.metadata?.material_type && !isExteriorWall))
+      
+      // Debug log for drywall processing
+      if (showDrywall) {
+        console.log(`🏠 Processing wall ${element.id}:`)
+        console.log(`  - isExteriorWall: ${isExteriorWall}`)
+        console.log(`  - material: ${element.material}`)
+        console.log(`  - material_type: ${element.metadata?.material_type}`)
+        console.log(`  - category: ${element.metadata?.category}`)
+        console.log(`  - shouldShowDrywallOnThisWall: ${shouldShowDrywallOnThisWall}`)
+      }
+      
+      const framingConfig = { 
+        ...STANDARD_FRAMING_CONFIG, 
+        showFraming: showFraming || false,
+        minLOD: 1000 // Always show when toggle is on, regardless of distance
+      }
+      
+      const drywallConfig = shouldShowDrywallOnThisWall ? {
+        ...STANDARD_DRYWALL_CONFIG,
+        showDrywall: true,
+        minLOD: 1000 // Show at all distances for debugging
+      } : undefined
+      
+      const framedWall = createFramedWallGroup(element, framingConfig, isWallSelected, drywallConfig)
+      
+      return {
+        geometry: null,
+        material: null,
+        framedWallGroup: framedWall
+      }
+    }
+    
+    // Show structural skeleton for selected steel I-beams
+    if (element.material === 'steel' && element.type === 'fixture' && lockedTarget === element.id) {
+      console.log(`🏗️ Showing steel beam structural skeleton with bright pink outline for ${element.id}`)
+      
+      // Create enhanced I-beam with visible structural details
+      const iBeamGroup = new THREE.Group()
+      
+      // Create steel material with enhanced visibility for selection
+      const structuralSteelMaterial = new THREE.MeshStandardMaterial({
+        color: new THREE.Color('#4682B4'), // Steel blue for structural visibility
+        metalness: 0.9,
+        roughness: 0.1,
+        transparent: false,
+        wireframe: true // Show wireframe for structural skeleton effect
+      })
+      
+      // Enhanced I-beam geometry with structural details
+      const { width: beamWidth, height: beamHeight, depth: beamLength = 20 } = element.dimensions
+      
+      // Main I-beam body (web)
+      const webGeometry = new THREE.BoxGeometry(0.5, beamLength, beamHeight - 1)
+      const web = new THREE.Mesh(webGeometry, structuralSteelMaterial)
+      web.position.set(0, 0, 0)
+      iBeamGroup.add(web)
+      
+      // Top flange
+      const flangeGeometry = new THREE.BoxGeometry(beamWidth, beamLength, 0.75)
+      const topFlange = new THREE.Mesh(flangeGeometry, structuralSteelMaterial)
+      topFlange.position.set(0, 0, (beamHeight - 0.75) / 2)
+      iBeamGroup.add(topFlange)
+      
+      // Bottom flange  
+      const bottomFlange = new THREE.Mesh(flangeGeometry, structuralSteelMaterial)
+      bottomFlange.position.set(0, 0, -(beamHeight - 0.75) / 2)
+      iBeamGroup.add(bottomFlange)
+      
+      // Add structural connection details
+      const connectionGeometry = new THREE.SphereGeometry(0.25, 8, 8)
+      const connectionMaterial = new THREE.MeshStandardMaterial({
+        color: '#FF6600', // Orange for connection points
+        metalness: 0.8,
+        roughness: 0.3
+      })
+      
+      // Connection points at beam ends
+      for (let i = 0; i < 2; i++) {
+        const connection = new THREE.Mesh(connectionGeometry, connectionMaterial)
+        connection.position.set(0, (i - 0.5) * (beamLength - 2), 0)
+        iBeamGroup.add(connection)
+      }
+      
+      // Add bright pink outline to all steel structural elements
+      iBeamGroup.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          // Create bright pink outline material
+          const outlineMaterial = new THREE.MeshBasicMaterial({
+            color: '#FF1493', // Deep pink/bright magenta
+            side: THREE.BackSide,
+            transparent: true,
+            opacity: 0.9
+          })
+          
+          // Create outline geometry (slightly larger)
+          const outlineGeometry = child.geometry.clone()
+          outlineGeometry.scale(1.08, 1.08, 1.08)
+          
+          // Create outline mesh
+          const outline = new THREE.Mesh(outlineGeometry, outlineMaterial)
+          outline.position.copy(child.position)
+          outline.rotation.copy(child.rotation)
+          outline.scale.copy(child.scale)
+          
+          // Add outline to the group
+          iBeamGroup.add(outline)
+        }
+      })
+      
+      return {
+        geometry: null,
+        material: null,
+        framedWallGroup: iBeamGroup
+      }
+    }
+    
+    // Show structural skeleton for selected tanks and totes (wireframe structural view)
+    if ((element.id.includes('ibc-tote') || element.id.includes('tank')) && lockedTarget === element.id) {
+      console.log(`🏗️ Showing structural skeleton with bright pink outline for selected tank/tote ${element.id}`)
+      
+      const containerGroup = new THREE.Group()
+      const { width: containerWidth, height: containerHeight, depth: containerDepth } = element.dimensions
+      
+      // Create wireframe structural material
+      const structuralMaterial = new THREE.MeshStandardMaterial({
+        color: new THREE.Color('#2E8B57'), // Sea green for tank structure
+        metalness: 0.7,
+        roughness: 0.3,
+        wireframe: true, // Show structural wireframe
+        transparent: true,
+        opacity: 0.9
+      })
+      
+      // Main container structure (wireframe)
+      const containerGeometry = new THREE.CylinderGeometry(
+        containerWidth / 2, containerWidth / 2, containerHeight, 16
+      )
+      const containerMesh = new THREE.Mesh(containerGeometry, structuralMaterial)
+      containerGroup.add(containerMesh)
+      
+      // Add structural ribs for tanks
+      if (element.id.includes('tank')) {
+        const ribMaterial = new THREE.MeshStandardMaterial({
+          color: '#FF6600', // Orange for structural ribs
+          metalness: 0.8,
+          roughness: 0.2
+        })
+        
+        // Horizontal ribs
+        for (let i = 0; i < 4; i++) {
+          const ribGeometry = new THREE.TorusGeometry(containerWidth / 2, 0.15, 8, 16)
+          const rib = new THREE.Mesh(ribGeometry, ribMaterial)
+          rib.position.y = -containerHeight / 2 + (i + 1) * (containerHeight / 5)
+          containerGroup.add(rib)
+        }
+        
+        // Base support ring
+        const baseGeometry = new THREE.CylinderGeometry(containerWidth / 2 + 0.5, containerWidth / 2 + 0.5, 0.5, 16)
+        const base = new THREE.Mesh(baseGeometry, ribMaterial)
+        base.position.y = -containerHeight / 2
+        containerGroup.add(base)
+      }
+      
+      // Add connection points for IBC totes
+      if (element.id.includes('ibc-tote')) {
+        const connectionMaterial = new THREE.MeshStandardMaterial({
+          color: '#4169E1', // Royal blue for connections
+          metalness: 0.9,
+          roughness: 0.1
+        })
+        
+        // Corner connection points
+        const corners = [
+          [-containerWidth/3, containerHeight/3, -containerDepth/3],
+          [containerWidth/3, containerHeight/3, -containerDepth/3],
+          [-containerWidth/3, containerHeight/3, containerDepth/3],
+          [containerWidth/3, containerHeight/3, containerDepth/3],
+        ]
+        
+        corners.forEach(([x, y, z]) => {
+          const connectionGeometry = new THREE.SphereGeometry(0.3, 8, 8)
+          const connection = new THREE.Mesh(connectionGeometry, connectionMaterial)
+          connection.position.set(x, y, z)
+          containerGroup.add(connection)
+        })
+      }
+      
+      // Add bright pink outline to all tank/tote structural elements
+      containerGroup.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          // Create bright pink outline material
+          const outlineMaterial = new THREE.MeshBasicMaterial({
+            color: '#FF1493', // Deep pink/bright magenta
+            side: THREE.BackSide,
+            transparent: true,
+            opacity: 0.85
+          })
+          
+          // Create outline geometry (slightly larger)
+          const outlineGeometry = child.geometry.clone()
+          outlineGeometry.scale(1.06, 1.06, 1.06)
+          
+          // Create outline mesh
+          const outline = new THREE.Mesh(outlineGeometry, outlineMaterial)
+          outline.position.copy(child.position)
+          outline.rotation.copy(child.rotation)
+          outline.scale.copy(child.scale)
+          
+          // Add outline to the container group
+          containerGroup.add(outline)
+        }
+      })
+      
+      return {
+        geometry: null,
+        material: null,
+        framedWallGroup: containerGroup
+      }
+    }
     
     // Special handling for steel I-beams
     if (element.material === 'steel' && element.type === 'fixture') {
@@ -269,7 +622,8 @@ function FloorplanElementMesh({
       return {
         geometry: null, // We'll use the group instead
         material: null,
-        iBeamGroup
+        iBeamGroup,
+        framedWallGroup: null
       }
     }
     
@@ -335,12 +689,20 @@ function FloorplanElementMesh({
     return {
       geometry: standardGeometry,
       material: standardMaterial,
-      iBeamGroup: null
+      iBeamGroup: null,
+      framedWallGroup: null
     }
-  }, [element, brickTexture])
+  }, [element, brickTexture, lockedTarget, camera.position.x, camera.position.y, camera.position.z])
 
   const position = useMemo(() => {
     const { x, y, z = 0 } = element.position
+    
+    // Special positioning for roof panels (they sit on top of trusses)
+    if (element.metadata?.category === 'roof') {
+      // Roof panels follow the same curve as trusses but positioned at the TOP of the trusses
+      // Positioned at the exterior height where the top of the truss is
+      return [x + element.dimensions.width / 2, z, y] as [number, number, number] // Use z from model as height
+    }
     
     // Special positioning for structural trusses (they span across the building at exact coordinates)
     // Check this BEFORE general steel fixtures to avoid incorrect positioning
@@ -396,20 +758,7 @@ function FloorplanElementMesh({
   const isMeasurementFirstSelection = selectedObjectsForMeasurement[0] === element.id
   const isMeasurementSecondSelection = selectedObjectsForMeasurement[1] === element.id
 
-  // Handle click events based on mode
-  const handleClick = (e: any) => {
-    if (measurementMode) {
-      // In measurement mode, ignore object clicks and let them pass through to ground plane
-      console.log('🚫 Ignoring object click in measurement mode:', element.id)
-      return // Don't stop propagation - let it go to ground plane
-    }
-    
-    e.stopPropagation()
-    console.log(`Clicked ${element.id}`)
-    onSelect(element.id)
-  }
-
-  // Handle double-click for editing or measurement
+  // Handle double-click for selection, editing or measurement
   const handleDoubleClick = (e: any) => {
     e.stopPropagation()
     
@@ -417,8 +766,8 @@ function FloorplanElementMesh({
       console.log(`Double-clicked ${element.id} for measurement`)
       onMeasurementSelect(element.id)
     } else {
-      console.log('🔧 Double-clicked element for editing:', element.id, 'type:', element.type)
-      onStartEdit(element)
+      console.log(`🎯 Double-clicked ${element.id} for selection`)
+      onSelect(element.id)
     }
   }
 
@@ -459,6 +808,107 @@ function FloorplanElementMesh({
     }
   }
 
+  // Handle signage fixtures with text rendering
+  if (element.type === 'fixture' && element.metadata?.category === 'signage') {
+    return (
+      <group 
+        position={position}
+        rotation={[0, element.rotation || 0, 0]}
+
+        onDoubleClick={handleDoubleClick}
+        onPointerDown={handlePointerDown}
+        onPointerOver={(e: any) => {
+          e.stopPropagation()
+          document.body.style.cursor = 'pointer'
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = 'auto'
+        }}
+      >
+        {/* Sign backing plate */}
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[
+            element.dimensions.width,
+            element.dimensions.depth || 0.05,
+            element.dimensions.height
+          ]} />
+          <meshStandardMaterial 
+            color={element.color || '#6b7280'} 
+            metalness={0.3}
+            roughness={0.7}
+          />
+        </mesh>
+        
+        {/* Sign text using Html component */}
+        <Html
+          position={[0, 0.03, 0]} // Slightly in front of the sign
+          center
+          style={{
+            width: `${element.dimensions.width * 50}px`,
+            pointerEvents: 'none'
+          }}
+        >
+          <div style={{
+            padding: '4px 8px',
+            backgroundColor: element.color || '#6b7280',
+            color: element.metadata?.text_color || '#ffffff',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            fontFamily: 'Arial, sans-serif',
+            textAlign: 'center',
+            borderRadius: '2px',
+            whiteSpace: 'nowrap'
+          }}>
+            {element.metadata?.text || 'SIGN'}
+          </div>
+        </Html>
+        
+        {(isSelected || isSelectedForMeasurement) && (
+          <SelectionBox dimensions={element.dimensions} color={isSelectedForMeasurement ? '#ffff00' : '#ff0000'} />
+        )}
+      </group>
+    )
+  }
+
+  // Handle roof panels with curved geometry
+  if (element.metadata?.category === 'roof') {
+    return (
+      <group 
+        position={position}
+        rotation={[0, element.rotation || 0, 0]}
+
+        onDoubleClick={handleDoubleClick}
+        onPointerDown={handlePointerDown}
+        onPointerOver={(e: any) => {
+          e.stopPropagation()
+          if (isEditing || selectedElements.includes(element.id)) {
+            document.body.style.cursor = 'move'
+          } else {
+            document.body.style.cursor = 'pointer'
+          }
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = 'auto'
+        }}
+      >
+        {/* Metal Roof Panel - Curved to match trusses */}
+        <RoofPanel 
+          position={[0, 0, 0]}
+          width={element.dimensions.width}
+          height={element.dimensions.height}
+          depth={element.dimensions.depth || 0.05}
+          centerHeight={element.metadata?.center_height || 14.046875}
+          exteriorHeight={element.metadata?.exterior_height || 12}
+          isCurved={element.metadata?.curved_profile || true}
+        />
+        
+        {(isSelected || isSelectedForMeasurement) && (
+          <SelectionBox dimensions={element.dimensions} color={isSelectedForMeasurement ? '#ffff00' : '#ff0000'} />
+        )}
+      </group>
+    )
+  }
+
   // Handle steel fixtures (I-beams and support trusses) rendering differently
   if (element.material === 'steel' && element.type === 'fixture') {
     // Support Truss rendering (cross trusses)
@@ -467,10 +917,10 @@ function FloorplanElementMesh({
         <group 
           position={position}
           rotation={[0, element.rotation || 0, 0]}
-          onClick={handleClick}
+  
           onDoubleClick={handleDoubleClick}
           onPointerDown={handlePointerDown}
-          onPointerOver={(e) => {
+          onPointerOver={(e: any) => {
             e.stopPropagation()
             if (isEditing || selectedElements.includes(element.id)) {
               document.body.style.cursor = 'move'
@@ -506,10 +956,10 @@ function FloorplanElementMesh({
         <group 
           position={position}
           rotation={[0, Math.PI / 2, 0]} // Rotate 90 degrees to run north-south
-          onClick={handleClick}
+  
           onDoubleClick={handleDoubleClick}
           onPointerDown={handlePointerDown}
-          onPointerOver={(e) => {
+          onPointerOver={(e: any) => {
             e.stopPropagation()
             if (isEditing || selectedElements.includes(element.id)) {
               document.body.style.cursor = 'move'
@@ -545,10 +995,10 @@ function FloorplanElementMesh({
         <group 
           position={position}
           rotation={[0, element.rotation || 0, 0]}
-          onClick={handleClick}
+  
           onDoubleClick={handleDoubleClick}
           onPointerDown={handlePointerDown}
-          onPointerOver={(e) => {
+          onPointerOver={(e: any) => {
             e.stopPropagation()
             // Show different cursor based on interaction mode
             if (isEditing || selectedElements.includes(element.id)) {
@@ -632,10 +1082,10 @@ function FloorplanElementMesh({
           element.position.y + 1.665 // Center of 3.33' height
         ]}
         rotation={[0, (element.rotation || 0) * Math.PI / 180, 0]}
-        onClick={handleClick}
+
         onDoubleClick={handleDoubleClick}
         onPointerDown={handlePointerDown}
-        onPointerOver={(e) => {
+        onPointerOver={(e: any) => {
           e.stopPropagation()
           if (isEditing || selectedElements.includes(element.id)) {
             document.body.style.cursor = 'move'
@@ -698,10 +1148,10 @@ function FloorplanElementMesh({
           element.position.y + 3 // Center of 6' diameter
         ]}
         rotation={[0, (element.rotation || 0) * Math.PI / 180, 0]}
-        onClick={handleClick}
+
         onDoubleClick={handleDoubleClick}
         onPointerDown={handlePointerDown}
-        onPointerOver={(e) => {
+        onPointerOver={(e: any) => {
           e.stopPropagation()
           if (isEditing || selectedElements.includes(element.id)) {
             document.body.style.cursor = 'move'
@@ -763,10 +1213,10 @@ function FloorplanElementMesh({
           element.position.y + element.dimensions.height / 2 // Center of tank
         ]}
         rotation={[0, (element.rotation || 0) * Math.PI / 180, 0]}
-        onClick={handleClick}
+
         onDoubleClick={handleDoubleClick}
         onPointerDown={handlePointerDown}
-        onPointerOver={(e) => {
+        onPointerOver={(e: any) => {
           e.stopPropagation()
           if (isEditing || selectedElements.includes(element.id)) {
             document.body.style.cursor = 'move'
@@ -802,6 +1252,47 @@ function FloorplanElementMesh({
     )
   }
 
+  // Handle framed walls
+  if (framedWallGroup) {
+    return (
+      <group
+        position={position}
+        rotation={[0, element.rotation || 0, 0]}
+
+        onDoubleClick={handleDoubleClick}
+        onPointerDown={handlePointerDown}
+        onPointerOver={(e: any) => {
+          e.stopPropagation()
+          // Show different cursor based on interaction mode
+          if (isEditing || selectedElements.includes(element.id)) {
+            document.body.style.cursor = 'move'
+          } else {
+            document.body.style.cursor = 'pointer'
+          }
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = 'auto'
+        }}
+      >
+        <primitive object={framedWallGroup} />
+        
+        {/* Dragging visual feedback for framed walls */}
+        {isDragging && selectedElements.includes(element.id) && (
+          <mesh
+            geometry={new THREE.BoxGeometry(element.dimensions.width, element.dimensions.depth || 8, element.dimensions.height || 1)}
+          >
+            <meshBasicMaterial
+              color="#4ade80" // Green for dragging
+              transparent
+              opacity={0.5}
+              depthTest={false}
+            />
+          </mesh>
+        )}
+      </group>
+    )
+  }
+
   // Standard mesh rendering for walls and other elements
   if (!geometry || !material) {
     return null
@@ -819,10 +1310,10 @@ function FloorplanElementMesh({
         rotation={[0, element.rotation || 0, 0]}
         castShadow
         receiveShadow
-        onClick={handleClick}
+
         onDoubleClick={handleDoubleClick}
         onPointerDown={handlePointerDown}
-        onPointerOver={(e) => {
+        onPointerOver={(e: any) => {
           e.stopPropagation()
           // Show different cursor based on interaction mode
           if (isEditing || selectedElements.includes(element.id)) {
@@ -835,17 +1326,12 @@ function FloorplanElementMesh({
           document.body.style.cursor = 'auto'
         }}
       >
-        {(isSelected || isSelectedForMeasurement) && (
+        {/* Measurement mode: bright pink outline on selected objects */}
+        {measurementMode && isSelectedForMeasurement && (
           <meshBasicMaterial
-            color={
-              measurementMode && isSelectedForMeasurement
-                ? isMeasurementFirstSelection
-                  ? "#00ff00" // Green for first selection
-                  : "#ff6600" // Orange for second selection
-                : "#ffff00" // Yellow for regular selection
-            }
+            color="#FF1493" // Bright pink instead of yellow
             transparent
-            opacity={0.5}
+            opacity={0.6}
             depthTest={false}
           />
         )}
@@ -2143,14 +2629,123 @@ function SteelTruss({ position, width, height, isCurved = true }: { position: [n
   )
 }
 
+// Metal Roof Panel Component - Creates curved metal roofing between trusses
+function RoofPanel({ 
+  position, 
+  width, 
+  height, 
+  depth = 0.05,
+  centerHeight = 14.046875, 
+  exteriorHeight = 12,
+  isCurved = true 
+}: { 
+  position: [number, number, number]; 
+  width: number; 
+  height: number; 
+  depth?: number;
+  centerHeight?: number;
+  exteriorHeight?: number;
+  isCurved?: boolean;
+}) {
+  
+  // Calculate curve parameters - same as trusses for perfect fit
+  const heightDrop = centerHeight - exteriorHeight // 2.046875'
+  
+  // Create curved surface geometry that sits exactly on top of truss top chord
+  // Roof panels span east-west (X direction) and north-south (Z direction, which is our height param)
+  const createRoofSurface = () => {
+    const widthSegments = 32 // East-west segments
+    const heightSegments = 16 // North-south segments
+    
+    const geometry = new THREE.PlaneGeometry(width, height, widthSegments, heightSegments)
+    
+    // Apply curve to the roof surface if curved - matches the TOP chord of trusses
+    if (isCurved) {
+      const vertices = geometry.attributes.position.array
+      
+      // Iterate through vertices and apply curve
+      for (let i = 0; i < vertices.length; i += 3) {
+        const x = vertices[i] // East-west position (-width/2 to width/2)
+        const z = vertices[i + 2] // North-south position (our element's height direction)
+        
+        // Calculate normalized position for curve (-1 to 1)
+        const t = x / (width / 2) // -1 to 1 across width
+        
+        // Apply same curve formula as trusses top chord
+        // This puts the roof surface exactly on the top chord curve
+        const curveHeight = heightDrop * (1 - Math.pow(t, 2)) // Parabolic curve matching trusses
+        vertices[i + 1] = curveHeight // Y is height in Three.js - sits exactly on top chord
+      }
+      
+      geometry.attributes.position.needsUpdate = true
+      geometry.computeVertexNormals() // Recalculate normals for proper lighting
+    }
+    
+    return geometry
+  }
+  
+  const roofGeometry = createRoofSurface()
+  
+  return (
+    <group position={position}>
+      {/* Main roof panel surface */}
+      <mesh 
+        geometry={roofGeometry} 
+        castShadow 
+        receiveShadow
+        rotation={[-Math.PI / 2, 0, 0]} // Rotate to be horizontal (plane starts vertical)
+      >
+        <meshStandardMaterial 
+          color="#708090" // Steel gray
+          metalness={0.9} // High metalness for metal roofing
+          roughness={0.1} // Low roughness for shiny metal
+          side={THREE.DoubleSide} // Visible from both sides
+        />
+      </mesh>
+      
+      {/* Optional corrugation effect - thin ridges running north-south */}
+      {Array.from({ length: Math.floor(width / 3) }, (_, i) => {
+        const x = -width/2 + (i + 1) * 3 // Every 3 feet
+        // Calculate ridge height to follow curve
+        const t = x / (width / 2) // Normalized position (-1 to 1)
+        const ridgeHeight = isCurved ? heightDrop * (1 - Math.pow(t, 2)) : 0
+        
+        return (
+          <mesh
+            key={`ridge-${i}`}
+            position={[x, ridgeHeight, 0]}
+            rotation={[-Math.PI / 2, 0, 0]}
+            castShadow
+          >
+            <boxGeometry args={[0.1, height, 0.02]} />
+            <meshStandardMaterial 
+              color="#5a6b7a" // Slightly darker for ridges
+              metalness={0.9}
+              roughness={0.15}
+            />
+          </mesh>
+        )
+      })}
+    </group>
+  )
+}
+
 // Legacy sample floorplan (kept for fallback compatibility)
 const sampleFloorplan = MAIN_WAREHOUSE_MODEL
 
-function Scene({ onCameraReady, snapPointsCache }: { onCameraReady: (camera: THREE.Camera) => void, snapPointsCache: any[] }) {
+function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, cameraTarget, lockedTarget }: { 
+  onCameraReady: (camera: THREE.Camera) => void, 
+  snapPointsCache: any[], 
+  showFraming: boolean,
+  showDrywall: boolean,
+  cameraTarget: [number, number, number],
+  lockedTarget: string | null
+}) {
   const {
     currentFloorplan,
     selectedElements,
     toggleElementSelection,
+    selectElementWithSnap,
     showMeasurements,
     measurementMode,
     selectedObjectsForMeasurement,
@@ -2251,6 +2846,13 @@ function Scene({ onCameraReady, snapPointsCache }: { onCameraReady: (camera: THR
             return visible
           }
           
+          // Check if Roof Panels layer is hidden
+          if (element.metadata?.category === 'roof') {
+            const visible = isLayerVisible('roof-panels')
+            console.log(`🔍 Roof panel ${element.id} visibility check: ${visible}`)
+            return visible
+          }
+          
           // Check if Room Walls layer is hidden
           if (element.metadata?.category === 'room-walls') {
             const visible = isLayerVisible('room-walls')
@@ -2276,15 +2878,15 @@ function Scene({ onCameraReady, snapPointsCache }: { onCameraReady: (camera: THR
         
         if (!shouldRender) return null
         
-        const handleSelect = () => {
+        const handleDoubleClickSelect = () => {
           if (isPreview) return
           
           if (!measurementMode) {
-            // Use group selection for I-beams, normal selection for others
+            // Use group selection for I-beams, normal selection with snap for others
             if (element.material === 'steel' && element.metadata?.beam_type === 'I-beam') {
               selectElementGroup(element.id)
             } else {
-              toggleElementSelection(element.id)
+              selectElementWithSnap(element.id)
             }
           } else {
             selectObjectForMeasurement(element.id)
@@ -2296,7 +2898,7 @@ function Scene({ onCameraReady, snapPointsCache }: { onCameraReady: (camera: THR
           key={element.id}
           element={element}
             isSelected={isSelected}
-            onSelect={handleSelect}
+            onSelect={handleDoubleClickSelect}
           showMeasurements={showMeasurements}
             measurementMode={measurementMode && !isPreview}
           selectedObjectsForMeasurement={selectedObjectsForMeasurement}
@@ -2306,6 +2908,9 @@ function Scene({ onCameraReady, snapPointsCache }: { onCameraReady: (camera: THR
           isEditing={isEditing}
           selectedElements={selectedElements}
           isDragging={isDragging}
+          showFraming={showFraming}
+          showDrywall={showDrywall}
+          lockedTarget={lockedTarget}
         />
         )
       })}
@@ -2384,6 +2989,24 @@ function Scene({ onCameraReady, snapPointsCache }: { onCameraReady: (camera: THR
         </Html>
       </group>
       
+      {/* Framing Status Indicator */}
+      {showFraming && (
+        <Html position={[25, 15, 25]}>
+          <div className="bg-amber-700 text-white px-3 py-1 rounded text-sm font-medium border border-amber-600 shadow-md pointer-events-none whitespace-nowrap">
+            🔨 2x4 FRAMING ON (Press F to toggle)
+          </div>
+        </Html>
+      )}
+      
+      {/* Drywall Status Indicator */}
+      {showDrywall && (
+        <Html position={[25, 12, 25]}>
+          <div className="bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium border border-blue-600 shadow-md pointer-events-none whitespace-nowrap">
+            🏠 DRYWALL ON - Interior walls only (Press G to toggle)
+          </div>
+        </Html>
+      )}
+      
       {/* Room number labels */}
       <RoomLabels floorplan={floorplan} />
       
@@ -2427,7 +3050,7 @@ function Scene({ onCameraReady, snapPointsCache }: { onCameraReady: (camera: THR
         />
       ) : (
         <WASDOrbitControls
-          target={[69.375, 0, 124]} // Center of the rotated pad (138.75/2, 248/2)
+          target={cameraTarget}
         />
       )}
 
@@ -2592,6 +3215,12 @@ export default function ThreeRenderer() {
     measurementType,
     selectObjectForMeasurement,
     
+    // Camera state
+    cameraPosition,
+    cameraTarget,
+    lockedTarget,
+    setLockedTarget,
+    
     // Layer visibility
     hiddenLayers,
     layerGroups,
@@ -2600,6 +3229,12 @@ export default function ThreeRenderer() {
     selectElementGroup
   } = useAppStore()
 
+  // Local state for wall framing visibility
+  const [showFraming, setShowFraming] = React.useState(false)
+  
+  // Local state for drywall visibility
+  const [showDrywall, setShowDrywall] = React.useState(false)
+
   // Refs for saving functionality
   const canvasRef = React.useRef<HTMLCanvasElement>()
   
@@ -2607,6 +3242,21 @@ export default function ThreeRenderer() {
   React.useEffect(() => {
     updateLayerGroups()
   }, [currentFloorplan, updateLayerGroups])
+  
+  // ESC key handler to unlock camera target
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && lockedTarget) {
+        console.log('🔓 ESC pressed - unlocking camera target')
+        setLockedTarget(null)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [lockedTarget, setLockedTarget])
   
   // Screenshot and export functions
   const captureScreenshot = React.useCallback((
@@ -2819,6 +3469,29 @@ export default function ThreeRenderer() {
             console.log('Starting element edit via keyboard shortcut')
             startElementEdit(selectedElement)
           }
+        }
+        
+        // Handle framing toggle (F key) - only prevent if not used for movement
+        if (event.key.toLowerCase() === 'f' && !event.ctrlKey && !event.altKey && !event.shiftKey) {
+          event.preventDefault()
+          event.stopPropagation()
+          setShowFraming(prev => {
+            const newValue = !prev
+            console.log(`🔨 Toggling wall framing: ${newValue ? 'ON' : 'OFF'}`)
+            console.log(`📍 Current camera position:`, cameraRef.current?.position)
+            return newValue
+          })
+        }
+        
+        // Handle drywall toggle (G key for Gypsum) - avoid conflict with WASD
+        if (event.key.toLowerCase() === 'g' && !event.ctrlKey && !event.altKey && !event.shiftKey) {
+          event.preventDefault()
+          event.stopPropagation()
+          setShowDrywall(prev => {
+            const newValue = !prev
+            console.log(`🏠 Drywall mode: ${newValue ? 'ON - Interior walls only (LOD optimized)' : 'OFF'}`)
+            return newValue
+          })
         }
       }
     }
@@ -3283,7 +3956,7 @@ export default function ThreeRenderer() {
             canvasRef.current = gl.domElement
           }
         }}
-        onClick={handleClick}
+
         onPointerMissed={(event) => {
           // Measurement now handled by direct object clicks - no ground clicking needed
         }}
@@ -3293,7 +3966,14 @@ export default function ThreeRenderer() {
             <div className="text-white text-lg">Loading 3D Scene...</div>
           </Html>
         }>
-          <Scene onCameraReady={handleCameraReady} snapPointsCache={snapPointsCache} />
+          <Scene 
+            onCameraReady={handleCameraReady} 
+            snapPointsCache={snapPointsCache} 
+            showFraming={showFraming}
+            showDrywall={showDrywall}
+            cameraTarget={cameraTarget}
+            lockedTarget={lockedTarget}
+          />
         </Suspense>
       </Canvas>
     </div>

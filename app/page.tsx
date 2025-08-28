@@ -136,6 +136,40 @@ export default function Home() {
                     <div className="text-[10px] text-[#cccccc] font-medium">LAYERS</div>
                   </div>
                   
+                  {/* Roof Panels Layer */}
+                  <div 
+                    className="px-3 py-1.5 hover:bg-[#3c3c3c] flex items-center justify-between cursor-pointer"
+                    onClick={() => {
+                      console.log('🔍 Toggling roof-panels layer via row click')
+                      toggleLayerVisibility('roof-panels')
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded border ${
+                        isLayerVisible('roof-panels') 
+                          ? 'bg-[#708090] border-[#708090]' 
+                          : 'border-[#666]'
+                      }`}>
+                        {isLayerVisible('roof-panels') && (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 bg-white rounded-sm"></div>
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-[#cccccc]">Metal Roof Panels</span>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        console.log('🔍 Toggling roof-panels layer via button click')
+                        toggleLayerVisibility('roof-panels')
+                      }}
+                      className="text-[10px] text-[#888] hover:text-[#ccc]"
+                    >
+                      8 panels
+                    </button>
+                  </div>
+
                   {/* I-Beams Layer */}
                   {layerGroups['steel-ibeams'] && layerGroups['steel-ibeams'].length > 0 && (
                     <div 
