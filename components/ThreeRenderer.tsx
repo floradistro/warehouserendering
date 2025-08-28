@@ -525,7 +525,7 @@ function FloorplanElementMesh({
           <SupportTruss 
             position={[0, 0, 0]}
             width={element.dimensions.height} // Use height as width since rotated
-            height={element.dimensions.depth} // Use depth as height
+            height={element.dimensions.depth || 4.8438} // Use depth as height (default to standard truss height)
             depth={element.dimensions.width || 1} // Use width as depth
             centerHeight={12} // Flat at 12'
             exteriorHeight={12} // Flat at 12'
