@@ -180,8 +180,8 @@ function EnvironmentMap() {
       }
     } catch (error) {
       console.warn('Environment map setup failed:', error)
-      // Fallback to simple environment color
-      scene.environment = new THREE.Color(0xf0f0f0)
+      // Fallback - set environment to null (no environment map)
+      scene.environment = null
     }
   }, [scene, gl])
   
