@@ -22,7 +22,7 @@ export default function EnhancedLighting({
       gl.toneMapping = THREE.ACESFilmicToneMapping
       gl.toneMappingExposure = 1.2
       
-      // Configure shadow settings based on quality
+      // Configure shadow settings based on quality - optimized for corner visibility
       if (enableShadows) {
         gl.shadowMap.enabled = true
         gl.shadowMap.type = quality === 'ultra' 
@@ -30,6 +30,10 @@ export default function EnhancedLighting({
           : quality === 'high'
           ? THREE.PCFShadowMap
           : THREE.BasicShadowMap
+        
+        // Enhanced shadow settings for better corner definition
+        gl.shadowMap.autoUpdate = true
+        gl.shadowMap.needsUpdate = true
       }
       
       // Set output color space for better colors (updated from outputEncoding)
@@ -37,7 +41,7 @@ export default function EnhancedLighting({
     }
   }, [gl, enableShadows, quality])
 
-  // Shadow map size based on quality
+  // Shadow map size based on quality - ultra quality restored
   const shadowMapSize = useMemo(() => {
     switch(quality) {
       case 'ultra': return 8192
@@ -47,92 +51,127 @@ export default function EnhancedLighting({
     }
   }, [quality])
 
-  // Animate sun light for dynamic shadows (optional)
-  useFrame((state) => {
-    if (sunLightRef.current) {
-      // Subtle movement for more realistic lighting
-      const time = state.clock.getElapsedTime()
-      sunLightRef.current.position.x = 50 + Math.sin(time * 0.1) * 5
-      sunLightRef.current.position.z = 20 + Math.cos(time * 0.1) * 5
-    }
-  })
+  // Removed dynamic sun movement for better performance
 
   return (
     <>
-      {/* Main ambient light - warehouse interior lighting */}
-      <ambientLight intensity={0.4} color="#f0f0f0" />
+      {/* Main ambient light for base illumination */}
+      <ambientLight intensity={0.35} color="#f0f0f0" />
       
-      {/* Primary sun light - main directional light source */}
+      {/* Primary directional sun light */}
       <directionalLight
-        ref={sunLightRef}
         position={[50, 60, 30]}
-        intensity={1.5}
+        intensity={1.8}
         color="#fffaf0"
         castShadow={enableShadows}
         shadow-mapSize={[shadowMapSize, shadowMapSize]}
-        shadow-camera-far={300}
-        shadow-camera-left={-150}
-        shadow-camera-right={150}
-        shadow-camera-top={150}
-        shadow-camera-bottom={-150}
-        shadow-bias={-0.0005}
-        shadow-normalBias={0.02}
+        shadow-camera-far={400}
+        shadow-camera-left={-200}
+        shadow-camera-right={200}
+        shadow-camera-top={200}
+        shadow-camera-bottom={-200}
+        shadow-bias={-0.001}
+        shadow-normalBias={0.05}
+        shadow-radius={4}
       />
       
-      {/* Secondary fill light - soften shadows */}
+      {/* Secondary fill light */}
       <directionalLight
         position={[-30, 40, -20]}
-        intensity={0.5}
+        intensity={0.4}
         color="#e6f3ff"
         castShadow={false}
       />
       
-      {/* Warehouse ceiling lights - array of point lights */}
+      {/* Warehouse ceiling lights - strategic placement */}
       {Array.from({ length: 6 }, (_, i) => {
-        const x = (i % 3) * 40 - 40
-        const z = Math.floor(i / 3) * 60 - 30
+        const positions = [
+          [35, 11.5, 80],   // Room 6 area
+          [105, 11.5, 80],  // Room 6 area
+          [35, 11.5, 140],  // Room 4 area
+          [105, 11.5, 140], // Room 4 area
+          [35, 11.5, 200],  // Room 2 area
+          [105, 11.5, 200]  // Room 2 area
+        ]
+        const [x, y, z] = positions[i]
         return (
           <pointLight
             key={`ceiling-light-${i}`}
-            position={[x, 11, z]}
+            position={[x, y, z]}
             intensity={0.8}
             color="#fff5e6"
-            distance={40}
+            distance={60}
             decay={2}
-            castShadow={enableShadows && i < 2} // Only first 2 cast shadows for performance
+            castShadow={enableShadows && i < 2} // Only first 2 cast shadows
             shadow-mapSize={[1024, 1024]}
+            shadow-bias={-0.001}
           />
         )
       })}
       
-      {/* Accent lighting for IBC Totes and equipment */}
+      {/* Key spotlight for corner definition */}
       <spotLight
-        position={[70, 15, 60]}
-        target-position={[70, 0, 60]}
-        angle={Math.PI / 6}
-        penumbra={0.5}
-        intensity={0.6}
+        position={[70, 15, 140]}
+        target-position={[70, 0, 140]}
+        angle={Math.PI / 4}
+        penumbra={0.3}
+        intensity={0.8}
         color="#ffffff"
         castShadow={enableShadows}
         shadow-mapSize={[2048, 2048]}
+        shadow-bias={-0.001}
       />
       
-      {/* Rim lighting for better depth perception */}
+      {/* Corner enhancement lights - minimal but effective */}
       <directionalLight
-        position={[0, 30, -80]}
+        position={[20, 10, 140]} // West side for corner shadows
+        target-position={[70, 0, 140]}
         intensity={0.3}
-        color="#cce7ff"
+        color="#f8f8ff"
+        castShadow={enableShadows}
+        shadow-mapSize={[1024, 1024]}
+        shadow-camera-near={1}
+        shadow-camera-far={80}
+        shadow-camera-left={-40}
+        shadow-camera-right={40}
+        shadow-camera-top={15}
+        shadow-camera-bottom={-15}
+        shadow-bias={-0.001}
       />
       
-      {/* Ground reflection light - simulate light bouncing off floor */}
+      <directionalLight
+        position={[120, 10, 140]} // East side for corner shadows
+        target-position={[70, 0, 140]}
+        intensity={0.3}
+        color="#f8f8ff"
+        castShadow={enableShadows}
+        shadow-mapSize={[1024, 1024]}
+        shadow-camera-near={1}
+        shadow-camera-far={80}
+        shadow-camera-left={-40}
+        shadow-camera-right={40}
+        shadow-camera-top={15}
+        shadow-camera-bottom={-15}
+        shadow-bias={-0.001}
+      />
+      
+      {/* Rim lighting for depth */}
+      <directionalLight
+        position={[0, 25, -60]}
+        intensity={0.25}
+        color="#cce7ff"
+        castShadow={false}
+      />
+      
+      {/* Ground reflection simulation */}
       <hemisphereLight
         color="#ffffff"
         groundColor="#8b7355"
-        intensity={0.3}
+        intensity={0.25}
         position={[0, -1, 0]}
       />
       
-      {/* Environment map for reflections (using a simple gradient for now) */}
+      {/* Environment map for reflections */}
       <EnvironmentMap />
     </>
   )

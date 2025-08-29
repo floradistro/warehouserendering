@@ -230,7 +230,7 @@ export const useAppStore = create<AppState>()(
       lockedTarget: null,
       
       // Layer visibility initial state
-      hiddenLayers: new Set<string>(),
+      hiddenLayers: new Set<string>(['roof-panels']),
       layerGroups: {},
       
       // Model management state
@@ -304,7 +304,7 @@ export const useAppStore = create<AppState>()(
       
       selectObjectForMeasurement: (objectId: string) => {
         const { selectedObjectsForMeasurement, currentFloorplan } = get()
-        console.log('📏 selectObjectForMeasurement called:', { objectId, current: selectedObjectsForMeasurement })
+
         
         if (!currentFloorplan) return
         
@@ -315,7 +315,7 @@ export const useAppStore = create<AppState>()(
         if (selectedObjectsForMeasurement[0] === null) {
           // First object selection
           set({ selectedObjectsForMeasurement: [objectId, null], measurementDistance: null })
-          console.log('✅ First object selected for measurement:', objectId)
+
         } else if (selectedObjectsForMeasurement[1] === null && selectedObjectsForMeasurement[0] !== objectId) {
           // Second object selection - calculate distance
           const firstElement = currentFloorplan.elements.find(el => el.id === selectedObjectsForMeasurement[0])
@@ -414,12 +414,12 @@ export const useAppStore = create<AppState>()(
               selectedObjectsForMeasurement: [selectedObjectsForMeasurement[0], objectId],
               measurementDistance: distance
             })
-            console.log('✅ Second object selected, distance calculated:', { distance: distance.toFixed(2) + 'ft' })
+
           }
         } else {
           // Reset and start over with new first object
           set({ selectedObjectsForMeasurement: [objectId, null], measurementDistance: null })
-          console.log('🔄 Reset - new first object selected:', objectId)
+
         }
       },
       
@@ -511,7 +511,7 @@ export const useAppStore = create<AppState>()(
             }
             
             set({ measurementDistance: distance })
-            console.log(`📐 Measurement type changed to ${type}, new distance: ${distance.toFixed(2)}ft`)
+
           }
         }
       },
@@ -522,11 +522,8 @@ export const useAppStore = create<AppState>()(
 
       // Model management actions
       loadCurrentModel: () => {
-        console.log('Store: Loading current model')
         const result = modelManager.getCurrentModel()
-        console.log('Store: Load current model result', result)
         if (result.success && result.data) {
-          console.log('Store: Setting current floorplan with', result.data.elements.length, 'elements')
           set({ 
             currentFloorplan: result.data,
             lastError: null 
@@ -534,7 +531,6 @@ export const useAppStore = create<AppState>()(
           get().refreshModelList()
           get().refreshUndoRedoStatus()
         } else {
-          console.error('Store: Failed to load model', result.error)
           set({ lastError: result.error || 'Failed to load model' })
         }
       },
@@ -584,16 +580,12 @@ export const useAppStore = create<AppState>()(
 
       // Element management actions
       addElement: (element) => {
-        console.log('Store: Adding element', element)
         const result = modelManager.addElement(element)
-        console.log('Store: Add element result', result)
         if (result.success) {
-          console.log('Store: Element added successfully, refreshing model')
           get().loadCurrentModel()
           get().refreshUndoRedoStatus()
           set({ lastError: null })
         } else {
-          console.error('Store: Failed to add element', result.error)
           set({ lastError: result.error || 'Failed to add element' })
         }
       },
@@ -1449,6 +1441,12 @@ export const useAppStore = create<AppState>()(
             layerGroups['support-trusses'].push(element.id)
           }
           
+          // Group TJI Beams
+          if (element.material === 'tji_beam' && element.metadata?.equipment_type === 'tji_ijoist') {
+            if (!layerGroups['tji-beams']) layerGroups['tji-beams'] = []
+            layerGroups['tji-beams'].push(element.id)
+          }
+          
           // Group Room Walls
           if (element.metadata?.category === 'room-walls') {
             if (!layerGroups['room-walls']) layerGroups['room-walls'] = []
@@ -1493,7 +1491,7 @@ export const useAppStore = create<AppState>()(
       },
     }),
     {
-      name: 'warehouse-cad-storage',
+      name: 'warehouse-storage', // This is the actual storage key being used
       partialize: (state) => ({
         viewMode: state.viewMode,
         showMeasurements: state.showMeasurements,

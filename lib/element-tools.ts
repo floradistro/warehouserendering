@@ -84,6 +84,32 @@ export const ELEMENT_TEMPLATES: Record<string, ElementTemplate> = {
     }
   },
 
+  // === SAFETY RAILINGS ===
+  METAL_HANDRAIL: {
+    id: 'metal-handrail',
+    name: 'Metal Handrail System',
+    description: 'OSHA compliant metal handrail with posts, top rail, mid rail, and toe kick',
+    type: 'fixture',
+    defaultDimensions: { width: 10, height: 0.1, depth: 3.5 },
+    defaultColor: '#708090',
+    material: 'metal',
+    category: 'safety',
+    metadata: {
+      category: 'safety_railing',
+      material_type: 'galvanized_steel',
+      osha_compliant: true,
+      height_inches: 42,
+      mid_rail_height: 21,
+      toe_kick_height: 4,
+      post_spacing: 60, // 5 feet maximum
+      rail_diameter: 1.5,
+      post_diameter: 2,
+      has_toe_kick: true,
+      has_mid_rail: true,
+      compliance_standard: 'OSHA_1910.29'
+    }
+  },
+
   // === STRUCTURAL ELEMENTS ===
   STEEL_BEAM: {
     id: 'steel-beam',

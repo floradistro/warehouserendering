@@ -3,7 +3,7 @@
 import React from 'react'
 import { Canvas, useLoader, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Html } from '@react-three/drei'
-import { Suspense, useMemo, useRef, useEffect } from 'react'
+import { Suspense, useMemo, useRef, useEffect, useCallback, memo } from 'react'
 import * as THREE from 'three'
 import { FloorplanData, FloorplanElement, useAppStore } from '@/lib/store'
 import { IntelligentWallSystem } from '@/lib/intelligent-wall-system'
@@ -11,6 +11,8 @@ import { MAIN_WAREHOUSE_MODEL } from '@/lib/warehouse-models'
 import { createDetailedIBCTote, createSimpleIBCTote } from '@/lib/ibc-tote-model'
 import { createDetailedSpiralFeederTank, createSimpleSpiralFeederTank } from '@/lib/spiral-feeder-tank-model'
 import { createDetailedNorwescoTank, createSimpleNorwescoTank } from '@/lib/norwesco-tank-model'
+import { createDetailedEatonPanel, createSimpleElectricalPanel, createDetailed200APanel } from '@/lib/electrical-panel-model'
+import { createWarehouseTJIJoist, createIJoist_11_7_8 } from '@/lib/tji-beam-model'
 import { createFramedWallGroup, shouldShowFraming, shouldShowDrywall, updateFramingLOD, updateDrywallLOD, STANDARD_FRAMING_CONFIG, STANDARD_DRYWALL_CONFIG } from '@/lib/wall-framing-system'
 import FirstPersonControls from './FirstPersonControls'
 import SnapIndicators from './SnapIndicators'
@@ -57,7 +59,7 @@ function WASDOrbitControls({ target, ...props }: any) {
       startTarget.current.copy(controls.target)
       endTarget.current.set(target[0], target[1], target[2])
       
-      console.log('📷 Starting smooth focus transition to target:', target)
+
       
       // Start animation
       isAnimating.current = true
@@ -71,7 +73,7 @@ function WASDOrbitControls({ target, ...props }: any) {
     const controls = orbitRef.current
     const camera = state.camera
     
-    // Handle smooth target focus animation
+    // Handle smooth target focus animation with frame rate limiting
     if (isAnimating.current) {
       const elapsed = Date.now() - animationStart.current
       const duration = 800 // 0.8 second animation - much faster and smoother
@@ -90,7 +92,6 @@ function WASDOrbitControls({ target, ...props }: any) {
       // End animation
       if (progress >= 1) {
         isAnimating.current = false
-        console.log('📷 Focus animation complete')
       }
       
       // Allow WASD movement during focus animation (don't return early)
@@ -229,7 +230,7 @@ interface FloorplanElementProps {
   isDragging: boolean
 }
 
-function FloorplanElementMesh({ 
+const FloorplanElementMesh = memo(({ 
   element, 
   isSelected, 
   onSelect, 
@@ -245,7 +246,7 @@ function FloorplanElementMesh({
   showFraming = false,
   showDrywall = false,
   lockedTarget
-}: FloorplanElementProps & { showFraming?: boolean, showDrywall?: boolean, lockedTarget: string | null }) {
+}: FloorplanElementProps & { showFraming?: boolean, showDrywall?: boolean, lockedTarget: string | null }) => {
   // Load brick texture for walls
   const brickTexture = useLoader(THREE.TextureLoader, '/textures/materials/concrete/Brick/bricktexture.jpg')
   
@@ -254,19 +255,16 @@ function FloorplanElementMesh({
 
   const isPreview = element.metadata?.isPreview === true
 
-  const { geometry, material, framedWallGroup } = useMemo(() => {
+  const { geometry, material, framedWallGroup, iBeamGroup, tjiBeamGroup, railingGroup } = useMemo(() => {
     const { width, height, depth = 8 } = element.dimensions
     
     // Show structural framing for selected walls (structural skeleton as selection indicator)
     if (element.type === 'wall' && lockedTarget === element.id) {
-      console.log(`🏗️ Showing structural skeleton for selected wall ${element.id}`)
       const wallPosition = new THREE.Vector3(
         element.position.x + width / 2,
         element.position.z || 0,
         element.position.y + height / 2
       )
-      
-      console.log(`📐 Displaying structural framework for selected element ${element.id}`)
       
       const framingConfig = { 
         ...STANDARD_FRAMING_CONFIG, 
@@ -303,12 +301,14 @@ function FloorplanElementMesh({
           }
         }
       })
-      console.log(`✅ Structural skeleton with bright pink outline displayed for selected wall ${element.id}`)
+
       
       return {
         geometry: null,
         material: null,
-        framedWallGroup: framedWall
+        framedWallGroup: framedWall,
+        iBeamGroup: null,
+        tjiBeamGroup: null
       }
     }
     
@@ -328,15 +328,7 @@ function FloorplanElementMesh({
                                            element.metadata?.category === 'interior' ||
                                            (!element.metadata?.material_type && !isExteriorWall))
       
-      // Debug log for drywall processing
-      if (showDrywall) {
-        console.log(`🏠 Processing wall ${element.id}:`)
-        console.log(`  - isExteriorWall: ${isExteriorWall}`)
-        console.log(`  - material: ${element.material}`)
-        console.log(`  - material_type: ${element.metadata?.material_type}`)
-        console.log(`  - category: ${element.metadata?.category}`)
-        console.log(`  - shouldShowDrywallOnThisWall: ${shouldShowDrywallOnThisWall}`)
-      }
+
       
       const framingConfig = { 
         ...STANDARD_FRAMING_CONFIG, 
@@ -355,13 +347,15 @@ function FloorplanElementMesh({
       return {
         geometry: null,
         material: null,
-        framedWallGroup: framedWall
+        framedWallGroup: framedWall,
+        iBeamGroup: null,
+        tjiBeamGroup: null
       }
     }
     
     // Show structural skeleton for selected steel I-beams
     if (element.material === 'steel' && element.type === 'fixture' && lockedTarget === element.id) {
-      console.log(`🏗️ Showing steel beam structural skeleton with bright pink outline for ${element.id}`)
+
       
       // Create enhanced I-beam with visible structural details
       const iBeamGroup = new THREE.Group()
@@ -439,13 +433,15 @@ function FloorplanElementMesh({
       return {
         geometry: null,
         material: null,
-        framedWallGroup: iBeamGroup
+        framedWallGroup: null,
+        iBeamGroup: iBeamGroup,
+        tjiBeamGroup: null
       }
     }
     
     // Show structural skeleton for selected tanks and totes (wireframe structural view)
     if ((element.id.includes('ibc-tote') || element.id.includes('tank')) && lockedTarget === element.id) {
-      console.log(`🏗️ Showing structural skeleton with bright pink outline for selected tank/tote ${element.id}`)
+
       
       const containerGroup = new THREE.Group()
       const { width: containerWidth, height: containerHeight, depth: containerDepth = containerWidth } = element.dimensions
@@ -543,7 +539,9 @@ function FloorplanElementMesh({
       return {
         geometry: null,
         material: null,
-        framedWallGroup: containerGroup
+        framedWallGroup: containerGroup,
+        iBeamGroup: null,
+        tjiBeamGroup: null
       }
     }
     
@@ -622,8 +620,106 @@ function FloorplanElementMesh({
       return {
         geometry: null, // We'll use the group instead
         material: null,
+        framedWallGroup: null,
         iBeamGroup,
-        framedWallGroup: null
+        tjiBeamGroup: null
+      }
+    }
+    
+    // Handle TJI I-Joist beams with detailed geometry
+    if (element.material === 'tji_beam' && element.metadata?.equipment_type === 'tji_ijoist') {
+      const { width, height, depth } = element.dimensions
+      
+      // Debug logging
+      console.log(`Creating TJI beam ${element.id}:`)
+      console.log(`  Dimensions: width=${width}, height=${height}, depth=${depth}`)
+      console.log(`  Position: x=${element.position.x}, y=${element.position.y}, z=${element.position.z}`)
+      
+      // Create detailed TJI beam geometry directly in warehouse coordinates
+      const tjiBeamGroup = new THREE.Group()
+      
+      // In warehouse model:
+      // width = 0.125' (1.5" beam width)
+      // height = 149.375' (beam length running north-south)
+      // depth = 0.99' (11.875" beam depth)
+      
+      // Match the standard geometry pattern: BoxGeometry(width, depth, height)
+      // In warehouse coords: width=X, depth=Y (vertical), height=Z
+      // For TJI beams: width=0.125', height=149.375' (length), depth=0.99' (vertical)
+      // So we need: BoxGeometry(width, depth, height) = (0.125, 0.99, 149.375)
+      
+      // Materials - Much darker colors for better visibility
+      const osbMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x4A3C28, // Dark brown OSB color (much darker)
+        roughness: 0.8,
+        metalness: 0.0
+      })
+      
+      const lumberMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x6B5D54, // Dark lumber color (darker brown-gray)
+        roughness: 0.9,
+        metalness: 0.0
+      })
+      
+      // Flange dimensions
+      const flangeThickness = depth * 0.127 // About 1.5" thick flanges
+      const webThickness = width * 0.25     // 3/8" web thickness
+      
+      // Create OSB web (vertical thin plate in center of beam)
+      // Using same pattern as standard geometry: (width, depth, height)
+      const webGeometry = new THREE.BoxGeometry(
+        webThickness,                // width: Very thin (3/8")
+        depth - 2 * flangeThickness, // depth: Beam depth minus flanges
+        height                       // height: Full beam length (north-south)
+      )
+      const web = new THREE.Mesh(webGeometry, osbMaterial)
+      web.name = 'OSB_Web'
+      web.castShadow = true
+      web.receiveShadow = true
+      tjiBeamGroup.add(web)
+      
+      // Create top flange (lumber) - horizontal piece at top
+      const topFlangeGeometry = new THREE.BoxGeometry(
+        width,            // width: Full beam width (1.5")
+        flangeThickness,  // depth: Flange thickness
+        height           // height: Full beam length
+      )
+      const topFlange = new THREE.Mesh(topFlangeGeometry, lumberMaterial)
+      topFlange.position.y = (depth - flangeThickness) / 2  // Position at top (Y is vertical in Three.js)
+      topFlange.name = 'Top_Flange'
+      topFlange.castShadow = true
+      topFlange.receiveShadow = true
+      tjiBeamGroup.add(topFlange)
+      
+      // Create bottom flange (lumber) - horizontal piece at bottom
+      const bottomFlangeGeometry = new THREE.BoxGeometry(
+        width,            // width: Full beam width (1.5")
+        flangeThickness,  // depth: Flange thickness
+        height           // height: Full beam length
+      )
+      const bottomFlange = new THREE.Mesh(bottomFlangeGeometry, lumberMaterial)
+      bottomFlange.position.y = -(depth - flangeThickness) / 2  // Position at bottom
+      bottomFlange.name = 'Bottom_Flange'
+      bottomFlange.castShadow = true
+      bottomFlange.receiveShadow = true
+      tjiBeamGroup.add(bottomFlange)
+      
+      // Set group name and metadata
+      tjiBeamGroup.name = 'TJI_Beam_Warehouse'
+      tjiBeamGroup.userData = {
+        type: 'TJI_I_Joist',
+        material: 'OSB_Web_with_Lumber_Flanges',
+        dimensions: { width, height, depth }
+      }
+      
+      console.log(`  Created TJI beam group with ${tjiBeamGroup.children.length} components`)
+      
+      return {
+        geometry: null, // We'll use the group instead
+        material: null,
+        framedWallGroup: null,
+        iBeamGroup: null,
+        tjiBeamGroup
       }
     }
     
@@ -671,6 +767,15 @@ function FloorplanElementMesh({
         transparent: isPreview,
         opacity: isPreview ? 0.6 : 1,
       })
+    } else if (element.material === 'tji_beam') {
+      // TJI beam material - OSB brown color for engineered lumber
+      standardMaterial = new THREE.MeshStandardMaterial({
+        color: isPreview ? new THREE.Color('#4ade80') : new THREE.Color(element.color || '#D2B48C'),
+        roughness: 0.8,
+        metalness: 0.0,
+        transparent: isPreview,
+        opacity: isPreview ? 0.6 : 1,
+      })
     } else {
       // Default material with fallback color
       const defaultColor = '#95A5A6' // Light gray fallback
@@ -685,17 +790,100 @@ function FloorplanElementMesh({
         metalness: 0.1,
       })
     }
+
+    // Create detailed railing geometry for safety railings
+    if (element.type === 'railing' || (element.metadata?.category === 'safety_railing' && element.metadata?.detailed_rendering)) {
+      const railingGroup = new THREE.Group()
+      const { width, height, depth } = element.dimensions
+      
+      // Materials
+      const steelMaterial = new THREE.MeshLambertMaterial({ color: 0x708090 })
+      const galvanizedMaterial = new THREE.MeshLambertMaterial({ color: 0x8A9BA8 })
+      
+      // Railing specifications from metadata
+      const postSpacing = (element.metadata?.post_spacing || 60) / 12 // Convert inches to feet
+      const railDiameter = (element.metadata?.rail_diameter || 1.5) / 12 // Convert to feet
+      const postDiameter = (element.metadata?.post_diameter || 2) / 12 // Convert to feet
+      const topHeight = depth // 42" = 3.5'
+      const midHeight = (element.metadata?.mid_rail_height || 21) / 12 // 21" = 1.75'
+      const toeHeight = (element.metadata?.toe_kick_height || 4) / 12 // 4" = 0.33'
+      
+      // Number of posts along the railing
+      const numPosts = Math.ceil(height / postSpacing) + 1
+      
+      // Create posts
+      for (let i = 0; i < numPosts; i++) {
+        const postGeometry = new THREE.CylinderGeometry(postDiameter/2, postDiameter/2, topHeight, 8)
+        const post = new THREE.Mesh(postGeometry, galvanizedMaterial)
+        post.position.set(0, topHeight/2, (i * postSpacing) - (height/2))
+        post.castShadow = true
+        railingGroup.add(post)
+        
+        // Base plate
+        const plateGeometry = new THREE.BoxGeometry(0.5, 0.04, 0.5) // 6"x6"x0.5"
+        const plate = new THREE.Mesh(plateGeometry, galvanizedMaterial)
+        plate.position.set(0, -0.02, (i * postSpacing) - (height/2))
+        plate.castShadow = true
+        railingGroup.add(plate)
+      }
+      
+      // Top rail (running north-south along the catwalk)
+      const topRailGeometry = new THREE.CylinderGeometry(railDiameter/2, railDiameter/2, height, 8)
+      const topRail = new THREE.Mesh(topRailGeometry, steelMaterial)
+      topRail.rotation.x = Math.PI / 2
+      topRail.position.set(0, topHeight, 0)
+      topRail.castShadow = true
+      railingGroup.add(topRail)
+      
+      // Mid rail
+      const midRailGeometry = new THREE.CylinderGeometry(railDiameter/2, railDiameter/2, height, 8)
+      const midRail = new THREE.Mesh(midRailGeometry, steelMaterial)
+      midRail.rotation.x = Math.PI / 2
+      midRail.position.set(0, midHeight, 0)
+      midRail.castShadow = true
+      railingGroup.add(midRail)
+      
+      // Toe kick
+      const toeGeometry = new THREE.BoxGeometry(0.02, toeHeight, height) // 1/4" thick
+      const toeKick = new THREE.Mesh(toeGeometry, steelMaterial)
+      toeKick.position.set(0, toeHeight/2, 0)
+      toeKick.castShadow = true
+      railingGroup.add(toeKick)
+      
+      return {
+        geometry: null,
+        material: null,
+        framedWallGroup: null,
+        iBeamGroup: null,
+        tjiBeamGroup: null,
+        railingGroup
+      }
+    }
     
     return {
       geometry: standardGeometry,
       material: standardMaterial,
+      framedWallGroup: null,
       iBeamGroup: null,
-      framedWallGroup: null
+      tjiBeamGroup: null,
+      railingGroup: null
     }
   }, [element, brickTexture, lockedTarget, camera.position.x, camera.position.y, camera.position.z])
 
   const position = useMemo(() => {
     const { x, y, z = 0 } = element.position
+    
+    // Special positioning for detailed railings
+    if (element.type === 'railing' || element.metadata?.category === 'safety_railing') {
+      // Railings positioned at their start point, extending upward
+      return [x, z + element.dimensions.depth / 2, y + element.dimensions.height / 2] as [number, number, number]
+    }
+    
+    // Special positioning for catwalks and elevated platforms
+    if (element.type === 'platform' || element.metadata?.category === 'catwalk') {
+      // Platforms and catwalks should be positioned at their specified z elevation
+      return [x + element.dimensions.width / 2, z, y + element.dimensions.height / 2] as [number, number, number]
+    }
     
     // Special positioning for roof panels (they sit on top of trusses)
     if (element.metadata?.category === 'roof') {
@@ -719,6 +907,13 @@ function FloorplanElementMesh({
       // Longitudinal trusses run along the walls at 12' height, flat (no curve)
       // They connect all the cross trusses at their ends
       return [x, 12, y + element.dimensions.height / 2] as [number, number, number] // Centered along length
+    }
+    
+    // Special positioning for TJI beams (horizontal structural beams)
+    if (element.material === 'tji_beam' && element.metadata?.equipment_type === 'tji_ijoist') {
+      // TJI beams are positioned at their start point, need to center them
+      // Position: [x-position, z-height+depth/2, y-start+length/2] in Three.js coordinates
+      return [x, z + element.dimensions.depth / 2, y + element.dimensions.height / 2] as [number, number, number]
     }
     
     // Special positioning for I-beams (they're vertical columns from ground up)
@@ -747,6 +942,8 @@ function FloorplanElementMesh({
       // Center the ceiling horizontally and depth-wise
       return [x + element.dimensions.width / 2, z, y + element.dimensions.height / 2] as [number, number, number]
     }
+    
+
     
     // Standard positioning for other elements (walls, etc.)
     const { depth = 8 } = element.dimensions
@@ -908,6 +1105,8 @@ function FloorplanElementMesh({
       </group>
     )
   }
+
+
 
   // Handle steel fixtures (I-beams and support trusses) rendering differently
   if (element.material === 'steel' && element.type === 'fixture') {
@@ -1252,6 +1451,130 @@ function FloorplanElementMesh({
     )
   }
 
+  // Handle Electrical Panel rendering
+  if (element.material === 'electrical_panel' || 
+      (element.metadata?.equipment_type === 'electrical_panel')) {
+    
+    const electricalPanelModel = useMemo(() => {
+      // Use detailed model for 3D view, simple for 2D
+      const is2D = false // viewMode not available in this component yet
+      
+      if (is2D) {
+        return createSimpleElectricalPanel()
+      } else {
+        return createDetailedEatonPanel({
+          circuitBreakers: element.metadata?.circuit_breakers || 42,
+          busType: element.metadata?.bus_type || 'copper',
+          finish: element.metadata?.finish || 'gray',
+          enclosureType: element.metadata?.enclosure_type || 'surface'
+        })
+      }
+    }, [element.metadata])
+    
+    return (
+      <group 
+        position={[
+          element.position.x + element.dimensions.width / 2, // Center of panel
+          element.position.z || 0, // Use z position for elevation if provided  
+          element.position.y + element.dimensions.depth / 2 // Center depth-wise (panel faces into room)
+        ]}
+        rotation={[0, (element.rotation || 0) * Math.PI / 180, 0]}
+
+        onDoubleClick={handleDoubleClick}
+        onPointerDown={handlePointerDown}
+        onPointerOver={(e: any) => {
+          e.stopPropagation()
+          if (isEditing || selectedElements.includes(element.id)) {
+            document.body.style.cursor = 'move'
+          } else {
+            document.body.style.cursor = 'pointer'
+          }
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = 'auto'
+        }}
+      >
+        <primitive object={electricalPanelModel} />
+        
+        {(isSelected || isSelectedForMeasurement) && (
+          <mesh position={[0, 3.5, 0]}> {/* Center at half height (7'/2) */}
+            <boxGeometry args={[element.dimensions.width, element.dimensions.height, element.dimensions.depth]} />
+            <meshBasicMaterial
+              color={isSelected ? "#22c55e" : "#3b82f6"}
+              transparent
+              opacity={0.4}
+              depthTest={false}
+              wireframe
+            />
+          </mesh>
+        )}
+      </group>
+    )
+  }
+
+  // Handle 200A Electrical Panel rendering
+  if (element.material === 'electrical_panel_200a' || 
+      (element.metadata?.equipment_type === 'electrical_panel_200a')) {
+    
+    const electricalPanel200AModel = useMemo(() => {
+      // Use detailed model for 3D view, simple for 2D
+      const is2D = false // viewMode not available in this component yet
+      
+      if (is2D) {
+        return createSimpleElectricalPanel()
+      } else {
+        return createDetailed200APanel({
+          circuitBreakers: element.metadata?.circuit_breakers || 24,
+          busType: element.metadata?.bus_type || 'copper',
+          finish: element.metadata?.finish || 'gray',
+          enclosureType: element.metadata?.enclosure_type || 'surface'
+        })
+      }
+    }, [element.metadata])
+    
+    return (
+      <group 
+        position={[
+          element.position.x + element.dimensions.width / 2, // Center of panel
+          element.position.z || 0, // Use z position for elevation if provided  
+          element.position.y + element.dimensions.depth / 2 // Center depth-wise (panel faces into room)
+        ]}
+        rotation={[0, (element.rotation || 0) * Math.PI / 180, 0]}
+
+        onDoubleClick={handleDoubleClick}
+        onPointerDown={handlePointerDown}
+        onPointerOver={(e: any) => {
+          e.stopPropagation()
+          if (isEditing || selectedElements.includes(element.id)) {
+            document.body.style.cursor = 'move'
+          } else {
+            document.body.style.cursor = 'pointer'
+          }
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = 'auto'
+        }}
+      >
+        <primitive object={electricalPanel200AModel} />
+        
+        {(isSelected || isSelectedForMeasurement) && (
+          <mesh position={[0, 1.67, 0]}> {/* Center at half height (3.33'/2) */}
+            <boxGeometry args={[element.dimensions.width, element.dimensions.height, element.dimensions.depth]} />
+            <meshBasicMaterial
+              color={isSelected ? "#22c55e" : "#3b82f6"}
+              transparent
+              opacity={0.4}
+              depthTest={false}
+              wireframe
+            />
+          </mesh>
+        )}
+      </group>
+    )
+  }
+
+
+
   // Handle framed walls
   if (framedWallGroup) {
     return (
@@ -1277,6 +1600,126 @@ function FloorplanElementMesh({
         <primitive object={framedWallGroup} />
         
         {/* Dragging visual feedback for framed walls */}
+        {isDragging && selectedElements.includes(element.id) && (
+          <mesh
+            geometry={new THREE.BoxGeometry(element.dimensions.width, element.dimensions.depth || 8, element.dimensions.height || 1)}
+          >
+            <meshBasicMaterial
+              color="#4ade80" // Green for dragging
+              transparent
+              opacity={0.5}
+              depthTest={false}
+            />
+          </mesh>
+        )}
+      </group>
+    )
+  }
+
+  // Handle I-beam groups
+  if (iBeamGroup) {
+    return (
+      <group
+        position={position}
+        rotation={[0, element.rotation || 0, 0]}
+
+        onDoubleClick={handleDoubleClick}
+        onPointerDown={handlePointerDown}
+        onPointerOver={(e: any) => {
+          e.stopPropagation()
+          if (isEditing || selectedElements.includes(element.id)) {
+            document.body.style.cursor = 'move'
+          } else {
+            document.body.style.cursor = 'pointer'
+          }
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = 'auto'
+        }}
+      >
+        <primitive object={iBeamGroup} />
+        
+        {/* Dragging visual feedback for I-beams */}
+        {isDragging && selectedElements.includes(element.id) && (
+          <mesh
+            geometry={new THREE.BoxGeometry(element.dimensions.width, element.dimensions.depth || 8, element.dimensions.height || 1)}
+          >
+            <meshBasicMaterial
+              color="#4ade80" // Green for dragging
+              transparent
+              opacity={0.5}
+              depthTest={false}
+            />
+          </mesh>
+        )}
+      </group>
+    )
+  }
+
+  // Handle detailed railing groups
+  if (railingGroup) {
+    return (
+      <group
+        position={position}
+        rotation={[0, element.rotation || 0, 0]}
+
+        onDoubleClick={handleDoubleClick}
+        onPointerDown={handlePointerDown}
+        onPointerOver={(e: any) => {
+          e.stopPropagation()
+          if (isEditing || selectedElements.includes(element.id)) {
+            document.body.style.cursor = 'move'
+          } else {
+            document.body.style.cursor = 'pointer'
+          }
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = 'auto'
+        }}
+      >
+        <primitive object={railingGroup} />
+        
+        {/* Dragging visual feedback for railings */}
+        {isDragging && selectedElements.includes(element.id) && (
+          <mesh
+            geometry={new THREE.BoxGeometry(element.dimensions.width, element.dimensions.depth || 3.5, element.dimensions.height || 1)}
+          >
+            <meshBasicMaterial
+              color="#4ade80" // Green for dragging
+              transparent
+              opacity={0.3}
+              depthTest={false}
+            />
+          </mesh>
+        )}
+      </group>
+    )
+  }
+
+  // Handle TJI beam groups
+  if (tjiBeamGroup) {
+    return (
+      <group
+        position={position}
+        rotation={[0, element.rotation || 0, 0]}
+
+        onDoubleClick={handleDoubleClick}
+        onPointerDown={handlePointerDown}
+        onPointerOver={(e: any) => {
+          e.stopPropagation()
+          if (isEditing || selectedElements.includes(element.id)) {
+            document.body.style.cursor = 'move'
+          } else {
+            document.body.style.cursor = 'pointer'
+          }
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = 'auto'
+        }}
+      >
+        <primitive object={tjiBeamGroup} />
+        
+        {/* Dragging visual feedback for TJI beams */}
         {isDragging && selectedElements.includes(element.id) && (
           <mesh
             geometry={new THREE.BoxGeometry(element.dimensions.width, element.dimensions.depth || 8, element.dimensions.height || 1)}
@@ -1350,7 +1793,7 @@ function FloorplanElementMesh({
       {/* Removed individual element measurements to clean up view */}
     </group>
   )
-}
+})
 
 
 
@@ -1439,11 +1882,67 @@ function GroundPlane({ width, height }: { width: number; height: number }) {
     <mesh
       position={[width / 2, -0.1, height / 2]}
       rotation={[-Math.PI / 2, 0, 0]}
-      receiveShadow
+      receiveShadow={true}
+      castShadow={false}
       renderOrder={-1}
     >
       <planeGeometry args={[width + 20, height + 20]} />
       <primitive object={material} />
+    </mesh>
+  )
+}
+
+// Room-specific floor component for white epoxy flooring
+function RoomFloor({ 
+  position, 
+  width, 
+  height, 
+  material = 'white-epoxy' 
+}: { 
+  position: [number, number, number]; 
+  width: number; 
+  height: number;
+  material?: string;
+}) {
+  const floorMaterial = useMemo(() => {
+    if (material === 'white-epoxy') {
+      return new THREE.MeshStandardMaterial({
+        color: '#f8f9fa', // Clean white with slight warmth
+        roughness: 0.1, // Very smooth, reflective epoxy
+        metalness: 0.0,
+        transparent: false,
+        opacity: 1.0,
+      })
+    }
+    
+    if (material === 'black-gloss-epoxy') {
+      return new THREE.MeshStandardMaterial({
+        color: '#0a0a0a', // Deep black with slight warmth
+        roughness: 0.05, // Ultra-smooth, highly reflective gloss epoxy
+        metalness: 0.1, // Slight metallic sheen for glossiness
+        transparent: false,
+        opacity: 1.0,
+      })
+    }
+    
+    // Default concrete material
+    return new THREE.MeshStandardMaterial({
+      color: '#6b7280',
+      roughness: 0.8,
+      metalness: 0.1,
+    })
+  }, [material])
+  
+  return (
+    <mesh
+      position={position}
+      rotation={[-Math.PI / 2, 0, 0]}
+      receiveShadow={true}
+      castShadow={false}
+      renderOrder={0} // Above ground plane
+    >
+      <planeGeometry args={[width, height]} />
+      <primitive object={floorMaterial} />
     </mesh>
   )
 }
@@ -1735,14 +2234,14 @@ function SimpleMeasurementLine({
         (start[2] + end[2]) / 2
       ]}>
         <div 
-          className={`px-4 py-2 rounded-lg text-xl font-bold border-2 shadow-xl whitespace-nowrap pointer-events-none ${
-            measurementType === 'horizontal' ? 'bg-cyan-900 text-cyan-100 border-cyan-400' :
-            measurementType === 'vertical' ? 'bg-green-900 text-green-100 border-green-400' :
-            measurementType === 'height' ? 'bg-orange-900 text-orange-100 border-orange-400' :
-            'bg-gray-900 text-white border-white'
+          className={`px-2 py-1 rounded text-xs font-medium border whitespace-nowrap pointer-events-none select-none opacity-80 backdrop-blur-sm ${
+            measurementType === 'horizontal' ? 'bg-gray-800/80 text-cyan-400 border-cyan-600/50' :
+            measurementType === 'vertical' ? 'bg-gray-800/80 text-green-400 border-green-600/50' :
+            measurementType === 'height' ? 'bg-gray-800/80 text-orange-400 border-orange-600/50' :
+            'bg-gray-800/80 text-gray-400 border-gray-600/50'
           }`}
         >
-          📏 {label}: {distanceFormatted}
+          {label}: {distanceFormatted}
         </div>
       </Html>
       
@@ -2141,35 +2640,35 @@ function WallLabels3D({ floorplan }: { floorplan: FloorplanData }) {
   const centerX = leftWall.position.x + buildingWidth / 2
   const centerY = effectiveBottomWall.position.y + buildingHeight / 2
   
-  // Prominent directional labels positioned around the building
+  // Subtle directional labels positioned around the building - VS Code theme
   // Building is now rotated: 88' 7/8" wide (East-West) x 198' long (North-South)
   // NORTH is where the dry room is located
   return (
     <>
       {/* NORTH - On the long side (198' long) - top end (DRY ROOM SIDE) */}
       <Html position={[centerX, 5, topWall.position.y + 25]}>
-        <div className="text-white text-2xl font-bold pointer-events-none select-none opacity-90 drop-shadow-lg bg-gray-900 px-3 py-1 rounded">
+        <div className="text-gray-400 text-sm font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
           NORTH
         </div>
       </Html>
       
       {/* SOUTH - On the long side (198' long) - bottom end */}
       <Html position={[centerX, 5, effectiveBottomWall.position.y - 25]}>
-        <div className="text-white text-2xl font-bold pointer-events-none select-none opacity-90 drop-shadow-lg bg-gray-900 px-3 py-1 rounded">
+        <div className="text-gray-400 text-sm font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
           SOUTH
         </div>
       </Html>
       
       {/* EAST - On the short side (88' 7/8" wide) - right side */}
       <Html position={[rightWall.position.x + 25, 5, centerY]}>
-        <div className="text-white text-2xl font-bold pointer-events-none select-none opacity-90 drop-shadow-lg bg-gray-900 px-3 py-1 rounded">
+        <div className="text-gray-400 text-sm font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
           EAST
         </div>
       </Html>
       
       {/* WEST - On the short side (88' 7/8" wide) - left side */}
       <Html position={[leftWall.position.x - 25, 5, centerY]}>
-        <div className="text-white text-2xl font-bold pointer-events-none select-none opacity-90 drop-shadow-lg bg-gray-900 px-3 py-1 rounded">
+        <div className="text-gray-400 text-sm font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
           WEST
         </div>
       </Html>
@@ -2209,7 +2708,7 @@ function DimensionLabels({ floorplan }: { floorplan: FloorplanData }) {
     <>
       {/* Overall building dimensions - shows actual building size */}
       <Html position={[centerX, 15, centerY - 60]}>
-        <div className="bg-gray-800 text-gray-300 px-3 py-1 rounded text-sm font-medium border border-gray-700 shadow-md pointer-events-none whitespace-nowrap">
+        <div className="text-gray-400 text-xs font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm whitespace-nowrap">
           Building: 198' × 88' 7/8" (12' walls)
         </div>
       </Html>
@@ -2339,7 +2838,7 @@ function RoomLabels({ floorplan }: { floorplan: FloorplanData }) {
         const centerX = room.centerX || defaultRoomCenterX
         return (
           <Html key={`room-${room.roomNumber}-${index}`} position={[centerX, 8, room.centerY]}>
-            <div className="text-gray-300 text-2xl font-bold pointer-events-none select-none opacity-40 drop-shadow-lg">
+            <div className="text-gray-400 text-sm font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
               {room.roomNumber}
             </div>
           </Html>
@@ -2369,12 +2868,39 @@ function FirewallLabels({ floorplan }: { floorplan: FloorplanData }) {
         
         return (
           <Html key={`firewall-${firewall.id}`} position={[centerX, centerZ, centerY]}>
-            <div className="text-red-300 text-sm font-medium pointer-events-none select-none opacity-50 tracking-wider">
+            <div className="text-red-400 text-xs font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-red-600/50 backdrop-blur-sm tracking-wider">
               FIREWALL
             </div>
           </Html>
         )
       })}
+    </>
+  )
+}
+
+function AreaLabels({ floorplan }: { floorplan: FloorplanData }) {
+  // Define area labels for different zones in the warehouse
+  const areas = [
+    {
+      id: 'control-area',
+      name: 'Control Area',
+      // Northwest corner area - west of dry rooms, in front of IBC/water tanks
+      // From west wall (x=25) to dry rooms west edge (x=76.875), from Room 2 north wall (y=198) to north wall (y=222)
+      centerX: 50.9375, // Center between x=25 and x=76.875: (25 + 76.875) / 2 = 50.9375
+      centerY: 210, // Center between y=198 and y=222: (198 + 222) / 2 = 210
+      centerZ: 6 // Elevated for visibility
+    }
+  ]
+  
+  return (
+    <>
+      {areas.map((area) => (
+        <Html key={`area-${area.id}`} position={[area.centerX, area.centerZ, area.centerY]}>
+          <div className="text-blue-400 text-sm font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-3 py-1.5 rounded border border-blue-600/50 backdrop-blur-sm">
+            {area.name}
+          </div>
+        </Html>
+      ))}
     </>
   )
 }
@@ -2629,7 +3155,8 @@ function SteelTruss({ position, width, height, isCurved = true }: { position: [n
   )
 }
 
-// Metal Roof Panel Component - Creates curved metal roofing between trusses
+
+
 function RoofPanel({ 
   position, 
   width, 
@@ -2775,12 +3302,18 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
     selectElementGroup
   } = useAppStore()
 
-  // Initialize model on first render
+  // Initialize model on first render only
+  const [isInitialized, setIsInitialized] = React.useState(false)
+  
   React.useEffect(() => {
-    if (!currentFloorplan) {
+    if (!isInitialized) {
+      console.log('🔄 Loading current model...')
       loadCurrentModel()
+      setIsInitialized(true)
     }
-  }, [currentFloorplan, loadCurrentModel])
+  }, [isInitialized, loadCurrentModel])
+  
+
 
   // ESC key handling moved to main ThreeRenderer component
 
@@ -2793,6 +3326,9 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
     if (previewElement) {
       elements.push(previewElement)
     }
+    
+
+    
     return elements
   }, [floorplan.elements, previewElement])
 
@@ -2811,13 +3347,128 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
       {/* Enhanced Lighting System for Realistic Rendering */}
       <EnhancedLighting 
         enableShadows={true} 
-        quality="high" 
+        quality="ultra" 
       />
 
       {/* Ground plane with concrete texture */}
       <GroundPlane 
         width={floorplan.dimensions.width} 
         height={floorplan.dimensions.height} 
+      />
+
+      {/* White epoxy floors for rooms 2-6 */}
+      {/* Room 2: y = 173.4792 to y = 198.0417 */}
+      <RoomFloor
+        position={[70.21875, -0.05, 185.76045]} // Center between longways walls, slightly above ground
+        width={80.3125} // Room interior width between longways walls
+        height={24.5625} // Room 2 height: 198.0417 - 173.4792
+        material="white-epoxy"
+      />
+      
+      {/* Room 3: y = 148.9167 to y = 173.4792 */}
+      <RoomFloor
+        position={[70.21875, -0.05, 161.19795]} // Center position
+        width={80.3125}
+        height={24.5625} // Room 3 height: 173.4792 - 148.9167
+        material="white-epoxy"
+      />
+      
+      {/* Room 4: y = 124.3542 to y = 148.9167 */}
+      <RoomFloor
+        position={[70.21875, -0.05, 136.63545]} // Center position
+        width={80.3125}
+        height={24.5625} // Room 4 height: 148.9167 - 124.3542
+        material="white-epoxy"
+      />
+      
+      {/* Room 5: y = 99.7917 to y = 124.3542 */}
+      <RoomFloor
+        position={[70.21875, -0.05, 112.07295]} // Center position
+        width={80.3125}
+        height={24.5625} // Room 5 height: 124.3542 - 99.7917
+        material="white-epoxy"
+      />
+      
+      {/* Room 6: y = 75.2292 to y = 99.7917 */}
+      <RoomFloor
+        position={[70.21875, -0.05, 87.51045]} // Center position
+        width={80.3125}
+        height={24.5625} // Room 6 height: 99.7917 - 75.2292
+        material="white-epoxy"
+      />
+      
+      {/* Room 7: y = 48.6667 to y = 75.2292 */}
+      <RoomFloor
+        position={[70.21875, -0.05, 61.94795]} // Center position
+        width={80.3125}
+        height={26.5625} // Room 7 height: 75.2292 - 48.6667
+        material="white-epoxy"
+      />
+      
+      {/* Room 8: y = 25 to y = 48.6667 */}
+      <RoomFloor
+        position={[70.21875, -0.05, 36.83335]} // Center position
+        width={80.3125}
+        height={23.6667} // Room 8 height: 48.6667 - 25
+        material="white-epoxy"
+      />
+
+      {/* Black gloss epoxy floors for hallways and control area */}
+      
+      {/* West Longway Hallway: x = 25 to x = 30.0625, y = 48.6667 to y = 198.0417 */}
+      <RoomFloor
+        position={[27.53125, -0.05, 123.35415]} // Center position: x=(25+30.0625)/2=27.53125, y=(48.6667+198.0417)/2=123.35415
+        width={5.0625} // 5' hallway width
+        height={149.3542} // From Room 8 north wall to Room 2 north wall
+        material="black-gloss-epoxy"
+      />
+      
+      {/* East Longway Hallway: x = 110.375 to x = 112.75, y = 48.6667 to y = 198.0417 */}
+      <RoomFloor
+        position={[111.5625, -0.05, 123.35415]} // Center position: x=(110.375+112.75)/2=111.5625, y=(48.6667+198.0417)/2=123.35415
+        width={2.375} // 3' hallway width
+        height={149.3542} // From Room 7 north wall to Room 2 north wall
+        material="black-gloss-epoxy"
+      />
+      
+      {/* South Cross Hallway: x = 30.0625 to x = 98.625, y = 25 to y = 29 */}
+      <RoomFloor
+        position={[64.34375, -0.05, 27]} // Center position: x=(30.0625+98.625)/2=64.34375, y=(25+29)/2=27
+        width={68.5625} // From west longway wall to end of south hallway wall
+        height={4} // 4' hallway width
+        material="black-gloss-epoxy"
+      />
+      
+      {/* Middle Cross Hallway: x = 81.875 to x = 110.375, y = 208.5209 to y = 211.5209 */}
+      <RoomFloor
+        position={[96.125, -0.05, 210.0209]} // Center position: x=(81.875+110.375)/2=96.125, y=(208.5209+211.5209)/2=210.0209
+        width={28.5} // Full dry room width
+        height={3} // 3' hallway width between dry rooms
+        material="black-gloss-epoxy"
+      />
+      
+      {/* Control Area: x = 25 to x = 76.875, y = 198.0417 to y = 222 */}
+      <RoomFloor
+        position={[50.9375, -0.05, 210.02085]} // Center position: x=(25+76.875)/2=50.9375, y=(198.0417+222)/2=210.02085
+        width={51.875} // From west wall to dry rooms west edge
+        height={23.9583} // From Room 2 north wall to north wall (222 - 198.0417 = 23.9583)
+        material="black-gloss-epoxy"
+      />
+      
+      {/* West End of South Hallway: x = 25 to x = 30.0625, y = 25 to y = 29 */}
+      <RoomFloor
+        position={[27.53125, -0.05, 27]} // Center position: x=(25+30.0625)/2=27.53125, y=(25+29)/2=27
+        width={5.0625} // From west wall to west longway wall
+        height={4} // 4' hallway width
+        material="black-gloss-epoxy"
+      />
+      
+      {/* West Side of Room 8 Area: x = 25 to x = 30.0625, y = 29 to y = 48.6667 */}
+      <RoomFloor
+        position={[27.53125, -0.05, 38.83335]} // Center position: x=(25+30.0625)/2=27.53125, y=(29+48.6667)/2=38.83335
+        width={5.0625} // From west wall to west longway wall
+        height={19.6667} // From end of south hallway to Room 8 north wall
+        material="black-gloss-epoxy"
       />
 
 
@@ -2843,6 +3494,14 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
           if (element.material === 'steel' && element.metadata?.truss_type === 'support_truss') {
             const visible = isLayerVisible('support-trusses')
             console.log(`🔍 Support truss ${element.id} visibility check: ${visible}`)
+            return visible
+          }
+          
+          // Check if TJI Beams should be shown (part of framing layer)
+          if (element.material === 'tji_beam' && element.metadata?.equipment_type === 'tji_ijoist') {
+            // TJI beams are part of the framing system
+            const visible = showFraming
+            console.log(`🔍 TJI beam ${element.id} visibility check (framing): ${visible}`)
             return visible
           }
           
@@ -2950,7 +3609,7 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
           <meshBasicMaterial color="#1f2937" transparent opacity={0.8} />
         </mesh>
         <Html position={[69.375, 8, 247]}>
-          <div className="text-white text-3xl font-bold pointer-events-none select-none">
+          <div className="text-gray-400 text-xs font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
             ↑ NORTH (DRY ROOM)
           </div>
         </Html>
@@ -2961,7 +3620,7 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
           <meshBasicMaterial color="#1f2937" transparent opacity={0.8} />
         </mesh>
         <Html position={[69.375, 8, 1]}>
-          <div className="text-white text-3xl font-bold pointer-events-none select-none">
+          <div className="text-gray-400 text-xs font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
             ↓ SOUTH
           </div>
         </Html>
@@ -2972,7 +3631,7 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
           <meshBasicMaterial color="#1f2937" transparent opacity={0.8} />
         </mesh>
         <Html position={[137.75, 8, 124]}>
-          <div className="text-white text-3xl font-bold pointer-events-none select-none">
+          <div className="text-gray-400 text-xs font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
             → EAST
           </div>
         </Html>
@@ -2983,7 +3642,7 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
           <meshBasicMaterial color="#1f2937" transparent opacity={0.8} />
         </mesh>
         <Html position={[1, 8, 124]}>
-          <div className="text-white text-3xl font-bold pointer-events-none select-none">
+          <div className="text-gray-400 text-xs font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
             ← WEST
           </div>
         </Html>
@@ -2992,8 +3651,8 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
       {/* Framing Status Indicator */}
       {showFraming && (
         <Html position={[25, 15, 25]}>
-          <div className="bg-amber-700 text-white px-3 py-1 rounded text-sm font-medium border border-amber-600 shadow-md pointer-events-none whitespace-nowrap">
-            🔨 2x4 FRAMING ON (Press F to toggle)
+          <div className="text-amber-400 text-xs font-medium pointer-events-none select-none opacity-70 bg-gray-800/80 px-2 py-1 rounded border border-amber-600/50 backdrop-blur-sm whitespace-nowrap">
+            🔨 FRAMING & TJI BEAMS ON (Press F to toggle)
           </div>
         </Html>
       )}
@@ -3001,7 +3660,7 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
       {/* Drywall Status Indicator */}
       {showDrywall && (
         <Html position={[25, 12, 25]}>
-          <div className="bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium border border-blue-600 shadow-md pointer-events-none whitespace-nowrap">
+          <div className="text-blue-400 text-xs font-medium pointer-events-none select-none opacity-70 bg-gray-800/80 px-2 py-1 rounded border border-blue-600/50 backdrop-blur-sm whitespace-nowrap">
             🏠 DRYWALL ON - Interior walls only (Press G to toggle)
           </div>
         </Html>
@@ -3012,6 +3671,9 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
       
       {/* Firewall labels */}
       <FirewallLabels floorplan={floorplan} />
+      
+      {/* Area labels */}
+      <AreaLabels floorplan={floorplan} />
 
       {/* Removed beam-to-beam measurements to clean up view */}
 
@@ -3935,19 +4597,24 @@ export default function ThreeRenderer() {
   }, [isPlacing, activeSnapPoint, finalizePlacement])
 
   return (
-    <div className="w-full h-full bg-gray-700">
+    <div className="w-full h-full bg-gray-700 relative">
       <Canvas
         camera={{
           position: [150, 100, 200], // View rotated building from Southeast corner
           fov: 60,
         }}
         shadows
-        className="bg-gray-700"
+        className="w-full h-full bg-gray-700"
+        style={{ width: '100%', height: '100%', display: 'block' }}
         gl={{ 
           antialias: true,
-          alpha: false 
+          alpha: false,
+          powerPreference: 'high-performance',
+          preserveDrawingBuffer: false
         }}
-        dpr={[1, 2]}
+        dpr={Math.min(window.devicePixelRatio, 2)}
+        frameloop="demand"
+        performance={{ min: 0.5 }}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onCreated={({ gl }) => {

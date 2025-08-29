@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useEffect, useRef } from 'react'
+import { Suspense, useState, useEffect, useRef, useCallback, memo } from 'react'
 import dynamic from 'next/dynamic'
 import { Ruler, X, Move3D, Square, Eye, EyeOff, User, Layers, ChevronDown } from 'lucide-react'
 import ClientOnly from '@/components/ClientOnly'
@@ -58,7 +58,7 @@ export default function Home() {
   }, [])
   
   return (
-    <div className="h-screen flex flex-col bg-gray-700">
+    <div className="h-full w-full flex flex-col bg-gray-700">
       {/* VSCode-style thin header */}
       <header className="flex-shrink-0 bg-[#2d2d2d] border-b border-[#3e3e3e] h-8 px-3">
         <div className="flex items-center justify-between h-full">
@@ -140,7 +140,6 @@ export default function Home() {
                   <div 
                     className="px-3 py-1.5 hover:bg-[#3c3c3c] flex items-center justify-between cursor-pointer"
                     onClick={() => {
-                      console.log('🔍 Toggling roof-panels layer via row click')
                       toggleLayerVisibility('roof-panels')
                     }}
                   >
@@ -161,7 +160,6 @@ export default function Home() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        console.log('🔍 Toggling roof-panels layer via button click')
                         toggleLayerVisibility('roof-panels')
                       }}
                       className="text-[10px] text-[#888] hover:text-[#ccc]"
@@ -175,7 +173,6 @@ export default function Home() {
                     <div 
                       className="px-3 py-1.5 hover:bg-[#3c3c3c] flex items-center justify-between cursor-pointer"
                       onClick={() => {
-                        console.log('🔍 Toggling steel-ibeams layer via row click')
                         toggleLayerVisibility('steel-ibeams')
                       }}
                     >
@@ -196,7 +193,6 @@ export default function Home() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          console.log('🔍 Toggling steel-ibeams layer')
                           toggleLayerVisibility('steel-ibeams')
                         }}
                         className="text-[10px] text-[#888] hover:text-[#cccccc]"
@@ -325,6 +321,32 @@ export default function Home() {
                         className="text-[10px] text-[#888] hover:text-[#cccccc]"
                       >
                         ({layerGroups['category-structural'].length})
+                      </button>
+                    </div>
+                  )}
+
+                  {/* TJI Beams Layer */}
+                  {layerGroups['tji-beams'] && layerGroups['tji-beams'].length > 0 && (
+                    <div className="px-3 py-1.5 hover:bg-[#3c3c3c] flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded border ${
+                          isLayerVisible('tji-beams') 
+                            ? 'bg-[#D2B48C] border-[#D2B48C]' 
+                            : 'border-[#666]'
+                        }`}>
+                          {isLayerVisible('tji-beams') && (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <div className="w-1.5 h-1.5 bg-white rounded-sm"></div>
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-[#cccccc]">TJI Beams</span>
+                      </div>
+                      <button
+                        onClick={() => toggleLayerVisibility('tji-beams')}
+                        className="text-[10px] text-[#888] hover:text-[#cccccc]"
+                      >
+                        ({layerGroups['tji-beams'].length})
                       </button>
                     </div>
                   )}
@@ -510,7 +532,7 @@ export default function Home() {
       <ModelToolbar />
 
       {/* 3D Viewport */}
-      <div className="flex-1">
+      <div className="flex-1 min-h-0 w-full">
         <ClientOnly
           fallback={
             <div className="w-full h-full flex items-center justify-center bg-gray-700">
