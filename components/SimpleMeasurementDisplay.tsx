@@ -120,7 +120,7 @@ export const SimpleMeasurementDisplay: React.FC<SimpleMeasurementDisplayProps> =
     })
     
     // Convert map to array
-    const snapPoints = Array.from(pointMap.values()).map(({ point, type, elementIds }) => ({
+    const newSnapPoints = Array.from(pointMap.values()).map(({ point, type, elementIds }) => ({
       point,
       type,
       elementId: elementIds.join(',') // Show which elements share this point
@@ -128,7 +128,7 @@ export const SimpleMeasurementDisplay: React.FC<SimpleMeasurementDisplayProps> =
     
 
     
-    setSnapPoints(snapPoints)
+    setSnapPoints(newSnapPoints)
   }, [scene])
   
   // Enhanced cursor-following with better snap detection
@@ -613,34 +613,29 @@ export const SimpleMeasurementDisplay: React.FC<SimpleMeasurementDisplayProps> =
               let label = 'GRID SNAP'
               
               // Find the closest snap point to determine type
-              let closestSnapData: { point: Vector3; type: 'center' | 'corner'; elementId: string } | null = null
+              let snapTypeFound = 'grid'
               let closestDistance = Infinity
               
               snapPoints.forEach((snapData) => {
                 const distance = hoverPoint.distanceTo(snapData.point)
                 if (distance < 0.5 && distance < closestDistance) {
                   closestDistance = distance
-                  closestSnapData = snapData
+                  snapTypeFound = snapData.type
                 }
               })
               
-              if (closestSnapData) {
-                switch (closestSnapData.type) {
-                  case 'center':
-                    snapType = 'center'
-                    bgColor = 'bg-green-400'
-                    borderColor = 'border-green-200'
-                    icon = '🎯'
-                    label = 'CENTER SNAP'
-                    break
-                  case 'corner':
-                    snapType = 'corner'
-                    bgColor = 'bg-red-400'
-                    borderColor = 'border-red-200'
-                    icon = '📐'
-                    label = 'CORNER SNAP'
-                    break
-                }
+              if (snapTypeFound === 'center') {
+                snapType = 'center'
+                bgColor = 'bg-green-400'
+                borderColor = 'border-green-200'
+                icon = '🎯'
+                label = 'CENTER SNAP'
+              } else if (snapTypeFound === 'corner') {
+                snapType = 'corner'
+                bgColor = 'bg-red-400'
+                borderColor = 'border-red-200'
+                icon = '📐'
+                label = 'CORNER SNAP'
               }
               
               return (
@@ -681,7 +676,7 @@ export const SimpleMeasurementDisplay: React.FC<SimpleMeasurementDisplayProps> =
         return (
           <mesh 
             key={`snap-${index}`}
-            position={[snap.x, snap.y + 0.2, snap.z]}
+            position={[snap.point.x, snap.point.y + 0.2, snap.point.z]}
           >
             <sphereGeometry args={[size, 6, 6]} />
             <meshBasicMaterial color={color} transparent opacity={opacity} />

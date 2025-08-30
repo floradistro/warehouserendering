@@ -38,10 +38,10 @@ export function Scene({
     toggleElementSelection,
     selectElementWithSnap,
     showMeasurements,
-    measurementMode,
-    selectedObjectsForMeasurement,
-    measurementDistance,
-    measurementType,
+    // measurementMode, // Removed - property doesn't exist
+    // selectedObjectsForMeasurement, // Removed - property doesn't exist
+    // measurementDistance, // Removed - property doesn't exist
+    // measurementType, // Removed - property doesn't exist
     selectObjectForMeasurement,
     dragGuides,
     firstPersonMode,

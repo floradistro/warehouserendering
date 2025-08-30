@@ -35,6 +35,7 @@ export interface WallOptions {
   height?: number
   material?: 'drywall' | 'concrete' | 'steel' | 'wood'
   hasOpenings?: boolean
+  allowOverlap?: boolean
   openings?: Array<{
     type: 'door' | 'window'
     position: number // Position along wall (0-1)

@@ -353,16 +353,16 @@ export class AdvancedWarehouseEngine extends WarehouseEngine {
     
     // Combine storage and office patterns
     const storageObjects = this.generateEfficientStorageLayout({ 
-      width: width * 0.7, 
-      height: height 
+      width: area.width * 0.7, 
+      height: area.height 
     })
     
-    const officeArea = { width: width * 0.3, height: height * 0.4 }
+    const officeArea = { width: area.width * 0.3, height: area.height * 0.4 }
     const officeObjects = this.generateOfficeLayout(officeArea)
     
     // Offset office objects
     officeObjects.forEach(obj => {
-      obj.transform.position.x += width * 0.7
+      obj.transform.position.x += area.width * 0.7
     })
 
     return [...storageObjects, ...officeObjects]
@@ -378,7 +378,9 @@ export class AdvancedWarehouseEngine extends WarehouseEngine {
     const racks = baseObjects.filter(obj => obj.metadata.subcategory === 'rack')
     racks.forEach(rack => {
       rack.metadata.dimensions.height = 20 // Taller racks
-      rack.metadata.properties = { ...rack.metadata.properties, automated: true }
+      // Mark as automated in operational properties
+      if (!rack.metadata.operational) rack.metadata.operational = {}
+      rack.metadata.operational.automated = true
     })
 
     // Add automated guided vehicles (AGVs)
@@ -866,7 +868,7 @@ export class AdvancedWarehouseEngine extends WarehouseEngine {
   private analyzeSafety(objects: SemanticObject[]): any {
     // Analyze safety aspects
     const safetyObjects = objects.filter(obj => obj.metadata.category === 'safety')
-    const exits = objects.filter(obj => obj.metadata.subcategory === 'door' && obj.metadata.properties?.isExit)
+    const exits = objects.filter(obj => obj.metadata.subcategory === 'door' && obj.metadata.codes?.emergencyAccess)
     
     return {
       safetyEquipmentCount: safetyObjects.length,

@@ -82,7 +82,7 @@ export function autoGenerateWallFraming(
     }
 
     const config = WAREHOUSE_CONFIGS[configType]
-    const elements = currentModel.elements
+    const elements = currentModel.data?.elements || []
 
     // Identify east/west interior walls
     const eastWestWalls = identifyEastWestWalls(elements)
@@ -228,7 +228,7 @@ export function removeWallFraming(): {
     }
 
     // Find all wall-to-truss framing elements
-    const framingElements = currentModel.elements.filter(element => 
+    const framingElements = (currentModel.data?.elements || []).filter(element => 
       element.metadata?.subcategory === 'wall-to-truss-framing' ||
       element.metadata?.subcategory === 'wall-framing' ||
       element.metadata?.hardware_type === 'angle-clip'
@@ -333,7 +333,7 @@ export function validateWallFraming(): {
     }
   }
 
-  const elements = currentModel.elements
+  const elements = currentModel.data?.elements || []
   const eastWestWalls = identifyEastWestWalls(elements)
   const framingElements = elements.filter(e => 
     e.metadata?.subcategory === 'wall-to-truss-framing'

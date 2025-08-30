@@ -106,6 +106,7 @@ export interface SemanticMetadata {
     noiseLevel?: number       // dB
     operatingTemperature?: { min: number; max: number }
     maintenanceAccess?: 'front' | 'back' | 'sides' | 'top' | 'all'
+    automated?: boolean       // Whether the object is automated
   }
   
   // Visual properties

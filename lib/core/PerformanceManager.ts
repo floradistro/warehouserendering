@@ -120,7 +120,7 @@ export class LODManager {
   updateLOD(cameraPosition: THREE.Vector3) {
     this.cameraPosition.copy(cameraPosition)
 
-    for (const lodObject of this.lodObjects.values()) {
+    Array.from(this.lodObjects.values()).forEach(lodObject => {
       const distance = lodObject.position.distanceTo(cameraPosition)
       lodObject.lastUpdateDistance = distance
 
@@ -132,7 +132,7 @@ export class LODManager {
       }
 
       lodObject.currentLevel = newLevel
-    }
+    })
   }
 
   getLODLevel(id: string): number {
@@ -153,7 +153,7 @@ export class LODManager {
     if (!positions) return original
 
     // For now, just return a box geometry as a placeholder
-    const box = original.boundingBox || new THREE.Box3().setFromBufferAttribute(positions)
+    const box = original.boundingBox || new THREE.Box3().setFromBufferAttribute(positions as THREE.BufferAttribute)
     const size = box.getSize(new THREE.Vector3())
     return new THREE.BoxGeometry(size.x, size.y, size.z)
   }
@@ -174,13 +174,13 @@ export class LODManager {
   getStats() {
     const stats = { lodLevel0: 0, lodLevel1: 0, lodLevel2: 0 }
     
-    for (const obj of this.lodObjects.values()) {
+    Array.from(this.lodObjects.values()).forEach(obj => {
       switch (obj.currentLevel) {
         case 0: stats.lodLevel0++; break
         case 1: stats.lodLevel1++; break
         case 2: stats.lodLevel2++; break
       }
-    }
+    })
 
     return stats
   }
@@ -280,9 +280,9 @@ export class InstancedRenderingManager {
 
   getStats() {
     let totalInstances = 0
-    for (const count of this.instanceCounts.values()) {
+    Array.from(this.instanceCounts.values()).forEach(count => {
       totalInstances += count
-    }
+    })
 
     return {
       instancedMeshTypes: this.instancedMeshes.size,

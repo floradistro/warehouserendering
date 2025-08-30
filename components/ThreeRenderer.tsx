@@ -663,14 +663,14 @@ const FloorplanElementMesh = memo(({
       })
       
       // Flange dimensions
-      const flangeThickness = depth * 0.127 // About 1.5" thick flanges
+      const flangeThickness = (depth || 12) * 0.127 // About 1.5" thick flanges
       const webThickness = width * 0.25     // 3/8" web thickness
       
       // Create OSB web (vertical thin plate in center of beam)
       // Using same pattern as standard geometry: (width, depth, height)
       const webGeometry = new THREE.BoxGeometry(
         webThickness,                // width: Very thin (3/8")
-        depth - 2 * flangeThickness, // depth: Beam depth minus flanges
+        (depth || 12) - 2 * flangeThickness, // depth: Beam depth minus flanges
         height                       // height: Full beam length (north-south)
       )
       const web = new THREE.Mesh(webGeometry, osbMaterial)
@@ -686,7 +686,7 @@ const FloorplanElementMesh = memo(({
         height           // height: Full beam length
       )
       const topFlange = new THREE.Mesh(topFlangeGeometry, lumberMaterial)
-      topFlange.position.y = (depth - flangeThickness) / 2  // Position at top (Y is vertical in Three.js)
+      topFlange.position.y = ((depth || 12) - flangeThickness) / 2  // Position at top (Y is vertical in Three.js)
       topFlange.name = 'Top_Flange'
       topFlange.castShadow = true
       topFlange.receiveShadow = true
@@ -699,7 +699,7 @@ const FloorplanElementMesh = memo(({
         height           // height: Full beam length
       )
       const bottomFlange = new THREE.Mesh(bottomFlangeGeometry, lumberMaterial)
-      bottomFlange.position.y = -(depth - flangeThickness) / 2  // Position at bottom
+      bottomFlange.position.y = -((depth || 12) - flangeThickness) / 2  // Position at bottom
       bottomFlange.name = 'Bottom_Flange'
       bottomFlange.castShadow = true
       bottomFlange.receiveShadow = true
@@ -798,7 +798,7 @@ const FloorplanElementMesh = memo(({
     }
 
     // Create detailed railing geometry for safety railings
-    if (element.type === 'railing' || (element.metadata?.category === 'safety_railing' && element.metadata?.detailed_rendering)) {
+    if (element.metadata?.category === 'safety_railing' && element.metadata?.detailed_rendering) {
       const railingGroup = new THREE.Group()
       const { width, height, depth } = element.dimensions
       
@@ -819,9 +819,9 @@ const FloorplanElementMesh = memo(({
       
       // Create posts
       for (let i = 0; i < numPosts; i++) {
-        const postGeometry = new THREE.CylinderGeometry(postDiameter/2, postDiameter/2, topHeight, 8)
+        const postGeometry = new THREE.CylinderGeometry(postDiameter/2, postDiameter/2, topHeight || depth || 3.5, 8)
         const post = new THREE.Mesh(postGeometry, galvanizedMaterial)
-        post.position.set(0, topHeight/2, (i * postSpacing) - (height/2))
+        post.position.set(0, (topHeight || depth || 3.5)/2, (i * postSpacing) - (height/2))
         post.castShadow = true
         railingGroup.add(post)
         
@@ -837,7 +837,7 @@ const FloorplanElementMesh = memo(({
       const topRailGeometry = new THREE.CylinderGeometry(railDiameter/2, railDiameter/2, height, 8)
       const topRail = new THREE.Mesh(topRailGeometry, steelMaterial)
       topRail.rotation.x = Math.PI / 2
-      topRail.position.set(0, topHeight, 0)
+      topRail.position.set(0, topHeight || depth || 3.5, 0)
       topRail.castShadow = true
       railingGroup.add(topRail)
       
@@ -880,13 +880,13 @@ const FloorplanElementMesh = memo(({
     const { x, y, z = 0 } = element.position
     
     // Special positioning for detailed railings
-    if (element.type === 'railing' || element.metadata?.category === 'safety_railing') {
+    if (element.metadata?.category === 'safety_railing') {
       // Railings positioned at their start point, extending upward
-      return [x, z + element.dimensions.depth / 2, y + element.dimensions.height / 2] as [number, number, number]
+      return [x, z + (element.dimensions.depth || 3.5) / 2, y + element.dimensions.height / 2] as [number, number, number]
     }
     
     // Special positioning for catwalks and elevated platforms
-    if (element.type === 'platform' || element.metadata?.category === 'catwalk') {
+    if (element.metadata?.category === 'catwalk') {
       // Platforms and catwalks should be positioned at their specified z elevation
       return [x + element.dimensions.width / 2, z, y + element.dimensions.height / 2] as [number, number, number]
     }
@@ -919,7 +919,7 @@ const FloorplanElementMesh = memo(({
     if (element.material === 'tji_beam' && element.metadata?.equipment_type === 'tji_ijoist') {
       // TJI beams are positioned at their start point, need to center them
       // Position: [x-position, z-height+depth/2, y-start+length/2] in Three.js coordinates
-      return [x, z + element.dimensions.depth / 2, y + element.dimensions.height / 2] as [number, number, number]
+      return [x, z + (element.dimensions.depth || 12) / 2, y + element.dimensions.height / 2] as [number, number, number]
     }
     
     // Special positioning for I-beams (they're vertical columns from ground up)
@@ -1491,7 +1491,7 @@ const FloorplanElementMesh = memo(({
         position={[
           element.position.x + element.dimensions.width / 2, // Center of panel
           element.position.z || 0, // Use z position for elevation if provided  
-          element.position.y + element.dimensions.depth / 2 // Center depth-wise (panel faces into room)
+          element.position.y + (element.dimensions.depth || 0.05) / 2 // Center depth-wise (panel faces into room)
         ]}
         rotation={[0, (element.rotation || 0) * Math.PI / 180, 0]}
 
@@ -1552,7 +1552,7 @@ const FloorplanElementMesh = memo(({
         position={[
           element.position.x + element.dimensions.width / 2, // Center of panel
           element.position.z || 0, // Use z position for elevation if provided  
-          element.position.y + element.dimensions.depth / 2 // Center depth-wise (panel faces into room)
+          element.position.y + (element.dimensions.depth || 0.05) / 2 // Center depth-wise (panel faces into room)
         ]}
         rotation={[0, (element.rotation || 0) * Math.PI / 180, 0]}
 
