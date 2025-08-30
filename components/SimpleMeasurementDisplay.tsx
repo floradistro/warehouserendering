@@ -613,7 +613,7 @@ export const SimpleMeasurementDisplay: React.FC<SimpleMeasurementDisplayProps> =
               let label = 'GRID SNAP'
               
               // Find the closest snap point to determine type
-              let closestSnapData: typeof snapPoints[0] | null = null
+              let closestSnapData: { point: Vector3; type: 'center' | 'corner'; elementId: string } | null = null
               let closestDistance = Infinity
               
               snapPoints.forEach((snapData) => {
