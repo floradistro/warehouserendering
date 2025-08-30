@@ -337,8 +337,8 @@ export class ConstraintSolver {
     return {
       isValid,
       score: weightSum > 0 ? totalScore / weightSum : 0,
-      issues: [...new Set(allIssues)], // Remove duplicates
-      suggestions: [...new Set(allSuggestions)]
+      issues: Array.from(new Set(allIssues)), // Remove duplicates
+      suggestions: Array.from(new Set(allSuggestions))
     }
   }
 

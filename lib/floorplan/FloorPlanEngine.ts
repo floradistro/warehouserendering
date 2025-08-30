@@ -7,7 +7,7 @@ export interface Point2D {
   y: number
 }
 
-export interface Line2D {
+export interface BasicLine2D {
   start: Point2D
   end: Point2D
   thickness?: number
@@ -277,7 +277,7 @@ export class FloorPlanEngine {
         properties: {
           height: dimensions.height,
           material: obj.metadata.visual.material,
-          isExterior: obj.metadata.subcategory === 'exterior-wall'
+          isExterior: (obj as any).type === 'wall' && (obj.metadata as any)?.subcategory === 'exterior-wall'
         }
       } as Line2D
     } else {
@@ -439,7 +439,9 @@ export class FloorPlanEngine {
     // Use a simple polygon tracing algorithm
     const enclosedPolygons = this.findEnclosedPolygons(wallSegments)
 
-    for (const [index, polygon] of enclosedPolygons.entries()) {
+    for (let i = 0; i < enclosedPolygons.length; i++) {
+      const index = i;
+      const polygon = enclosedPolygons[i];
       const room: Room2D = {
         id: `room_${index}`,
         name: `Room ${index + 1}`,

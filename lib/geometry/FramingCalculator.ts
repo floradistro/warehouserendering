@@ -4,7 +4,6 @@ import {
   riseRunFromPitch, 
   calculateRadialSpan,
   calculateRafter,
-  calculateJoistLayout,
   Point2D,
   Point3D,
   RiseRunResult,

@@ -232,7 +232,7 @@ export const useSceneStore = create<SceneState>()(
       
       objects.forEach(obj => {
         if (obj.boundingBox) {
-          box.expandByBox(obj.boundingBox)
+          box.union(obj.boundingBox)
         }
       })
       

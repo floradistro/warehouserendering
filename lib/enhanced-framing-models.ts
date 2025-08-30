@@ -1,9 +1,10 @@
 import * as THREE from 'three'
 import { FloorplanElement } from './store'
-import { 
+import {
   calculateRiseRun, 
   riseRunFromPitch, 
   calculateRadialSpan,
+  calculateJoistLayout,
   Point2D,
   Point3D
 } from './geometry/GeometryCalculator'
@@ -12,7 +13,6 @@ import {
   designQueenPostTruss,
   sizeBeam,
   calculateCompoundMiter,
-  calculateJoistLayout,
   LUMBER_SIZES,
   TrussDesign,
   BeamSizing

@@ -220,7 +220,7 @@ export class RulesEngine {
     const exits = layout.objects.filter(obj => 
       obj.metadata.category === 'opening' && 
       obj.metadata.subcategory === 'door' &&
-      obj.metadata.properties?.isExit
+      (obj.metadata as any).properties?.isExit
     )
 
     const requiredWidth = Math.max(32, layout.occupancy * 0.2) // 0.2" per person, min 32"
@@ -256,7 +256,7 @@ export class RulesEngine {
     const exits = layout.objects.filter(obj => 
       obj.metadata.category === 'opening' && 
       obj.metadata.subcategory === 'door' &&
-      obj.metadata.properties?.isExit
+      (obj.metadata as any).properties?.isExit
     )
 
     if (exits.length === 0) {
@@ -305,7 +305,7 @@ export class RulesEngine {
     const exits = layout.objects.filter(obj => 
       obj.metadata.category === 'opening' && 
       obj.metadata.subcategory === 'door' &&
-      obj.metadata.properties?.isExit
+      (obj.metadata as any).properties?.isExit
     )
 
     let requiredExits = 1
@@ -339,7 +339,7 @@ export class RulesEngine {
     // This is a simplified check - a full implementation would use pathfinding
     const accessibleEntrances = layout.objects.filter(obj => 
       obj.metadata.category === 'opening' && 
-      obj.metadata.properties?.accessible
+      (obj.metadata as any).properties?.accessible
     )
 
     if (accessibleEntrances.length === 0) {
@@ -570,7 +570,7 @@ export class RulesEngine {
     // Check exit route continuity and obstruction
     const exits = layout.objects.filter(obj => 
       obj.metadata.category === 'opening' && 
-      obj.metadata.properties?.isExit
+      (obj.metadata as any).properties?.isExit
     )
 
     for (const exit of exits) {
@@ -610,7 +610,7 @@ export class RulesEngine {
     
     const flammableStorage = layout.objects.filter(obj => 
       obj.metadata.category === 'storage' && 
-      obj.metadata.properties?.flammable
+      (obj.metadata as any).properties?.flammable
     )
 
     for (const storage of flammableStorage) {

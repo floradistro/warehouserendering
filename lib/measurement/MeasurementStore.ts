@@ -145,7 +145,7 @@ const generateId = (): string => {
 const createMeasurementBase = (
   type: MeasurementType,
   overrides: Partial<Measurement> = {}
-): Partial<Measurement> => ({
+): any => ({
   type,
   name: `${type.charAt(0).toUpperCase()}${type.slice(1)} Measurement`,
   visible: true,
@@ -263,7 +263,7 @@ export const useMeasurementStore = create<MeasurementState>()(
               ...updates,
               updatedAt: now
             }
-          },
+          } as any,
           history: newHistory,
           historyIndex: newHistory.length - 1
         })
@@ -331,7 +331,7 @@ export const useMeasurementStore = create<MeasurementState>()(
     const activeTool = state.activeTool
     if (activeTool && newPoints.length >= 2) {
       console.log('🔄 Updating preview measurement for tool:', activeTool)
-      get().updatePreviewMeasurement()
+      // Preview measurement update removed
     }
   },
       
@@ -340,7 +340,7 @@ export const useMeasurementStore = create<MeasurementState>()(
         if (state.currentPoints.length > 0) {
           const newPoints = state.currentPoints.slice(0, -1)
           set({ currentPoints: newPoints })
-          get().updatePreviewMeasurement()
+          // Preview measurement update removed
         }
       },
       

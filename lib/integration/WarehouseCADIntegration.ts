@@ -91,7 +91,7 @@ export class WarehouseCADIntegration {
       return result
     } catch (error) {
       console.error('❌ AI placement failed:', error)
-      return { success: false, error: error.toString() }
+      return { success: false, error: (error as Error).message || 'Unknown error' }
     }
   }
 
@@ -113,7 +113,7 @@ export class WarehouseCADIntegration {
       return result
     } catch (error) {
       console.error('❌ AI room creation failed:', error)
-      return { success: false, error: error.toString() }
+      return { success: false, error: (error as Error).message || 'Unknown error' }
     }
   }
 
@@ -135,7 +135,7 @@ export class WarehouseCADIntegration {
       return result
     } catch (error) {
       console.error('❌ AI layout generation failed:', error)
-      return { success: false, error: error.toString() }
+      return { success: false, error: (error as Error).message || 'Unknown error' }
     }
   }
 
@@ -151,7 +151,7 @@ export class WarehouseCADIntegration {
       return result
     } catch (error) {
       console.error('❌ AI optimization failed:', error)
-      return { success: false, error: error.toString() }
+      return { success: false, error: (error as Error).message || 'Unknown error' }
     }
   }
 
@@ -168,7 +168,7 @@ export class WarehouseCADIntegration {
       return result
     } catch (error) {
       console.error('❌ AI compliance validation failed:', error)
-      return { success: false, error: error.toString() }
+      return { success: false, error: (error as Error).message || 'Unknown error' }
     }
   }
 
@@ -184,7 +184,7 @@ export class WarehouseCADIntegration {
       return result
     } catch (error) {
       console.error('❌ AI analysis failed:', error)
-      return { success: false, error: error.toString() }
+      return { success: false, error: (error as Error).message || 'Unknown error' }
     }
   }
 
@@ -204,7 +204,7 @@ export class WarehouseCADIntegration {
       }
     } catch (error) {
       console.error('❌ 2D floor plan generation failed:', error)
-      return { success: false, error: error.toString() }
+      return { success: false, error: (error as Error).message || 'Unknown error' }
     }
   }
 

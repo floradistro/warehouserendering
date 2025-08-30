@@ -1,4 +1,4 @@
-import { Vector3, Ray, Raycaster, Object3D, Geometry, BufferGeometry, Mesh } from 'three'
+import { Vector3, Ray, Raycaster, Object3D, BufferGeometry, Mesh } from 'three'
 import {
   Measurement,
   LinearMeasurement,

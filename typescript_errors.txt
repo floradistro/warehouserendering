@@ -1,0 +1,76 @@
+lib/examples/WarehouseEngineDemo.ts(45,30): error TS2802: Type 'ArrayIterator<[number, { x: number; y: number; z: number; }]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+lib/floorplan/FloorPlanEngine.ts(280,23): error TS2367: This comparison appears to be unintentional because the types '"wall"' and '"exterior-wall"' have no overlap.
+lib/floorplan/FloorPlanEngine.ts(442,36): error TS2802: Type 'ArrayIterator<[number, Point2D[]]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+lib/measurement/DimensionRenderer.tsx(85,17): error TS2322: Type '{ color?: string | undefined; thickness?: number | undefined; opacity?: number | undefined; textSize?: number | undefined; textColor?: string | undefined; arrowSize?: number | undefined; ... 9 more ...; backgroundColor?: string | undefined; }' is not assignable to type 'MeasurementStyle'.
+  Types of property 'color' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+lib/measurement/DimensionRenderer.tsx(99,17): error TS2322: Type '{ color?: string | undefined; thickness?: number | undefined; opacity?: number | undefined; textSize?: number | undefined; textColor?: string | undefined; arrowSize?: number | undefined; ... 9 more ...; backgroundColor?: string | undefined; }' is not assignable to type 'MeasurementStyle'.
+  Types of property 'color' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+lib/measurement/DimensionRenderer.tsx(112,17): error TS2322: Type '{ color?: string | undefined; thickness?: number | undefined; opacity?: number | undefined; textSize?: number | undefined; textColor?: string | undefined; arrowSize?: number | undefined; ... 9 more ...; backgroundColor?: string | undefined; }' is not assignable to type 'MeasurementStyle'.
+  Types of property 'color' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+lib/measurement/DimensionRenderer.tsx(432,15): error TS2322: Type '{ geometry: BufferGeometry<NormalBufferAttributes>; material: LineBasicMaterial; }' is not assignable to type 'SVGLineElementAttributes<SVGLineElement>'.
+  Property 'geometry' does not exist on type 'SVGLineElementAttributes<SVGLineElement>'.
+lib/measurement/DimensionRenderer.tsx(435,15): error TS2322: Type '{ geometry: BufferGeometry<NormalBufferAttributes>; material: LineBasicMaterial; }' is not assignable to type 'SVGLineElementAttributes<SVGLineElement>'.
+  Property 'geometry' does not exist on type 'SVGLineElementAttributes<SVGLineElement>'.
+lib/measurement/DimensionRenderer.tsx(438,15): error TS2322: Type '{ geometry: BufferGeometry<NormalBufferAttributes>; material: LineBasicMaterial; }' is not assignable to type 'SVGLineElementAttributes<SVGLineElement>'.
+  Property 'geometry' does not exist on type 'SVGLineElementAttributes<SVGLineElement>'.
+lib/measurement/DimensionRenderer.tsx(549,13): error TS2322: Type '{ geometry: BufferGeometry<NormalBufferAttributes>; material: LineBasicMaterial; }' is not assignable to type 'SVGLineElementAttributes<SVGLineElement>'.
+  Property 'geometry' does not exist on type 'SVGLineElementAttributes<SVGLineElement>'.
+lib/measurement/DimensionRenderer.tsx(629,13): error TS2322: Type '{ geometry: BufferGeometry<NormalBufferAttributes>; material: LineBasicMaterial; }' is not assignable to type 'SVGLineElementAttributes<SVGLineElement>'.
+  Property 'geometry' does not exist on type 'SVGLineElementAttributes<SVGLineElement>'.
+lib/measurement/MeasurementStore.ts(148,29): error TS2322: Type '{ type: MeasurementType; points?: Vector3[] | undefined; totalDistance?: number | undefined; segments?: { startPoint: Vector3; endPoint: Vector3; distance: number; label?: string | undefined; }[] | undefined; ... 13 more ...; style: MeasurementStyle; } | ... 6 more ... | { ...; }' is not assignable to type 'Partial<Measurement>'.
+  Type '{ type: MeasurementType; points?: Vector3[] | undefined; totalDistance?: number | undefined; segments?: { startPoint: Vector3; endPoint: Vector3; distance: number; label?: string; }[] | undefined; ... 13 more ...; style: MeasurementStyle; }' is not assignable to type 'Partial<Measurement>'.
+    Type '{ type: MeasurementType; points?: Vector3[] | undefined; totalDistance?: number | undefined; segments?: { startPoint: Vector3; endPoint: Vector3; distance: number; label?: string; }[] | undefined; ... 13 more ...; style: MeasurementStyle; }' is not assignable to type 'Partial<LinearMeasurement>'.
+      Types of property 'type' are incompatible.
+        Type 'MeasurementType' is not assignable to type '"linear" | undefined'.
+          Type '"area"' is not assignable to type '"linear"'.
+lib/measurement/MeasurementStore.ts(259,11): error TS2322: Type '{ [x: string]: Measurement | { updatedAt: Date; type: "linear"; points: Vector3[]; totalDistance: number; segments: Array<{ startPoint: Vector3; endPoint: Vector3; distance: number; label?: string; }>; ... 12 more ...; style?: MeasurementStyle; } | ... 62 more ... | { ...; }; }' is not assignable to type 'Record<string, Measurement>'.
+  'string' index signatures are incompatible.
+    Type 'Measurement | { updatedAt: Date; type: "linear"; points: Vector3[]; totalDistance: number; segments: { startPoint: Vector3; endPoint: Vector3; distance: number; label?: string | undefined; }[]; ... 12 more ...; style?: MeasurementStyle | undefined; } | ... 62 more ... | { ...; }' is not assignable to type 'Measurement'.
+      Type '{ updatedAt: Date; type: "linear" | "angular"; vertex?: Vector3 | undefined; startPoint?: Vector3 | undefined; endPoint?: Vector3 | undefined; angle?: number | undefined; ... 16 more ...; chainDimensions: boolean; }' is not assignable to type 'Measurement'.
+        Type '{ updatedAt: Date; type: "linear" | "angular"; vertex?: Vector3 | undefined; startPoint?: Vector3 | undefined; endPoint?: Vector3 | undefined; angle?: number | undefined; ... 16 more ...; chainDimensions: boolean; }' is not assignable to type 'LinearMeasurement | AngularMeasurement'.
+          Type '{ updatedAt: Date; type: "linear" | "angular"; vertex?: Vector3 | undefined; startPoint?: Vector3 | undefined; endPoint?: Vector3 | undefined; angle?: number | undefined; ... 16 more ...; chainDimensions: boolean; }' is not assignable to type 'AngularMeasurement'.
+            Types of property 'type' are incompatible.
+              Type '"linear" | "angular"' is not assignable to type '"angular"'.
+                Type '"linear"' is not assignable to type '"angular"'.
+lib/measurement/MeasurementStore.ts(334,13): error TS2551: Property 'updatePreviewMeasurement' does not exist on type 'MeasurementState'. Did you mean 'previewMeasurement'?
+lib/measurement/MeasurementStore.ts(343,17): error TS2551: Property 'updatePreviewMeasurement' does not exist on type 'MeasurementState'. Did you mean 'previewMeasurement'?
+lib/models/ModelLibrary.ts(894,30): error TS2802: Type 'MapIterator<SemanticMetadata>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+lib/models/ModelLibrary.ts(899,37): error TS7006: Parameter 'conn2' implicitly has an 'any' type.
+lib/placement/ConstraintSolver.ts(340,19): error TS2802: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+lib/placement/ConstraintSolver.ts(341,24): error TS2802: Type 'Set<string>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+lib/placement/SnapSystem.tsx(75,25): error TS2802: Type 'MapIterator<SnapPoint>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.
+lib/state/sceneStore.ts(235,15): error TS2339: Property 'expandByBox' does not exist on type 'Box3'.
+lib/validation/RulesEngine.ts(223,20): error TS2339: Property 'properties' does not exist on type 'SemanticMetadata'.
+lib/validation/RulesEngine.ts(259,20): error TS2339: Property 'properties' does not exist on type 'SemanticMetadata'.
+lib/validation/RulesEngine.ts(308,20): error TS2339: Property 'properties' does not exist on type 'SemanticMetadata'.
+lib/validation/RulesEngine.ts(342,20): error TS2339: Property 'properties' does not exist on type 'SemanticMetadata'.
+lib/validation/RulesEngine.ts(573,20): error TS2339: Property 'properties' does not exist on type 'SemanticMetadata'.
+lib/validation/RulesEngine.ts(613,20): error TS2339: Property 'properties' does not exist on type 'SemanticMetadata'.
+lib/wall-to-truss-framing.ts(113,19): error TS18048: 'wall.position.z' is possibly 'undefined'.
+lib/wall-to-truss-framing.ts(392,10): error TS7053: Element implicitly has an 'any' type because expression of type '"steel" | "wood" | "engineered"' can't be used to index type '{ wood: { hardware: string[]; installation: string[]; loadCapacity: number; cost: number; }; } | { wood: { hardware: string[]; installation: string[]; loadCapacity: number; cost: number; }; } | { wood: { hardware: string[]; installation: string[]; loadCapacity: number; cost: number; }; }'.
+  Property 'steel' does not exist on type '{ wood: { hardware: string[]; installation: string[]; loadCapacity: number; cost: number; }; } | { wood: { hardware: string[]; installation: string[]; loadCapacity: number; cost: number; }; } | { wood: { hardware: string[]; installation: string[]; loadCapacity: number; cost: number; }; }'.
+lib/warehouse-models.ts(2049,5): error TS2740: Type '{ x: number; y: number; z: number; }' is missing the following properties from type 'Vector3': isVector3, set, setScalar, setX, and 73 more.
+lib/warehouse-models.ts(2050,5): error TS2740: Type '{ x: number; y: number; z: number; }' is missing the following properties from type 'Euler': order, isEuler, _onChangeCallback, set, and 11 more.
+lib/warehouse-models.ts(2055,5): error TS2304: Cannot find name 'trim'.
+lib/warehouse-models.ts(2058,10): error TS2304: Cannot find name 'trim'.
+lib/warehouse-models.ts(2098,40): error TS2345: Argument of type '{ length: number; position: { x: number; y: number; z: number; }; rotation: { x: number; y: number; z: number; }; height: number; thickness: number; coveRadius: number; color: number; material: "vinyl" | "rubber" | "aluminum"; }' is not assignable to parameter of type 'CoveBaseTrimConfig'.
+  Types of property 'position' are incompatible.
+    Type '{ x: number; y: number; z: number; }' is missing the following properties from type 'Vector3': isVector3, set, setScalar, setX, and 73 more.
+lib/warehouse-models.ts(2118,40): error TS2345: Argument of type '{ length: number; position: { x: number; y: number; z: number; }; rotation: { x: number; y: number; z: number; }; height: number; thickness: number; coveRadius: number; color: number; material: "vinyl" | "rubber" | "aluminum"; }' is not assignable to parameter of type 'CoveBaseTrimConfig'.
+  Types of property 'position' are incompatible.
+    Type '{ x: number; y: number; z: number; }' is missing the following properties from type 'Vector3': isVector3, set, setScalar, setX, and 73 more.
+lib/warehouse-models.ts(2123,19): error TS2365: Operator '<' cannot be applied to types 'number' and '(x: number) => number'.
+lib/warehouse-models.ts(2138,40): error TS2345: Argument of type '{ length: number; position: { x: number; y: number; z: number; }; rotation: { x: number; y: number; z: number; }; height: number; thickness: number; coveRadius: number; color: number; material: "vinyl" | "rubber" | "aluminum"; }' is not assignable to parameter of type 'CoveBaseTrimConfig'.
+  Types of property 'position' are incompatible.
+    Type '{ x: number; y: number; z: number; }' is missing the following properties from type 'Vector3': isVector3, set, setScalar, setX, and 73 more.
+lib/warehouse-models.ts(2158,40): error TS2345: Argument of type '{ length: number; position: { x: number; y: number; z: number; }; rotation: { x: number; y: number; z: number; }; height: number; thickness: number; coveRadius: number; color: number; material: "vinyl" | "rubber" | "aluminum"; }' is not assignable to parameter of type 'CoveBaseTrimConfig'.
+  Types of property 'position' are incompatible.
+    Type '{ x: number; y: number; z: number; }' is missing the following properties from type 'Vector3': isVector3, set, setScalar, setX, and 73 more.
+lib/warehouse-models.ts(2222,10): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ office: { name: string; config: { height: number; thickness: number; coveRadius: number; length: number; color: number; material: "rubber" | "aluminum" | "vinyl"; position: Vector3; rotation: Euler; }; description: string; }; ... 9 more ...; laboratory: { ...; }; }'.
+  No index signature with a parameter of type 'string' was found on type '{ office: { name: string; config: { height: number; thickness: number; coveRadius: number; length: number; color: number; material: "rubber" | "aluminum" | "vinyl"; position: Vector3; rotation: Euler; }; description: string; }; ... 9 more ...; laboratory: { ...; }; }'.

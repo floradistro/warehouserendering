@@ -110,7 +110,7 @@ export function generateWallToTrussFraming(
 ): WallToTrussFraming {
   
   const wallLength = wall.dimensions.width
-  const wallTop = wall.position.z + (wall.dimensions.depth || 8)
+  const wallTop = (wall.position.z || 0) + (wall.dimensions.depth || 8)
   const trussBottom = config.trussHeight
   const framingHeight = trussBottom - wallTop
   
@@ -389,7 +389,7 @@ export function generateTrussConnectionDetails(
     }
   }
   
-  return connectionDetails[connectionType]?.[trussType] || connectionDetails.direct.wood
+  return (connectionDetails as any)[connectionType]?.[trussType] || connectionDetails.direct.wood
 }
 
 /**

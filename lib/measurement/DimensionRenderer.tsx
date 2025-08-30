@@ -82,7 +82,24 @@ export const DimensionRenderer: React.FC<DimensionRendererProps> = ({
               <LinearDimensionRenderer
                 key={measurement.id}
                 measurement={measurement as LinearMeasurement}
-                style={style}
+                style={{
+                  color: style.color || '#ffffff',
+                  thickness: style.thickness || 1,
+                  opacity: style.opacity || 1,
+                  textSize: style.textSize || 12,
+                  textColor: style.textColor || '#ffffff',
+                  arrowSize: style.arrowSize || 8,
+                  arrowStyle: style.arrowStyle || 'arrow',
+                  lineStyle: style.lineStyle || 'solid',
+                  extensionLineLength: style.extensionLineLength || 10,
+                  textOffset: style.textOffset || new Vector3(0, 0, 0),
+                  dimensionLineOffset: style.dimensionLineOffset || 2,
+                  showExtensionLines: style.showExtensionLines !== false,
+                  showDimensionLine: style.showDimensionLine !== false,
+                  showText: style.showText !== false,
+                  backgroundOpacity: style.backgroundOpacity || 0,
+                  backgroundColor: style.backgroundColor || 'transparent'
+                }}
                 opacity={opacity}
                 showExtensionLines={showExtensionLines}
                 showText={showText}
@@ -96,7 +113,24 @@ export const DimensionRenderer: React.FC<DimensionRendererProps> = ({
               <AngularDimensionRenderer
                 key={measurement.id}
                 measurement={measurement as AngularMeasurement}
-                style={style}
+                style={{
+                  color: style.color || '#ffffff',
+                  thickness: style.thickness || 1,
+                  opacity: style.opacity || 1,
+                  textSize: style.textSize || 12,
+                  textColor: style.textColor || '#ffffff',
+                  arrowSize: style.arrowSize || 8,
+                  arrowStyle: style.arrowStyle || 'arrow',
+                  lineStyle: style.lineStyle || 'solid',
+                  extensionLineLength: style.extensionLineLength || 10,
+                  textOffset: style.textOffset || new Vector3(0, 0, 0),
+                  dimensionLineOffset: style.dimensionLineOffset || 2,
+                  showExtensionLines: style.showExtensionLines !== false,
+                  showDimensionLine: style.showDimensionLine !== false,
+                  showText: style.showText !== false,
+                  backgroundOpacity: style.backgroundOpacity || 0,
+                  backgroundColor: style.backgroundColor || 'transparent'
+                }}
                 opacity={opacity}
                 showText={showText}
                 textScale={textScale}
@@ -109,7 +143,24 @@ export const DimensionRenderer: React.FC<DimensionRendererProps> = ({
               <AreaDimensionRenderer
                 key={measurement.id}
                 measurement={measurement as AreaMeasurement}
-                style={style}
+                style={{
+                  color: style.color || '#ffffff',
+                  thickness: style.thickness || 1,
+                  opacity: style.opacity || 1,
+                  textSize: style.textSize || 12,
+                  textColor: style.textColor || '#ffffff',
+                  arrowSize: style.arrowSize || 8,
+                  arrowStyle: style.arrowStyle || 'arrow',
+                  lineStyle: style.lineStyle || 'solid',
+                  extensionLineLength: style.extensionLineLength || 10,
+                  textOffset: style.textOffset || new Vector3(0, 0, 0),
+                  dimensionLineOffset: style.dimensionLineOffset || 2,
+                  showExtensionLines: style.showExtensionLines !== false,
+                  showDimensionLine: style.showDimensionLine !== false,
+                  showText: style.showText !== false,
+                  backgroundOpacity: style.backgroundOpacity || 0,
+                  backgroundColor: style.backgroundColor || 'transparent'
+                }}
                 opacity={opacity}
                 showText={showText}
                 textScale={textScale}
@@ -429,13 +480,13 @@ const LinearDimensionRenderer: React.FC<LinearDimensionProps> = ({
   return (
     <group name={`linear-dimension-${measurement.id}`}>
       {geometries.dimensionLines.attributes.position && (
-        <line geometry={geometries.dimensionLines} material={lineMaterial} />
+        <primitive object={new Line(geometries.dimensionLines, lineMaterial)} />
       )}
       {geometries.extensionLines.attributes.position && showExtensionLines && (
-        <line geometry={geometries.extensionLines} material={extLineMaterial} />
+        <primitive object={new Line(geometries.extensionLines, extLineMaterial)} />
       )}
       {geometries.arrows.attributes.position && (
-        <line geometry={geometries.arrows} material={lineMaterial} />
+        <primitive object={new Line(geometries.arrows, lineMaterial)} />
       )}
       {textSprites}
     </group>
@@ -546,7 +597,7 @@ const AngularDimensionRenderer: React.FC<AngularDimensionProps> = ({
   
   return (
     <group name={`angular-dimension-${measurement.id}`}>
-      <line geometry={geometry} material={material} />
+      <primitive object={new Line(geometry, material)} />
       {textSprite}
     </group>
   )
@@ -626,7 +677,7 @@ const AreaDimensionRenderer: React.FC<AreaDimensionProps> = ({
   
   return (
     <group name={`area-dimension-${measurement.id}`}>
-      <line geometry={geometry} material={material} />
+      <primitive object={new Line(geometry, material)} />
       {textSprite}
     </group>
   )

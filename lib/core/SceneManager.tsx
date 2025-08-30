@@ -42,7 +42,7 @@ export function Scene({
     // selectedObjectsForMeasurement, // Removed - property doesn't exist
     // measurementDistance, // Removed - property doesn't exist
     // measurementType, // Removed - property doesn't exist
-    selectObjectForMeasurement,
+    // selectObjectForMeasurement, // Removed - property doesn't exist
     dragGuides,
     firstPersonMode,
     isPlacing,
@@ -113,17 +113,7 @@ export function Scene({
         height={floorplan.dimensions.height} 
       />
 
-      {/* Room floors - these should be data-driven from floorplan */}
-      {floorplan.rooms?.map((room, index) => (
-        <RoomFloor
-          key={`room-floor-${index}`}
-          position={[room.center.x, -0.05, room.center.y]}
-          width={room.width}
-          height={room.height}
-          color="#f0f0f0"
-          opacity={0.8}
-        />
-      ))}
+      {/* Room floors - TODO: implement when room data is available in FloorplanData */}
 
       {/* Render all floorplan elements */}
       {allElements.map((element) => (
@@ -133,7 +123,7 @@ export function Scene({
           isSelected={selectedElements.includes(element.id)}
           onSelect={() => toggleElementSelection(element.id)}
           onEdit={() => startElementEdit(element)}
-          onDragStart={() => startDrag(element.id)}
+          onDragStart={(worldPosition: { x: number; y: number; z: number } | null) => startDrag(element, worldPosition || { x: element.position.x, y: element.position.y, z: element.position.z || 0 })}
           showFraming={showFraming}
           showDrywall={showDrywall}
           isLayerVisible={isLayerVisible}
@@ -144,9 +134,12 @@ export function Scene({
       {showSnapIndicators && snapPoints.map((point, index) => (
         <SnapPointIndicator
           key={`snap-${index}`}
-          position={[point.x, point.y, point.z]}
+          position={[point.position.x, point.position.y, point.position.z]}
           type={point.type}
-          isActive={activeSnapPoint === index}
+          isActive={activeSnapPoint !== null && 
+                     activeSnapPoint.position.x === point.position.x && 
+                     activeSnapPoint.position.y === point.position.y && 
+                     activeSnapPoint.position.z === point.position.z}
         />
       ))}
 
@@ -155,14 +148,7 @@ export function Scene({
         <FirstPersonControls />
       )}
 
-      {/* Measurement tools */}
-      {showMeasurements && (
-        <MeasurementTools
-          selectedObjects={selectedObjectsForMeasurement}
-          measurementType={measurementType}
-          distance={measurementDistance}
-        />
-      )}
+      {/* Measurement tools - removed during optimization */}
 
       {/* Drag guides */}
       {isDragging && dragGuides && (

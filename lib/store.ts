@@ -209,11 +209,6 @@ export const useAppStore = create<AppState>()(
       viewMode: '3d',
       selectedElements: [],
       
-      measurementMode: false,
-      selectedObjectsForMeasurement: [null, null],
-      measurementDistance: null,
-      measurementType: 'horizontal',
-      
       cameraPosition: [150, 100, 200],
       cameraTarget: [69.375, 0, 124],
       showMeasurements: false,
@@ -294,220 +289,8 @@ export const useAppStore = create<AppState>()(
       // Measurement actions (moved to end of file)
       
 
-      
-      selectObjectForMeasurement: (objectId: string) => {
-        const { selectedObjectsForMeasurement, currentFloorplan } = get()
 
-        
-        if (!currentFloorplan) return
-        
-        // Find the element to ensure it exists
-        const element = currentFloorplan.elements.find(el => el.id === objectId)
-        if (!element) return
-        
-        if (selectedObjectsForMeasurement[0] === null) {
-          // First object selection
-          set({ selectedObjectsForMeasurement: [objectId, null], measurementDistance: null })
 
-        } else if (selectedObjectsForMeasurement[1] === null && selectedObjectsForMeasurement[0] !== objectId) {
-          // Second object selection - calculate distance
-          const firstElement = currentFloorplan.elements.find(el => el.id === selectedObjectsForMeasurement[0])
-          if (firstElement) {
-            // Calculate edge-to-edge distances (closest points between objects)
-            const first = firstElement
-            const second = element
-            
-            // Get object bounds
-            const firstBounds = {
-              minX: first.position.x,
-              maxX: first.position.x + first.dimensions.width,
-              minY: first.position.y, 
-              maxY: first.position.y + first.dimensions.height,
-              minZ: first.position.z || 0,
-              maxZ: (first.position.z || 0) + (first.dimensions.depth || 0)
-            }
-            
-            const secondBounds = {
-              minX: second.position.x,
-              maxX: second.position.x + second.dimensions.width,
-              minY: second.position.y,
-              maxY: second.position.y + second.dimensions.height, 
-              minZ: second.position.z || 0,
-              maxZ: (second.position.z || 0) + (second.dimensions.depth || 0)
-            }
-            
-            // Calculate edge-to-edge distances (closest points)
-            const xDistance = Math.max(0, 
-              Math.max(firstBounds.minX - secondBounds.maxX, secondBounds.minX - firstBounds.maxX)
-            )
-            const yDistance = Math.max(0,
-              Math.max(firstBounds.minY - secondBounds.maxY, secondBounds.minY - firstBounds.maxY)
-            )
-            const zDistance = Math.max(0,
-              Math.max(firstBounds.minZ - secondBounds.maxZ, secondBounds.minZ - firstBounds.maxZ)
-            )
-            
-            // Calculate center positions for visual line positioning
-            const firstCenter = {
-              x: first.position.x + first.dimensions.width / 2,
-              y: first.position.y + first.dimensions.height / 2,
-              z: (first.position.z || 0) + (first.dimensions.depth || 0) / 2
-            }
-            const secondCenter = {
-              x: second.position.x + second.dimensions.width / 2,
-              y: second.position.y + second.dimensions.height / 2,
-              z: (second.position.z || 0) + (second.dimensions.depth || 0) / 2
-            }
-            
-            // Calculate distance based on measurement type
-            const { measurementType } = get()
-            let distance: number
-            
-            // Auto-suggest the most logical measurement type based on which axis has the largest difference
-            const maxDistance = Math.max(xDistance, yDistance, zDistance)
-            let suggestedType = measurementType
-            
-            if (maxDistance === xDistance && xDistance > yDistance * 2) {
-              suggestedType = 'horizontal' // Width measurement
-            } else if (maxDistance === yDistance && yDistance > xDistance * 2) {
-              suggestedType = 'vertical' // Depth measurement
-            } else if (maxDistance === zDistance && zDistance > 1) {
-              suggestedType = 'height' // Height measurement
-            }
-            
-            // Use the suggested type if we're still on default
-            const finalType = measurementType === 'horizontal' && suggestedType !== 'horizontal' ? suggestedType : measurementType
-            
-            switch (finalType) {
-              case 'horizontal':
-                distance = xDistance
-                break
-              case 'vertical':
-                distance = yDistance
-                break
-              case 'height':
-                distance = zDistance
-                break
-              case 'direct':
-              default:
-                distance = Math.sqrt(
-                  Math.pow(xDistance, 2) +
-                  Math.pow(yDistance, 2) +
-                  Math.pow(zDistance, 2)
-                )
-                break
-            }
-            
-            // Update the measurement type if we auto-suggested a better one
-            if (finalType !== measurementType) {
-              set({ measurementType: finalType })
-            }
-            
-            set({ 
-              selectedObjectsForMeasurement: [selectedObjectsForMeasurement[0], objectId],
-              measurementDistance: distance
-            })
-
-          }
-        } else {
-          // Reset and start over with new first object
-          set({ selectedObjectsForMeasurement: [objectId, null], measurementDistance: null })
-
-        }
-      },
-      
-      clearMeasurementSelection: () => set({
-        selectedObjectsForMeasurement: [null, null],
-        measurementDistance: null,
-      }),
-      
-      setMeasurementType: (type: 'horizontal' | 'vertical' | 'height' | 'direct') => {
-        const { selectedObjectsForMeasurement, currentFloorplan } = get()
-        set({ measurementType: type })
-        
-        // Recalculate distance if both objects are selected
-        if (selectedObjectsForMeasurement[0] && selectedObjectsForMeasurement[1] && currentFloorplan) {
-          const firstElement = currentFloorplan.elements.find(el => el.id === selectedObjectsForMeasurement[0])
-          const secondElement = currentFloorplan.elements.find(el => el.id === selectedObjectsForMeasurement[1])
-          
-          if (firstElement && secondElement) {
-            // Calculate edge-to-edge distances (same logic as above)
-            const firstBounds = {
-              minX: firstElement.position.x,
-              maxX: firstElement.position.x + firstElement.dimensions.width,
-              minY: firstElement.position.y, 
-              maxY: firstElement.position.y + firstElement.dimensions.height,
-              minZ: firstElement.position.z || 0,
-              maxZ: (firstElement.position.z || 0) + (firstElement.dimensions.depth || 0)
-            }
-            
-            const secondBounds = {
-              minX: secondElement.position.x,
-              maxX: secondElement.position.x + secondElement.dimensions.width,
-              minY: secondElement.position.y,
-              maxY: secondElement.position.y + secondElement.dimensions.height, 
-              minZ: secondElement.position.z || 0,
-              maxZ: (secondElement.position.z || 0) + (secondElement.dimensions.depth || 0)
-            }
-            
-            // Calculate edge-to-edge distances
-            const xDistance = Math.max(0, 
-              Math.max(firstBounds.minX - secondBounds.maxX, secondBounds.minX - firstBounds.maxX)
-            )
-            const yDistance = Math.max(0,
-              Math.max(firstBounds.minY - secondBounds.maxY, secondBounds.minY - firstBounds.maxY)
-            )
-            const zDistance = Math.max(0,
-              Math.max(firstBounds.minZ - secondBounds.maxZ, secondBounds.minZ - firstBounds.maxZ)
-            )
-            
-            // Calculate distance based on new measurement type
-            let distance: number
-            
-            switch (type) {
-              case 'horizontal':
-                distance = xDistance
-                break
-              case 'vertical':
-                distance = yDistance
-                break
-              case 'height':
-                distance = zDistance
-                break
-              case 'direct':
-              default:
-                // For direct, use center-to-center if objects are overlapping, otherwise edge-to-edge
-                if (xDistance === 0 || yDistance === 0 || zDistance === 0) {
-                  const firstCenter = {
-                    x: firstElement.position.x + firstElement.dimensions.width / 2,
-                    y: firstElement.position.y + firstElement.dimensions.height / 2,
-                    z: (firstElement.position.z || 0) + (firstElement.dimensions.depth || 0) / 2
-                  }
-                  const secondCenter = {
-                    x: secondElement.position.x + secondElement.dimensions.width / 2,
-                    y: secondElement.position.y + secondElement.dimensions.height / 2,
-                    z: (secondElement.position.z || 0) + (secondElement.dimensions.depth || 0) / 2
-                  }
-                  distance = Math.sqrt(
-                    Math.pow(secondCenter.x - firstCenter.x, 2) +
-                    Math.pow(secondCenter.y - firstCenter.y, 2) +
-                    Math.pow(secondCenter.z - firstCenter.z, 2)
-                  )
-                } else {
-                  distance = Math.sqrt(
-                    Math.pow(xDistance, 2) +
-                    Math.pow(yDistance, 2) +
-                    Math.pow(zDistance, 2)
-                  )
-                }
-                break
-            }
-            
-            set({ measurementDistance: distance })
-
-          }
-        }
-      },
       
       toggleFirstPersonMode: () => set((state) => ({
         firstPersonMode: !state.firstPersonMode,
@@ -535,8 +318,7 @@ export const useAppStore = create<AppState>()(
             currentFloorplan: result.data,
             lastError: null,
             selectedElements: [],
-            measurementMode: false,
-            selectedObjectsForMeasurement: [null, null]
+            // Measurement mode removed during optimization
           })
           get().refreshUndoRedoStatus()
         } else {
@@ -674,7 +456,7 @@ export const useAppStore = create<AppState>()(
           isRotationLocked: false,
           snapPoints: [],
           activeSnapPoint: null,
-          measurementMode: false, // Exit measurement mode when placing
+          // Measurement mode removed during optimization
           selectedElements: [] // Clear selection when placing
         })
       },
@@ -1356,17 +1138,7 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      // Measurement actions
-      toggleMeasurementMode: () => {
-        const { measurementMode } = get()
-        console.log('🎯 toggleMeasurementMode called:', { currentMode: measurementMode, newMode: !measurementMode })
-        set({ 
-          measurementMode: !measurementMode,
-          selectedObjectsForMeasurement: [null, null], // Clear measurements when toggling
-          measurementDistance: null,   // Clear distance when toggling
-          measurementType: 'horizontal' // Reset to horizontal when toggling
-        })
-      },
+      // Measurement actions removed during optimization
 
 
 

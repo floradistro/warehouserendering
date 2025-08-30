@@ -32,7 +32,7 @@ export function createCommercial600AmpPanel(manufacturer = 'square-d', options =
     };
     
     // Get dimensions for selected manufacturer
-    const dims = manufacturers[manufacturer] || manufacturers['square-d'];
+    const dims = manufacturers[manufacturer as keyof typeof manufacturers] || manufacturers['square-d'];
     
     // Default options
     const config = {
@@ -59,8 +59,8 @@ export function createCommercial600AmpPanel(manufacturer = 'square-d', options =
     };
     
     // Main enclosure material
-    const enclosureMaterial = new THREE.MeshLambertMaterial({ 
-        color: finishColors[config.finish],
+    const enclosureMaterial = new THREE.MeshPhongMaterial({ 
+        color: finishColors[config.finish as keyof typeof finishColors],
         name: 'Enclosure_Material'
     });
     
@@ -85,7 +85,7 @@ export function createCommercial600AmpPanel(manufacturer = 'square-d', options =
     
     // === DOOR HANDLE ===
     const handleGeometry = new THREE.BoxGeometry(0.02, 0.15, 0.05);
-    const handleMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+    const handleMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
     const handle = new THREE.Mesh(handleGeometry, handleMaterial);
     handle.position.x = width / 2 - 0.05;
     handle.position.y = height / 2 + 0.2;
@@ -98,7 +98,7 @@ export function createCommercial600AmpPanel(manufacturer = 'square-d', options =
     
     // Back panel
     const backPanelGeometry = new THREE.BoxGeometry(width - 0.1, height - 0.1, 0.02);
-    const backPanelMaterial = new THREE.MeshLambertMaterial({ color: 0xe0e0e0 });
+    const backPanelMaterial = new THREE.MeshPhongMaterial({ color: 0xe0e0e0 });
     const backPanel = new THREE.Mesh(backPanelGeometry, backPanelMaterial);
     backPanel.position.y = height / 2;
     backPanel.position.z = -depth / 2 + 0.01;
@@ -107,7 +107,7 @@ export function createCommercial600AmpPanel(manufacturer = 'square-d', options =
     
     // === MAIN BREAKER (600A) ===
     const mainBreakerGeometry = new THREE.BoxGeometry(0.35, 0.18, 0.1);
-    const mainBreakerMaterial = new THREE.MeshLambertMaterial({ color: 0x2c2c2c });
+    const mainBreakerMaterial = new THREE.MeshPhongMaterial({ color: 0x2c2c2c });
     const mainBreaker = new THREE.Mesh(mainBreakerGeometry, mainBreakerMaterial);
     mainBreaker.position.y = height - 0.25;
     mainBreaker.position.z = -depth / 2 + 0.06;
@@ -117,7 +117,7 @@ export function createCommercial600AmpPanel(manufacturer = 'square-d', options =
     
     // === BUS BARS ===
     const busColor = config.busType === 'copper' ? 0xb87333 : 0xc0c0c0;
-    const busMaterial = new THREE.MeshLambertMaterial({ 
+    const busMaterial = new THREE.MeshPhongMaterial({ 
         color: busColor,
         shininess: 60,
         name: config.busType === 'copper' ? 'Copper_Bus' : 'Aluminum_Bus'
@@ -136,7 +136,7 @@ export function createCommercial600AmpPanel(manufacturer = 'square-d', options =
     
     // === CIRCUIT BREAKERS ===
     const breakerGeometry = new THREE.BoxGeometry(0.045, 0.09, 0.07);
-    const breakerMaterial = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
+    const breakerMaterial = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
     
     // Calculate breaker layout
     const breakersPerRow = 2;
@@ -166,7 +166,7 @@ export function createCommercial600AmpPanel(manufacturer = 'square-d', options =
     
     // Manufacturer label
     const labelGeometry = new THREE.PlaneGeometry(0.6, 0.12);
-    const labelMaterial = new THREE.MeshLambertMaterial({ 
+    const labelMaterial = new THREE.MeshPhongMaterial({ 
         color: 0xffffff,
         transparent: true,
         opacity: 0.9
@@ -179,7 +179,7 @@ export function createCommercial600AmpPanel(manufacturer = 'square-d', options =
     
     // Warning/danger labels
     const warningGeometry = new THREE.PlaneGeometry(0.35, 0.1);
-    const warningMaterial = new THREE.MeshLambertMaterial({ 
+    const warningMaterial = new THREE.MeshPhongMaterial({ 
         color: 0xff4444,
         transparent: true,
         opacity: 0.8
@@ -192,7 +192,7 @@ export function createCommercial600AmpPanel(manufacturer = 'square-d', options =
     
     // Circuit directory
     const directoryGeometry = new THREE.BoxGeometry(0.28, 0.45, 0.015);
-    const directoryMaterial = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+    const directoryMaterial = new THREE.MeshPhongMaterial({ color: 0xcccccc });
     const circuitDirectory = new THREE.Mesh(directoryGeometry, directoryMaterial);
     circuitDirectory.position.x = width / 2 - 0.18;
     circuitDirectory.position.y = height / 2 - 0.1;
@@ -204,7 +204,7 @@ export function createCommercial600AmpPanel(manufacturer = 'square-d', options =
     
     // Mounting brackets (4 corners)
     const bracketGeometry = new THREE.BoxGeometry(0.04, 0.04, 0.1);
-    const bracketMaterial = new THREE.MeshLambertMaterial({ color: 0x666666 });
+    const bracketMaterial = new THREE.MeshPhongMaterial({ color: 0x666666 });
     
     const bracketPositions = [
         [-width/2 - 0.02, height - 0.08], // Top left
@@ -294,7 +294,7 @@ export function createCommercial200AmpPanel(manufacturer = 'eaton', options = {}
     };
     
     // Get dimensions for selected manufacturer
-    const dims = manufacturers[manufacturer] || manufacturers['eaton'];
+    const dims = manufacturers[manufacturer as keyof typeof manufacturers] || manufacturers['eaton'];
     
     // Default options for 200A panel
     const config = {
@@ -321,8 +321,8 @@ export function createCommercial200AmpPanel(manufacturer = 'eaton', options = {}
     };
     
     // Main enclosure material
-    const enclosureMaterial = new THREE.MeshLambertMaterial({ 
-        color: finishColors[config.finish],
+    const enclosureMaterial = new THREE.MeshPhongMaterial({ 
+        color: finishColors[config.finish as keyof typeof finishColors],
         name: 'Enclosure_Material_200A'
     });
     
@@ -347,7 +347,7 @@ export function createCommercial200AmpPanel(manufacturer = 'eaton', options = {}
     
     // === DOOR HANDLE ===
     const handleGeometry = new THREE.BoxGeometry(0.01, 0.08, 0.02);
-    const handleMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+    const handleMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
     const handle = new THREE.Mesh(handleGeometry, handleMaterial);
     handle.position.x = width / 2 - 0.02;
     handle.position.y = height / 2 + 0.1;
@@ -358,7 +358,7 @@ export function createCommercial200AmpPanel(manufacturer = 'eaton', options = {}
     
     // === MAIN BREAKER (200A) ===
     const mainBreakerGeometry = new THREE.BoxGeometry(0.2, 0.12, 0.06);
-    const mainBreakerMaterial = new THREE.MeshLambertMaterial({ color: 0x2c2c2c });
+    const mainBreakerMaterial = new THREE.MeshPhongMaterial({ color: 0x2c2c2c });
     const mainBreaker = new THREE.Mesh(mainBreakerGeometry, mainBreakerMaterial);
     mainBreaker.position.y = height - 0.15;
     mainBreaker.position.z = -depth / 2 + 0.04;
@@ -368,7 +368,7 @@ export function createCommercial200AmpPanel(manufacturer = 'eaton', options = {}
     
     // === BUS BARS (Single Phase + Neutral) ===
     const busColor = config.busType === 'copper' ? 0xb87333 : 0xc0c0c0;
-    const busMaterial = new THREE.MeshLambertMaterial({ 
+    const busMaterial = new THREE.MeshPhongMaterial({ 
         color: busColor,
         shininess: 60,
         name: config.busType === 'copper' ? 'Copper_Bus_200A' : 'Aluminum_Bus_200A'
@@ -387,7 +387,7 @@ export function createCommercial200AmpPanel(manufacturer = 'eaton', options = {}
     
     // === CIRCUIT BREAKERS ===
     const breakerGeometry = new THREE.BoxGeometry(0.025, 0.06, 0.04);
-    const breakerMaterial = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
+    const breakerMaterial = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
     
     // Calculate breaker layout
     const breakersPerRow = 2;
@@ -415,7 +415,7 @@ export function createCommercial200AmpPanel(manufacturer = 'eaton', options = {}
     
     // === LABELS ===
     const labelGeometry = new THREE.PlaneGeometry(0.25, 0.06);
-    const labelMaterial = new THREE.MeshLambertMaterial({ 
+    const labelMaterial = new THREE.MeshPhongMaterial({ 
         color: 0xffffff,
         transparent: true,
         opacity: 0.9
@@ -475,7 +475,7 @@ export function createSimpleElectricalPanel() {
     
     // Simple box representation
     const geometry = new THREE.BoxGeometry(0.6, 1.68, 0.16); // 30"x84"x8" scaled
-    const material = new THREE.MeshLambertMaterial({ color: 0x808080 });
+    const material = new THREE.MeshPhongMaterial({ color: 0x808080 });
     const panel = new THREE.Mesh(geometry, material);
     
     panel.position.y = 0.84; // Half height

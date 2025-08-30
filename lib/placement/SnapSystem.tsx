@@ -72,7 +72,7 @@ export class SnapSystem {
     let closestPoint: SnapPoint | null = null
     let closestDistance = this.snapTolerance
 
-    for (const point of this.snapPoints.values()) {
+    for (const point of Array.from(this.snapPoints.values())) {
       const distance = position.distanceTo(point.position)
       if (distance < closestDistance) {
         closestDistance = distance

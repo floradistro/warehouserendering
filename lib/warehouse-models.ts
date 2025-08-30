@@ -1,5 +1,6 @@
 import { FloorplanData } from './store'
 import { CoveBaseTrimConfig, createCoveBaseTrim, defaultCoveBaseTrimConfig, coveBaseTrimPresets } from './cove-base-trim-model'
+import * as THREE from 'three'
 
 
 /**
@@ -2046,11 +2047,13 @@ export function createWarehouseCoveBaseTrim(
   const trimConfig: CoveBaseTrimConfig = {
     ...defaultCoveBaseTrimConfig,
     ...config,
-    position: { x: position.x, y: position.y, z: position.z },
-    rotation: { x: 0, y: 0, z: config?.rotation?.z || 0 }
+    position: new THREE.Vector3(position.x, position.y, position.z),
+    rotation: new THREE.Euler(0, 0, config?.rotation?.z || 0)
   };
 
 
+  const trim = createCoveBaseTrim(trimConfig);
+  
   if (id) {
     trim.userData.id = id;
   }
@@ -2091,8 +2094,8 @@ export function createRoomCoveBaseTrimSystem(
     const trimConfig = {
       ...baseConfig,
       length: pieceWidth * 12, // Convert to inches
-      position: { x: position.x, y: position.y, z: position.z },
-      rotation: { x: 0, y: 0, z: 0 }
+      position: new THREE.Vector3(position.x, position.y, position.z),
+      rotation: new THREE.Euler(0, 0, 0)
     };
     
     trimPieces.push(createCoveBaseTrim(trimConfig));
@@ -2111,15 +2114,15 @@ export function createRoomCoveBaseTrimSystem(
     const trimConfig = {
       ...baseConfig,
       length: pieceWidth * 12, // Convert to inches
-      position: { x: position.x, y: position.y, z: position.z },
-      rotation: { x: 0, y: 0, z: 0 }
+      position: new THREE.Vector3(position.x, position.y, position.z),
+      rotation: new THREE.Euler(0, 0, 0)
     };
     
     trimPieces.push(createCoveBaseTrim(trimConfig));
   }
   
   // West wall (left) - running north-south
-  const westPieces = Math.ceil;
+  const westPieces = Math.ceil(roomLength / pieceLengthFeet);
   for (let i = 0; i < westPieces; i++) {
     const pieceLength = Math.min(pieceLengthFeet, roomLength - (i * pieceLengthFeet));
     const position = {
@@ -2131,8 +2134,8 @@ export function createRoomCoveBaseTrimSystem(
     const trimConfig = {
       ...baseConfig,
       length: pieceLength * 12, // Convert to inches
-      position: { x: position.x, y: position.y, z: position.z },
-      rotation: { x: 0, y: 0, z: Math.PI / 2 } // 90 degrees for north-south orientation
+      position: new THREE.Vector3(position.x, position.y, position.z),
+      rotation: new THREE.Euler(0, 0, Math.PI / 2) // 90 degrees for north-south orientation
     };
     
     trimPieces.push(createCoveBaseTrim(trimConfig));
@@ -2151,8 +2154,8 @@ export function createRoomCoveBaseTrimSystem(
     const trimConfig = {
       ...baseConfig,
       length: pieceLength * 12, // Convert to inches
-      position: { x: position.x, y: position.y, z: position.z },
-      rotation: { x: 0, y: 0, z: Math.PI / 2 } // 90 degrees for north-south orientation
+      position: new THREE.Vector3(position.x, position.y, position.z),
+      rotation: new THREE.Euler(0, 0, Math.PI / 2) // 90 degrees for north-south orientation
     };
     
     trimPieces.push(createCoveBaseTrim(trimConfig));
@@ -2219,7 +2222,7 @@ export function getRecommendedCoveBaseTrim(areaType: string) {
     'laboratory': COVE_BASE_TRIM_CATALOG.ALUMINUM_TRIM
   };
   
-  return recommendations[areaType.toLowerCase()] || COVE_BASE_TRIM_CATALOG.VINYL_6_INCH;
+  return (recommendations as any)[areaType.toLowerCase()] || COVE_BASE_TRIM_CATALOG.VINYL_6_INCH;
 }
 
 /**

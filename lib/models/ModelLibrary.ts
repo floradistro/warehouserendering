@@ -891,12 +891,12 @@ export class ModelLibrary {
 
     const compatible: SemanticMetadata[] = []
     
-    for (const otherModel of this.models.values()) {
+    for (const otherModel of Array.from(this.models.values())) {
       if (otherModel.id === modelId) continue
 
       // Check if models can connect
       const canConnect = model.connections.some(conn1 =>
-        otherModel.connections.some(conn2 => conn1.type === conn2.type)
+        otherModel.connections.some((conn2: any) => conn1.type === conn2.type)
       )
 
       // Check if models have compatible relationships

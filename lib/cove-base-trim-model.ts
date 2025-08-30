@@ -25,13 +25,13 @@ export const createCoveBaseTrim = (config: CoveBaseTrimConfig): THREE.Group => {
   let baseMaterial: THREE.Material;
   switch(config.material) {
     case 'vinyl':
-      baseMaterial = new THREE.MeshLambertMaterial({ 
+      baseMaterial = new THREE.MeshPhongMaterial({ 
         color: config.color,
         shininess: 20
       });
       break;
     case 'rubber':
-      baseMaterial = new THREE.MeshLambertMaterial({ 
+      baseMaterial = new THREE.MeshPhongMaterial({ 
         color: config.color,
         shininess: 5
       });
@@ -44,7 +44,7 @@ export const createCoveBaseTrim = (config: CoveBaseTrimConfig): THREE.Group => {
       });
       break;
     default:
-      baseMaterial = new THREE.MeshLambertMaterial({ 
+      baseMaterial = new THREE.MeshPhongMaterial({ 
         color: config.color,
         shininess: 20
       });

@@ -42,7 +42,9 @@ export async function demonstrateWarehouseEngine() {
     { x: 10, y: 0, z: 12 }
   ]
 
-  for (const [index, pos] of chairPositions.entries()) {
+  for (let i = 0; i < chairPositions.length; i++) {
+    const index = i;
+    const pos = chairPositions[i];
     const chairResult = await engine.placeObjectIntelligently('chair', pos, {
       allowAutoPosition: true,
       enforceConstraints: true
