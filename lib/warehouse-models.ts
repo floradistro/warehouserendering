@@ -301,16 +301,16 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
     // Building width: 88.75', Room wall width: 78.875' (88.75 - 10 = 78.875)
     // Creates 5' hallways on both sides (5' + 78.875' + 5' = 88.875')
     
-    // South dry room north wall - separates south and middle hallway (FULL HEIGHT TO ROOF)
+    // Room wall 1 - Room 2's north wall (separates Room 2 from area above)
     {
       id: 'room-wall-1',
       type: 'wall' as const,
       position: { 
-        x: 81.875, // Adjusted to make east wall exactly 28.5' long (110.375 - 28.5 = 81.875)
-        y: 208.5209, // North boundary of south dry room (198.0417 + 10.4792 = 208.5209)
+        x: 36.0625, // Aligned with new left longways wall position
+        y: 198.0417, // Room 2's north boundary
         z: 0 
       },
-      dimensions: { width: 28.5, height: 0.375, depth: 16.8906 }, // Width set to exactly 28.5' to reach east longway wall, 4.5" thick (0.375'), FULL HEIGHT to roof curve
+      dimensions: { width: 70.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -318,30 +318,31 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         category: 'room-walls', 
         material_type: 'drywall',
         load_bearing: false,
-        room_south: 'dry-room-south',
+        room_south: 2,
         curved_top: true,
         follows_roof_profile: true,
         center_height: 16.8906,
         exterior_height: 16.8438,
-        description: 'South dry room north wall - FULL HEIGHT to roof trusses (28.5\' long)',
+        description: 'Room wall 1 - Room 2\'s north wall (separates Room 2 from area above)',
         framing: {
           studSize: '2x4',
           studSpacing: 16, // inches on center
-          studCount: Math.ceil(28.5 * 12 / 16), // calculated stud count
+          studCount: Math.ceil(70.6875 * 12 / 16), // calculated stud count
           hasFraming: true
         }
       }
     },
+
     // Room wall 2 - centered on second I-beam (separates Room 2 from Room 3)
     {
       id: 'room-wall-2',
       type: 'wall' as const,
       position: { 
-        x: 30.0625, // Precisely centered
+        x: 36.0625, // Aligned with new left longways wall position
         y: 173.4792, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 80.375, height: 0.375, depth: 12 }, // 4.5" thick (0.375'), fits between longways walls
+      dimensions: { width: 70.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -354,16 +355,17 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         description: 'Room wall 2 - separates Room 2 (north) from Room 3 (south)'
       }
     },
-    // Room wall 3 - centered on third I-beam (separates Room 3 from Room 4)
+
+    // Room 2 East Divider Wall - 12' west of interior wall (north-south divider)
     {
-      id: 'room-wall-3',
+      id: 'room-2-east-divider-wall',
       type: 'wall' as const,
       position: { 
-        x: 30.0625, // Precisely centered
-        y: 148.9167, // Precisely centered on I-beam Y position minus half wall thickness
+        x: 94.75, // 12' west of east longway wall (106.75 - 12 = 94.75)
+        y: 173.4792, // Start at Room 2 south wall
         z: 0 
       },
-      dimensions: { width: 80.375, height: 0.375, depth: 12 }, // 4.5" thick (0.375'), fits between longways walls
+      dimensions: { width: 0.375, height: 24.5625, depth: 17 }, // 4.5" thick, spans Room 2 height (198.0417 - 173.4792 = 24.5625'), 17' tall interior wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -371,21 +373,32 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         category: 'room-walls', 
         material_type: 'drywall',
         load_bearing: false,
-        room_north: 3,
-        room_south: 4,
-        description: 'Room wall 3 - separates Room 3 (north) from Room 4 (south)'
+        room_west: 'room-2-west',
+        room_east: 'room-2-east',
+        curved_top: true,
+        follows_roof_profile: true,
+        center_height: 16.8906,
+        exterior_height: 16.8438,
+        description: 'Room 2 east divider wall - 12\' west of east longway wall, divides Room 2 into west and east sections',
+        framing: {
+          studSize: '2x4',
+          studSpacing: 16, // inches on center
+          studCount: Math.ceil(24.5625 * 12 / 16), // calculated stud count
+          hasFraming: true
+        }
       }
     },
-    // FIREWALL - Room 5's north wall / Room 4's south wall - EXTENDS TO EXTERIOR WALLS
+
+    // FIREWALL - Room 4's north wall / Room 3's south wall - EXTENDS TO EXTERIOR WALLS
     {
       id: 'room-wall-4',
       type: 'wall' as const,
       position: { 
         x: 25, // Extended to west exterior wall
-        y: 124.3542, // Precisely centered on I-beam Y position minus half wall thickness
+        y: 148.9167, // Precisely centered on I-beam Y position minus half wall thickness - MOVED NORTH ONE WALL
         z: 0 
       },
-      dimensions: { width: 87.75, height: 0.5, depth: 12 }, // 6" thick firewall (0.5'), extends full building width
+      dimensions: { width: 87.75, height: 0.5, depth: 17 }, // 6" thick firewall (0.5'), 17' tall interior wall
       rotation: 0,
       material: 'concrete',
       color: '#dc2626', // Fire-rated red color
@@ -397,9 +410,31 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         extends_to_exterior: true,
         crosses_hallways: true,
         firewall_marking: 'subtle',
+        room_north: 3,
+        room_south: 4,
+        description: 'FIREWALL - Room 4 north wall / Room 3 south wall - extends to exterior walls across hallways'
+      }
+    },
+    // Room wall 4 - centered on fourth I-beam (separates Room 4 from Room 5) - REGULAR WALL REPLACING FIREWALL'S OLD POSITION
+    {
+      id: 'room-wall-4-regular',
+      type: 'wall' as const,
+      position: { 
+        x: 36.0625, // Aligned with new left longways wall position
+        y: 124.3542, // Precisely centered on I-beam Y position minus half wall thickness
+        z: 0 
+      },
+      dimensions: { width: 70.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
+      rotation: 0,
+      material: 'concrete',
+      color: '#ffffff',
+      metadata: { 
+        category: 'room-walls', 
+        material_type: 'drywall',
+        load_bearing: false,
         room_north: 4,
         room_south: 5,
-        description: 'FIREWALL - Room 5 north wall / Room 4 south wall - extends to exterior walls across hallways'
+        description: 'Room wall 4 - separates Room 4 (north) from Room 5 (south)'
       }
     },
     // Room wall 5 - centered on fifth I-beam (separates Room 5 from Room 6)
@@ -407,11 +442,11 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'room-wall-5',
       type: 'wall' as const,
       position: { 
-        x: 30.0625, // Precisely centered
+        x: 36.0625, // Aligned with new left longways wall position
         y: 99.7917, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 80.375, height: 0.375, depth: 12 }, // 4.5" thick (0.375'), fits between longways walls
+      dimensions: { width: 70.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -429,11 +464,11 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'room-wall-6',
       type: 'wall' as const,
       position: { 
-        x: 30.0625, // Precisely centered
+        x: 36.0625, // Aligned with new left longways wall position
         y: 75.2292, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 80.375, height: 0.375, depth: 12 }, // 4.5" thick (0.375'), fits between longways walls
+      dimensions: { width: 70.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -451,11 +486,11 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'room-wall-7',
       type: 'wall' as const,
       position: { 
-        x: 30.0625, // Precisely centered
+        x: 36.0625, // Aligned with new left longways wall position
         y: 48.6667, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 80.375, height: 0.375, depth: 12 }, // 4.5" thick (0.375'), fits between longways walls
+      dimensions: { width: 70.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -471,16 +506,16 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
 
     // LONGWAYS WALLS - 2 vertical walls to close rooms, stopping 4' from north/south for hallway
     
-    // Left longways wall - runs north-south, recessed 5' from left exterior wall, stops at north hallway
+    // Left longways wall - runs north-south, recessed 15' from left exterior wall, stops at north hallway
     {
       id: 'longways-wall-left',
       type: 'wall' as const,
       position: { 
-        x: 30.0625, // Aligned with room walls (matches room-wall positions)
-        y: 29, // Start 4' from south exterior wall (25 + 4 = 29)
+        x: 37.0625, // Adjusted for 12' wide west hallway (25 + 12 = 37.0625)
+        y: 25, // Extended to south exterior wall
         z: 0 
       },
-      dimensions: { width: 0.375, height: 169.0417, depth: 12 }, // 4.5" thick, shortened to end at room 2's north wall: 198.0417-29 = 169.0417'
+      dimensions: { width: 0.375, height: 173.0417, depth: 17 }, // 4.5" thick, full length to room 2's north wall: 198.0417-25 = 173.0417'
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -488,73 +523,73 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         category: 'room-walls', 
         material_type: 'drywall',
         load_bearing: false,
-        description: 'Left longways wall - 12\' high with room openings, shortened to end at room 2\'s north wall',
+        description: 'Left longways wall - 12\' high with room openings, extended to south exterior wall for Room 8 expansion',
         openings: [
           {
             id: 'room-8-west-opening',
             type: 'door',
             position: { x: 11.83, z: 0 }, // Room 8 centered in its section (29 + 23.6667/2 = 40.83 - 29 = 11.83)
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 8 west entrance - 5\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Room 8 west entrance - 15\' hallway double door' }
           },
           {
             id: 'room-7-west-opening', 
             type: 'door',
             position: { x: 31.77, z: 0 }, // Room 7 centered (75.2292 + 48.6667)/2 - 29 = 31.77
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 7 west entrance - 5\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Room 7 west entrance - 15\' hallway double door' }
           },
           {
             id: 'room-6-west-opening',
             type: 'door', 
             position: { x: 58.51, z: 0 }, // Room 6 centered (75.2292 + 99.7917)/2 - 29 = 58.51
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 6 west entrance - 5\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Room 6 west entrance - 15\' hallway double door' }
           },
           {
             id: 'room-5-west-opening',
             type: 'door',
             position: { x: 83.07, z: 0 }, // Room 5 centered (99.7917 + 124.3542)/2 - 29 = 83.07
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 5 west entrance - 5\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Room 5 west entrance - 15\' hallway double door' }
           },
           {
             id: 'room-4-west-opening',
             type: 'door',
             position: { x: 107.64, z: 0 }, // Room 4 centered (124.3542 + 148.9167)/2 - 29 = 107.64
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 4 west entrance - 5\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Room 4 west entrance - 15\' hallway double door' }
           },
           {
             id: 'room-3-west-opening',
             type: 'door',
             position: { x: 132.20, z: 0 }, // Room 3 centered (148.9167 + 173.4792)/2 - 29 = 132.20
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 3 west entrance - 5\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Room 3 west entrance - 15\' hallway double door' }
           },
           {
             id: 'room-2-west-opening',
             type: 'door',
             position: { x: 156.76, z: 0 }, // Room 2 centered (173.4792 + 198.0417)/2 - 29 = 156.76
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 2 west entrance - 5\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Room 2 west entrance - 15\' hallway double door' }
           }
         ]
       }
     },
     
-          // Right longways wall - runs north-south, recessed 3' from right exterior wall
-      // STARTS at room-wall-7 (room 7's south wall) to leave room 8 open to east hallway
+          // Right longways wall - runs north-south, recessed 6' from right exterior wall
+      // STARTS at room-wall-7 (room 7's south wall) - Room 8 now extends full width to east exterior wall
       // Continues north past double tier dry room, creating continuous wall
       {
         id: 'longways-wall-right',
         type: 'wall' as const,
         position: { 
-          x: 110.375, // 3' from right exterior wall (112.75 - 3 + wall thickness/2 = 110.375)
-          y: 49.0417, // Start after room-wall-7 (48.6667 + 0.375 wall thickness = 49.0417)
+          x: 106.75, // 6' from right exterior wall (112.75 - 6 + wall thickness/2 = 106.75)
+          y: 25, // Extended to south exterior wall
           z: 0 
         },
-        dimensions: { width: 0.375, height: 172.9583, depth: 12 }, // Extended to north exterior wall (222 - 49.0417 = 172.9583')
+        dimensions: { width: 0.375, height: 173.0417, depth: 17 }, // Full length to control area (198.0417 - 25 = 173.0417')
         rotation: 0,
         material: 'concrete',
         color: '#ffffff',
@@ -562,7 +597,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
           category: 'room-walls', 
           material_type: 'drywall',
           load_bearing: false,
-          description: 'Right longways wall - 12\' high with room openings, continuous wall to north exterior, 3\' from east exterior wall',
+          description: 'Right longways wall - 12\' high with room openings, shortened to open control area to east hallway, 6\' from east exterior wall',
           openings: [
             {
               id: 'room-7-east-opening',
@@ -610,445 +645,33 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         }
       },
 
-    // HALLWAY WALLS - North and South walls to complete 4' perimeter hallway
+    // HALLWAY WALLS - North area is now open control area (hallway wall removed)
     
-    // South hallway wall - runs east-west, 4' from south exterior wall (northern boundary of Room 8)
-    // Shortened to end 2' from south wall opening
-    {
-      id: 'hallway-wall-south',
-      type: 'wall' as const,
-      position: { 
-        x: 30.0625, // Aligned with other room walls (matches room-wall positions)
-        y: 29, // 4' from south exterior wall (25 + 4 = 29)
-        z: 0 
-      },
-      dimensions: { width: 68.5625, height: 0.375, depth: 12 }, // Extended eastward (98.625 - 30.0625 = 68.5625')
-      rotation: 0,
-      material: 'concrete',
-      color: '#ffffff',
-      metadata: { 
-        category: 'room-walls', 
-        material_type: 'drywall',
-        load_bearing: false,
-        room_north: 8,
-        description: 'South hallway wall - northern boundary of Room 8, shortened to end 2\' from south wall opening'
-      }
-    },
+
     
-    // Room 8 closure wall - runs north-south from south exterior wall to room-wall-7
-    // This wall closes both room 8 and the south hallway at x=96.625
-    {
-      id: 'room-8-closure-wall',
-      type: 'wall' as const,
-      position: { 
-        x: 98.625, // At the end of the extended south hallway wall
-        y: 25, // Start at south exterior wall
-        z: 0 
-      },
-      dimensions: { width: 0.375, height: 23.6667, depth: 12 }, // 4.5" thick, extends to room-wall-7 (48.6667 - 25 = 23.6667')
-      rotation: 0,
-      material: 'concrete',
-      color: '#ffffff',
-      metadata: { 
-        category: 'room-walls', 
-        material_type: 'drywall',
-        load_bearing: false,
-        description: 'Room 8 closure wall - closes both room 8 and south hallway, connects south exterior wall to room-wall-7 (room 8 north wall)'
-      }
-    },
+
+
+
+
+
+
+
+
+
+
+
     
-    // North hallway wall - separates Room 2 from south dry room (stays at original I-beam position) (FULL HEIGHT TO ROOF)
-    {
-      id: 'hallway-wall-north',
-      type: 'wall' as const,
-      position: { 
-        x: 30.0625, // Aligned with other room walls (same as room-wall positions)
-        y: 198.0417, // Precisely centered on I-beam Y position minus half wall thickness (stays at original position)
-        z: 0 
-      },
-      dimensions: { width: 80.3125, height: 0.375, depth: 16.8906 }, // Ends at east longway wall: 110.375 - 30.0625 = 80.3125', 4.5" thick (0.375'), FULL HEIGHT to roof curve
-      rotation: 0,
-      material: 'concrete',
-      color: '#ffffff',
-      metadata: { 
-        category: 'room-walls', 
-        material_type: 'drywall',
-        load_bearing: false,
-        room_north: 'dry-room-south',
-        room_south: 2,
-        curved_top: true,
-        follows_roof_profile: true,
-        center_height: 16.8906,
-        exterior_height: 16.8438,
-        description: 'North hallway wall - separates Room 2 from south dry room (SOUTH WALL - FULL HEIGHT to roof trusses)'
-      }
-    },
 
 
 
 
 
-    // South dry room east wall - eastern boundary (FULL HEIGHT TO ROOF)
-    {
-      id: 'room-1-second-divider-wall',
-      type: 'wall' as const,
-      position: { 
-        x: 110.375, // At the end of the north hallway wall (30 + 80.375 = 110.375)
-        y: 198.0417, // Start at north hallway wall position and extend north
-        z: 0 
-      },
-      dimensions: { width: 0.375, height: 10.4792, depth: 16.8906 }, // 4.5" thick, spans exactly 10.4792' for equal sized rooms, FULL HEIGHT to roof curve
-      rotation: 0,
-      material: 'concrete',
-      color: '#ffffff',
-      metadata: { 
-        category: 'room-walls', 
-        material_type: 'drywall',
-        load_bearing: false,
-        room_west: 'dry-room-south',
-        curved_top: true,
-        follows_roof_profile: true,
-        center_height: 16.8906,
-        exterior_height: 16.8438,
-        description: 'South dry room east wall - FULL HEIGHT to roof trusses (10.4792\' wide)'
-      }
-    },
 
-    // South dry room west wall - western boundary (FULL HEIGHT TO ROOF)
-    {
-      id: 'dry-room-west-cap-wall',
-      type: 'wall' as const,
-      position: { 
-        x: 81.875, // Adjusted to make the dry room exactly 28.5' long
-        y: 198.0417, // Start at north hallway wall position and extend north
-        z: 0 
-      },
-      dimensions: { width: 0.375, height: 10.4792, depth: 16.8906 }, // 4.5" thick, spans exactly 10.4792' for equal sized rooms, FULL HEIGHT to roof curve
-      rotation: 0,
-      material: 'concrete',
-      color: '#ffffff',
-      metadata: { 
-        category: 'room-walls', 
-        material_type: 'drywall',
-        load_bearing: false,
-        room_east: 'dry-room-south',
-        curved_top: true,
-        follows_roof_profile: true,
-        center_height: 16.8906,
-        exterior_height: 16.8438,
-        description: 'South dry room west wall - FULL HEIGHT to roof trusses (28.5\' long x 10.4792\' wide)',
-        openings: [
-          {
-            id: 'south-dry-room-west-double-door',
-            type: 'door' as const,
-            position: { x: 5.2396, z: 0 }, // Centered on 10.4792' wall (10.4792/2 = 5.2396), at floor level
-            dimensions: { width: 5, height: 8 }, // 5' wide (slim double door), 8' tall
-            metadata: {
-              doorType: 'double' as const,
-              description: 'Slim double door - South dry room west entrance'
-            }
-          }
-        ]
-      }
-    },
 
-    // MIDDLE HALLWAY WALLS (3' wide hallway between dry rooms)
-    // Middle hallway north wall (also south wall of north dry room) (FULL HEIGHT TO ROOF)
-    {
-      id: 'middle-hallway-south-wall',
-      type: 'wall' as const,
-      position: { 
-        x: 81.875, // Aligned with dry rooms
-        y: 211.5209, // North wall of middle hallway (208.5209 + 3 = 211.5209)
-        z: 0 
-      },
-      dimensions: { width: 28.5, height: 0.375, depth: 16.8906 }, // Same 28.5' length, 4.5" thick, FULL HEIGHT to roof curve
-      rotation: 0,
-      material: 'concrete',
-      color: '#ffffff',
-      metadata: { 
-        category: 'room-walls', 
-        material_type: 'drywall',
-        load_bearing: false,
-        room_north: 'dry-room-north',
-        room_south: 'middle-hallway',
-        curved_top: true,
-        follows_roof_profile: true,
-        center_height: 16.8906,
-        exterior_height: 16.8438,
-        description: 'Middle hallway north wall / North dry room south wall - FULL HEIGHT to roof trusses'
-      }
-    },
-    
-    // North dry room west wall (FULL HEIGHT TO ROOF)
-    {
-      id: 'north-dry-room-west-wall',
-      type: 'wall' as const,
-      position: { 
-        x: 81.875, // Western boundary of north dry room
-        y: 211.5209, // Start at south wall of north dry room
-        z: 0 
-      },
-      dimensions: { width: 0.375, height: 10.4791, depth: 16.8906 }, // 4.5" thick, extends to north exterior (222 - 211.5209 = 10.4791'), FULL HEIGHT to roof curve
-      rotation: 0,
-      material: 'concrete',
-      color: '#ffffff',
-      metadata: { 
-        category: 'room-walls', 
-        material_type: 'drywall',
-        load_bearing: false,
-        room_east: 'dry-room-north',
-        curved_top: true,
-        follows_roof_profile: true,
-        center_height: 16.8906,
-        exterior_height: 16.8438,
-        description: 'North dry room west wall - FULL HEIGHT to roof trusses (28.5\' long x 10.4791\' wide)',
-        openings: [
-          {
-            id: 'north-dry-room-west-double-door',
-            type: 'door' as const,
-            position: { x: 5.23955, z: 0 }, // Centered on 10.4791' wall (10.4791/2 = 5.23955), at floor level
-            dimensions: { width: 5, height: 8 }, // 5' wide (slim double door), 8' tall
-            metadata: {
-              doorType: 'double' as const,
-              description: 'Slim double door - North dry room west entrance'
-            }
-          }
-        ]
-      }
-    },
 
-    // North dry room north wall (FULL HEIGHT TO ROOF)
-    {
-      id: 'north-dry-room-north-wall',
-      type: 'wall' as const,
-      position: { 
-        x: 81.875, // Start at west wall of north dry room
-        y: 222, // North exterior wall position
-        z: 0 
-      },
-      dimensions: { width: 28.5, height: 0.375, depth: 16.8906 }, // 28.5' long, 4.5" thick, FULL HEIGHT to roof curve
-      rotation: 0,
-      material: 'concrete',
-      color: '#ffffff',
-      metadata: { 
-        category: 'room-walls', 
-        material_type: 'drywall',
-        load_bearing: false,
-        room_south: 'dry-room-north',
-        curved_top: true,
-        follows_roof_profile: true,
-        center_height: 16.8906,
-        exterior_height: 16.8438,
-        description: 'North dry room north wall - FULL HEIGHT to roof trusses (28.5\' long)'
-      }
-    },
 
-    // North dry room east wall (FULL HEIGHT TO ROOF)
-    {
-      id: 'north-dry-room-east-wall',
-      type: 'wall' as const,
-      position: { 
-        x: 110.375, // East boundary at longway wall position
-        y: 211.5209, // Start at south wall of north dry room
-        z: 0 
-      },
-      dimensions: { width: 0.375, height: 10.4791, depth: 16.8906 }, // 4.5" thick, extends to north exterior (222 - 211.5209 = 10.4791'), FULL HEIGHT to roof curve
-      rotation: 0,
-      material: 'concrete',
-      color: '#ffffff',
-      metadata: { 
-        category: 'room-walls', 
-        material_type: 'drywall',
-        load_bearing: false,
-        room_west: 'dry-room-north',
-        curved_top: true,
-        follows_roof_profile: true,
-        center_height: 16.8906,
-        exterior_height: 16.8438,
-        description: 'North dry room east wall - FULL HEIGHT to roof trusses (10.4791\' wide)'
-      }
-    },
 
-    // CATWALKS - 2.5' wide elevated walkways with ZERO GAP on door headers
-    // South Dry Room Catwalk - Bottom touches door header with zero gap
-    {
-      id: 'south-dry-room-catwalk',
-      type: 'platform' as const,
-      position: { 
-        x: 81.875, // Start at west wall where doorway is
-        y: 198.0417 + 5.2396 - 1.25, // Door center minus half catwalk width (198.0417 + 5.2396 - 1.25 = 202.0313)
-        z: 8.875 // RIGHT ON TOP of door frame assembly (8' door + 0.875' complete header structure)
-      },
-      dimensions: { 
-        width: 28.5, // Length from west wall to east longway wall (110.375 - 81.875 = 28.5')
-        height: 2.5, // Catwalk width of 2.5'
-        depth: 0.25 // Platform thickness of 3"
-      },
-      rotation: 0,
-      material: 'metal',
-      color: '#6b7280',
-      metadata: { 
-        category: 'catwalk',
-        material_type: 'steel_grating',
-        load_capacity: 100, // psf
-        has_railings: true,
-        railing_height: 3.5, // 42" railings
-        sits_on_header: true,
-        description: 'South dry room catwalk - zero gap on door header'
-      }
-    },
 
-    // North Dry Room Catwalk - Bottom touches door header with zero gap
-    {
-      id: 'north-dry-room-catwalk',
-      type: 'platform' as const,
-      position: { 
-        x: 81.875, // Start at west wall where doorway is
-        y: 211.5209 + 5.23955 - 1.25, // Door center minus half catwalk width (211.5209 + 5.23955 - 1.25 = 215.51045)
-        z: 8.875 // RIGHT ON TOP of door frame assembly (8' door + 0.875' complete header structure)
-      },
-      dimensions: { 
-        width: 28.5, // Length from west wall to east longway wall (110.375 - 81.875 = 28.5')
-        height: 2.5, // Catwalk width of 2.5'
-        depth: 0.25 // Platform thickness of 3"
-      },
-      rotation: 0,
-      material: 'metal',
-      color: '#6b7280',
-      metadata: { 
-        category: 'catwalk',
-        material_type: 'steel_grating',
-        load_capacity: 100, // psf
-        has_railings: true,
-        railing_height: 3.5, // 42" railings
-        sits_on_header: true,
-        description: 'North dry room catwalk - zero gap on door header'
-      }
-    },
-
-    // CONNECTING CATWALK - 8' wide catwalk connecting both dry room catwalks on west side
-    {
-      id: 'west-connecting-catwalk',
-      type: 'platform' as const,
-      position: { 
-        x: 73.5, // Extended 4' further west (77.5 - 4 = 73.5)
-        y: 198.0417, // Start at south dry room south wall
-        z: 8.875 // Same height as dry room catwalks
-      },
-      dimensions: { 
-        width: 8, // 8' wide connecting catwalk (expanded from 4' to 8')
-        height: 24.4791, // Length to span both dry rooms + middle hallway (222 - 198.0417 = 23.9583, rounded to 24.4791)
-        depth: 0.25 // Platform thickness of 3"
-      },
-      rotation: 0,
-      material: 'metal',
-      color: '#6b7280',
-      metadata: { 
-        category: 'catwalk',
-        material_type: 'steel_grating',
-        load_capacity: 100, // psf
-        has_railings: true,
-        railing_height: 3.5, // 42" railings
-        connects_catwalks: true,
-        description: '8\' wide connecting catwalk on west side linking both dry room catwalks'
-      }
-    },
-
-    // WEST CONNECTING CATWALK DETAILED METAL RAILING - OSHA Compliant (West Side Only)
-    {
-      id: 'west-connecting-catwalk-railing-system',
-      type: 'railing' as const,
-      position: { 
-        x: 73.6, // Positioned 1.2" inward from new west edge of catwalk (73.5 + 0.1 = 73.6) for proper post mounting
-        y: 198.0417, // Start at south end of catwalk
-        z: 7.375 // Base sits on catwalk surface: 9.125 - (3.5/2) = 7.375 (accounts for depth/2 offset in positioning logic)
-      },
-      dimensions: { 
-        width: 0.1, // Thin railing profile
-        height: 24.4791, // Length along catwalk (north-south)
-        depth: 3.5 // 42" high railing
-      },
-      rotation: 0,
-      material: 'metal',
-      color: '#708090',
-      metadata: { 
-        category: 'safety_railing',
-        material_type: 'galvanized_steel',
-        osha_compliant: true,
-        height_inches: 42,
-        mid_rail_height: 21,
-        toe_kick_height: 4,
-        post_spacing: 60, // 5 feet maximum
-        rail_diameter: 1.5,
-        post_diameter: 2,
-        has_toe_kick: true,
-        has_mid_rail: true,
-        has_posts: true,
-        num_posts: 6, // Every 5 feet along 24.48' length
-        compliance_standard: 'OSHA_1910.29',
-        detailed_rendering: true,
-        railing_type: 'detailed_metal_handrail',
-        description: 'West connecting catwalk detailed railing - OSHA compliant with posts, top rail, mid rail, and toe kick - mounted on catwalk edge'
-      }
-    },
-
-    // EAST LONGWAY HALLWAY CEILING - 8' high ceiling creating 4' duct space above
-    // Horizontal ceiling panel spanning the east hallway width and length
-    {
-      id: 'east-hallway-ceiling',
-      type: 'fixture' as const, // Using fixture type for ceiling panel
-      position: { 
-        x: 110.375, // Start at right longways wall
-        y: 29, // Start at south hallway wall
-        z: 8 // 8' height for ceiling
-      },
-      dimensions: { 
-        width: 2.375, // Width from right longway wall to east exterior wall (112.75 - 110.375 = 2.375')
-        height: 193, // Extended to north exterior wall (222 - 29 = 193')
-        depth: 0.25 // Thin ceiling material - 3" thick
-      },
-      rotation: 0, // No rotation needed - positioned as horizontal surface
-      material: 'concrete',
-      color: '#f5f5f5', // Light gray ceiling color
-      metadata: { 
-        category: 'ceiling', 
-        material_type: 'drywall',
-        load_bearing: false,
-        ceiling_height: 8,
-        duct_space_above: 4,
-        is_ceiling: true,
-        description: 'East longway hallway ceiling at 8\' height, extended to north exterior wall'
-      }
-    },
-
-    // MIDDLE HALLWAY CEILING - 8' high ceiling for 3' wide hallway between dry rooms
-    {
-      id: 'middle-hallway-ceiling',
-      type: 'fixture' as const,
-      position: { 
-        x: 81.875, // Start at west wall of dry rooms
-        y: 208.5209, // Start at south wall of middle hallway
-        z: 8 // 8' height for ceiling
-      },
-      dimensions: { 
-        width: 28.5, // Same width as dry rooms (28.5')
-        height: 3, // Exactly 3' wide hallway (211.5209 - 208.5209 = 3')
-        depth: 0.25 // Thin ceiling material - 3" thick
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#f5f5f5', // Light gray ceiling color
-      metadata: { 
-        category: 'ceiling', 
-        material_type: 'drywall',
-        load_bearing: false,
-        ceiling_height: 8,
-        duct_space_above: 4,
-        is_ceiling: true,
-        description: 'Middle hallway ceiling at 8\' height, 3\' wide hallway between dry rooms'
-      }
-    },
 
     // SUPPORT TRUSS SYSTEM - 9 trusses spanning east-west across building (88.75' width)
     // Trusses are 4' 10 1/16" wide vertically, 8" thick beams on each end
@@ -1719,7 +1342,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'ibc-tote-bottom-1',
       type: 'fixture' as const,
       position: { 
-        x: 69.375, // Starting at the I-beam center position
+        x: 54, // Positioned east of feeder tanks (47 + 5.33' tank + 1.67' clearance = 54')
         y: 198.4167, // Against the north face of Room 2's north wall
         z: 0 // Floor level
       },
@@ -1745,7 +1368,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'ibc-tote-bottom-2',
       type: 'fixture' as const,
       position: { 
-        x: 65.292, // 4.083' spacing (4' tote + 0.083' gap = 1")
+        x: 58.083, // Maintain 4.083' spacing from first tote (54 + 4.083' = 58.083')
         y: 198.4167,
         z: 0
       },
@@ -1765,7 +1388,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'ibc-tote-bottom-3',
       type: 'fixture' as const,
       position: { 
-        x: 61.209, // 4.083' spacing
+        x: 62.166, // Maintain 4.083' spacing (58.083 + 4.083' = 62.166')
         y: 198.4167,
         z: 0
       },
@@ -1785,7 +1408,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'ibc-tote-bottom-4',
       type: 'fixture' as const,
       position: { 
-        x: 57.126, // 4.083' spacing
+        x: 66.249, // Maintain 4.083' spacing (62.166 + 4.083' = 66.249')
         y: 198.4167,
         z: 0
       },
@@ -1805,7 +1428,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'ibc-tote-bottom-5',
       type: 'fixture' as const,
       position: { 
-        x: 53.043, // 4.083' spacing
+        x: 70.332, // Maintain 4.083' spacing (66.249 + 4.083' = 70.332')
         y: 198.4167,
         z: 0
       },
@@ -1825,7 +1448,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'ibc-tote-bottom-6',
       type: 'fixture' as const,
       position: { 
-        x: 48.96, // 4.083' spacing
+        x: 74.415, // Maintain 4.083' spacing (70.332 + 4.083' = 74.415')
         y: 198.4167,
         z: 0
       },
@@ -1845,7 +1468,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'ibc-tote-bottom-7',
       type: 'fixture' as const,
       position: { 
-        x: 44.877, // 4.083' spacing
+        x: 78.498, // Maintain 4.083' spacing (74.415 + 4.083' = 78.498')
         y: 198.4167,
         z: 0
       },
@@ -1867,7 +1490,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'ibc-tote-top-1',
       type: 'fixture' as const,
       position: { 
-        x: 69.375, // Same X position as bottom
+        x: 54, // Same X position as bottom
         y: 198.4167, // Same Y position
         z: 5.83 // Bottom tote (3.83') + 2' gap = 5.83' height
       },
@@ -1888,7 +1511,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'ibc-tote-top-2',
       type: 'fixture' as const,
       position: { 
-        x: 65.292, // Match bottom row spacing with 1" gaps
+        x: 58.083, // Match bottom row spacing
         y: 198.4167,
         z: 5.83
       },
@@ -1908,7 +1531,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'ibc-tote-top-3',
       type: 'fixture' as const,
       position: { 
-        x: 61.209, // Match bottom row spacing
+        x: 62.166, // Match bottom row spacing
         y: 198.4167,
         z: 5.83
       },
@@ -1929,7 +1552,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'ibc-tote-top-4',
       type: 'fixture' as const,
       position: { 
-        x: 57.126, // Match bottom row spacing
+        x: 66.249, // Match bottom row spacing
         y: 198.4167,
         z: 5.83
       },
@@ -1949,7 +1572,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'ibc-tote-top-5',
       type: 'fixture' as const,
       position: { 
-        x: 53.043, // Match bottom row spacing
+        x: 70.332, // Match bottom row spacing
         y: 198.4167,
         z: 5.83
       },
@@ -1970,7 +1593,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'ibc-tote-top-6',
       type: 'fixture' as const,
       position: { 
-        x: 48.96, // Match bottom row spacing
+        x: 74.415, // Match bottom row spacing
         y: 198.4167,
         z: 5.83
       },
@@ -1990,7 +1613,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'ibc-tote-top-7',
       type: 'fixture' as const,
       position: { 
-        x: 44.877, // Match bottom row spacing
+        x: 78.498, // Match bottom row spacing
         y: 198.4167,
         z: 5.83
       },
@@ -2008,7 +1631,155 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       }
     },
 
-
+    // Third tier - 7 totes with 2' vertical gap above top row
+    {
+      id: 'ibc-tote-third-1',
+      type: 'fixture' as const,
+      position: { 
+        x: 54, // Same X position as bottom and top
+        y: 198.4167, // Same Y position
+        z: 11.66 // Top tote (5.83') + tote height (3.83') + 2' gap = 11.66' height
+      },
+      dimensions: { width: 4, height: 3.33, depth: 3.83 },
+      rotation: 0,
+      material: 'ibc_tote',
+      color: '#f0f0f0',
+      metadata: { 
+        category: 'storage',
+        equipment_type: 'ibc_tote',
+        capacity_gallons: 330,
+        stack_level: 'third',
+        liquid_level: 0.8, // High liquid level
+        description: 'IBC Tote Third Stack #1 - 330 gallon capacity'
+      }
+    },
+    {
+      id: 'ibc-tote-third-2',
+      type: 'fixture' as const,
+      position: { 
+        x: 58.083, // Match spacing with lower tiers
+        y: 198.4167,
+        z: 11.66
+      },
+      dimensions: { width: 4, height: 3.33, depth: 3.83 },
+      rotation: 0,
+      material: 'ibc_tote',
+      color: '#f0f0f0',
+      metadata: { 
+        category: 'storage',
+        equipment_type: 'ibc_tote',
+        capacity_gallons: 330,
+        stack_level: 'third',
+        liquid_level: 0.6,
+        description: 'IBC Tote Third Stack #2'
+      }
+    },
+    {
+      id: 'ibc-tote-third-3',
+      type: 'fixture' as const,
+      position: { 
+        x: 62.166, // Match spacing
+        y: 198.4167,
+        z: 11.66
+      },
+      dimensions: { width: 4, height: 3.33, depth: 3.83 },
+      rotation: 0,
+      material: 'ibc_tote',
+      color: '#f0f0f0',
+      metadata: { 
+        category: 'storage',
+        equipment_type: 'ibc_tote',
+        capacity_gallons: 330,
+        stack_level: 'third',
+        liquid_level: 0.4,
+        description: 'IBC Tote Third Stack #3'
+      }
+    },
+    {
+      id: 'ibc-tote-third-4',
+      type: 'fixture' as const,
+      position: { 
+        x: 66.249, // Match spacing
+        y: 198.4167,
+        z: 11.66
+      },
+      dimensions: { width: 4, height: 3.33, depth: 3.83 },
+      rotation: 0,
+      material: 'ibc_tote',
+      color: '#f0f0f0',
+      metadata: { 
+        category: 'storage',
+        equipment_type: 'ibc_tote',
+        capacity_gallons: 330,
+        stack_level: 'third',
+        liquid_level: 0.9, // Nearly full
+        description: 'IBC Tote Third Stack #4'
+      }
+    },
+    {
+      id: 'ibc-tote-third-5',
+      type: 'fixture' as const,
+      position: { 
+        x: 70.332, // Match spacing
+        y: 198.4167,
+        z: 11.66
+      },
+      dimensions: { width: 4, height: 3.33, depth: 3.83 },
+      rotation: 0,
+      material: 'ibc_tote',
+      color: '#f0f0f0',
+      metadata: { 
+        category: 'storage',
+        equipment_type: 'ibc_tote',
+        capacity_gallons: 330,
+        stack_level: 'third',
+        liquid_level: 0.3,
+        description: 'IBC Tote Third Stack #5'
+      }
+    },
+    {
+      id: 'ibc-tote-third-6',
+      type: 'fixture' as const,
+      position: { 
+        x: 74.415, // Match spacing
+        y: 198.4167,
+        z: 11.66
+      },
+      dimensions: { width: 4, height: 3.33, depth: 3.83 },
+      rotation: 0,
+      material: 'ibc_tote',
+      color: '#f0f0f0',
+      metadata: { 
+        category: 'storage',
+        equipment_type: 'ibc_tote',
+        capacity_gallons: 330,
+        stack_level: 'third',
+        liquid_level: 0.7,
+        description: 'IBC Tote Third Stack #6'
+      }
+    },
+    {
+      id: 'ibc-tote-third-7',
+      type: 'fixture' as const,
+      position: { 
+        x: 78.498, // Match spacing with bottom and top tiers
+        y: 198.4167,
+        z: 11.66
+      },
+      dimensions: { width: 4, height: 3.33, depth: 3.83 },
+      rotation: 0,
+      material: 'ibc_tote',
+      color: '#f0f0f0',
+      metadata: { 
+        category: 'storage',
+        equipment_type: 'ibc_tote',
+        capacity_gallons: 330,
+        stack_level: 'third',
+        liquid_level: 0.5,
+        weathered: true, // Some weathered for variety
+        description: 'IBC Tote Third Stack #7'
+      }
+    },
 
     // NORWESCO 1000 GALLON TANKS - Two tanks west of the IBC totes
     // Positioned to the left/west of the westernmost IBC tote (x=44.877)
@@ -2016,7 +1787,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'norwesco-tank-1',
       type: 'fixture' as const,
       position: { 
-        x: 38, // West of the westernmost IBC tote (44.877 - 4' tote width - 2.877' spacing = 38')
+        x: 40.5, // Positioned to clear west hallway (37.0625 + 1' clearance + 2.67' tank radius = 40.67', rounded to 40.5')
         y: 198.4167, // Same Y position as IBC totes
         z: 0 // Floor level
       },
@@ -2044,7 +1815,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'norwesco-tank-2',
       type: 'fixture' as const,
       position: { 
-        x: 31.5, // Second tank further west (38 - 5.33' tank width - 1.17' spacing = 31.5')
+        x: 47, // Positioned east of first tank (40.5 + 5.33' tank width + 1.17' spacing = 47')
         y: 198.4167, // Same Y position as IBC totes
         z: 0 // Floor level
       },
@@ -2069,1313 +1840,23 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       }
     },
 
-    // TJI I-JOISTS - 11 7/8" beams running N/S from Room 7 south wall to Room 2 north wall
-    // Spaced 16" on center (1.33' spacing), perpendicular orientation
-    // Total span: 149.375' (Room 7 south wall y:48.6667 to Room 2 north wall y:198.0417)
-    // Width coverage: 80.3125' (x:30.0625 to x:110.375 between longways walls)
-    // Number of beams: 60 beams at 16" OC spacing
-    ...Array.from({ length: 60 }, (_, i) => {
-      const beamXPosition = 30.0625 + (i * 1.33); // Start at left longways wall, increment by 16" spacing
-      const beamStartY = 48.6667; // Room 7 south wall Y coordinate
-      
-      return {
-        id: `tji-beam-ns-${i + 1}`,
-        type: 'fixture' as const,
-        position: { 
-          x: beamXPosition,
-          y: beamStartY, // Start at Room 7 south wall
-          z: 12.5 // Positioned above 12' walls (12' + 0.5' clearance)
-        },
-        dimensions: { 
-          width: 0.125, // 1.5" = 0.125' beam width
-          height: 149.375, // Full span from Room 7 south wall to Room 2 north wall (198.0417 - 48.6667)
-          depth: 0.99 // 11.875" = 0.99' beam depth
-        },
-        rotation: 0, // No rotation - running north-south
-        material: 'tji_beam',
-        color: '#D2B48C', // OSB brown color
-        metadata: {
-          category: 'structural',
-          equipment_type: 'tji_ijoist',
-          beam_size: '11_7_8_inch',
-          material_web: 'OSB',
-          material_flange: 'lumber',
-          load_bearing: true,
-          engineered_lumber: true,
-          spacing_inches: 16,
-          spacing_oc: '16" OC',
-                     span_rooms: ['Room 7', 'Room 6', 'Room 5', 'Room 4', 'Room 3', 'Room 2'],
-           start_location: 'Room 7 south wall',
-          end_location: 'Room 2 north wall',
-          beam_number: i + 1,
-          total_beams: 60,
-          length_feet: 149.375,
-          description: `TJI I-Joist 11 7/8" #${i + 1} - 149.4' long spanning Room 7 to Room 2, 16" OC`
-        }
-      };
-    }),
 
-    // COVE BASE TRIM - 8" solid vinyl trim for all interior walls of rooms 2-7
-    // Positioned INSIDE room walls for proper installation and realistic appearance
-    // Using dark color for visibility against white walls
-    
-    // ROOM 2 COVE BASE TRIM (4 walls)
-    // Room 2 boundaries: x: 30.0625 to 110.375 (79.3125'), y: 173.4792 to 198.0417 (24.5625')
-    
-    // Room 2 - South wall trim (INSIDE room)
-    {
-      id: 'cove-trim-room2-south',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.0625, // Start at west longway wall
-        y: 173.6667, // INSIDE room wall (173.4792 + 0.1875 = 173.6667)
-        z: 0 // Floor level
-      },
-      dimensions: { 
-        width: 80.3125, // Full width between longway walls
-        height: 0.375, // 4.5" thick for visibility (0.375')
-        depth: 0.67 // 8" tall (8/12 = 0.67')
-      },
-      rotation: 0,
-      material: 'concrete', // Use concrete material for solid rendering
-      color: '#1a202c', // Very dark gray for maximum visibility
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        thickness_inches: 4.5,
-        room: 'room-2',
-        wall_side: 'south',
-        description: '8" vinyl cove base trim - Room 2 south wall (inside)'
-      }
-    },
-    
-    // Room 2 - North wall trim (INSIDE room)
-    {
-      id: 'cove-trim-room2-north',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.0625,
-        y: 197.8542, // INSIDE room wall (198.0417 - 0.1875 = 197.8542)
-        z: 0
-      },
-      dimensions: { 
-        width: 80.3125,
-        height: 0.375, // 4.5" thick
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c', // Very dark gray
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-2',
-        wall_side: 'north',
-        description: '8" vinyl cove base trim - Room 2 north wall (inside)'
-      }
-    },
-    
-    // Room 2 - West wall trim (INSIDE room)
-    {
-      id: 'cove-trim-room2-west',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.25, // INSIDE room wall (30.0625 + 0.1875 = 30.25)
-        y: 173.4792,
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375, // 4.5" thick
-        height: 24.5625, // Room length
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c', // Very dark gray
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-2',
-        wall_side: 'west',
-        description: '8" vinyl cove base trim - Room 2 west wall (inside)'
-      }
-    },
-    
-    // Room 2 - East wall trim (INSIDE room)
-    {
-      id: 'cove-trim-room2-east',
-      type: 'fixture' as const,
-      position: { 
-        x: 110.1875, // INSIDE room wall (110.375 - 0.1875 = 110.1875)
-        y: 173.4792,
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375, // 4.5" thick
-        height: 24.5625, // Room length
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c', // Very dark gray
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-2',
-        wall_side: 'east',
-        description: '8" vinyl cove base trim - Room 2 east wall (inside)'
-      }
-    },
-
-    // ROOM 3 COVE BASE TRIM (4 walls)
-    // Room 3 boundaries: x: 30.0625 to 110.375, y: 148.9167 to 173.4792 (24.5625')
-    
-    // Room 3 - South wall trim (INSIDE room)
-    {
-      id: 'cove-trim-room3-south',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.0625,
-        y: 149.1042, // INSIDE room wall (148.9167 + 0.1875 = 149.1042)
-        z: 0
-      },
-      dimensions: { 
-        width: 80.3125,
-        height: 0.375,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-3',
-        wall_side: 'south',
-        description: '8" vinyl cove base trim - Room 3 south wall (inside)'
-      }
-    },
-    
-    // Room 3 - North wall trim (INSIDE room)
-    {
-      id: 'cove-trim-room3-north',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.0625,
-        y: 173.2917, // INSIDE room wall (173.4792 - 0.1875 = 173.2917)
-        z: 0
-      },
-      dimensions: { 
-        width: 80.3125,
-        height: 0.375,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-3',
-        wall_side: 'north',
-        description: '8" vinyl cove base trim - Room 3 north wall (inside)'
-      }
-    },
-    
-    // Room 3 - West wall trim
-    {
-      id: 'cove-trim-room3-west',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.25, // INSIDE room wall (30.0625 + 0.1875 = 30.25)
-        y: 148.9167,
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375,
-        height: 24.5625,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-3',
-        wall_side: 'west',
-        description: '8" vinyl cove base trim - Room 3 west wall (inside)'
-      }
-    },
-    
-    // Room 3 - East wall trim
-    {
-      id: 'cove-trim-room3-east',
-      type: 'fixture' as const,
-      position: { 
-        x: 110.1875, // INSIDE room wall (110.375 - 0.1875 = 110.1875)
-        y: 148.9167,
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375,
-        height: 24.5625,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-3',
-        wall_side: 'east',
-        description: '8" vinyl cove base trim - Room 3 east wall (inside)'
-      }
-    },
-
-    // ROOM 4 COVE BASE TRIM (4 walls)
-    // Room 4 boundaries: x: 30.0625 to 110.375, y: 124.3542 to 148.9167 (24.5625')
-    
-    // Room 4 - South wall trim (INSIDE room)
-    {
-      id: 'cove-trim-room4-south',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.0625,
-        y: 124.5417, // INSIDE room wall (124.3542 + 0.1875 = 124.5417)
-        z: 0
-      },
-      dimensions: { 
-        width: 80.3125,
-        height: 0.375,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-4',
-        wall_side: 'south',
-        firewall_adjacent: true,
-        description: '8" vinyl cove base trim - Room 4 south wall (inside)'
-      }
-    },
-    
-    // Room 4 - North wall trim (INSIDE room)
-    {
-      id: 'cove-trim-room4-north',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.0625,
-        y: 148.7292, // INSIDE room wall (148.9167 - 0.1875 = 148.7292)
-        z: 0
-      },
-      dimensions: { 
-        width: 80.3125,
-        height: 0.375,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-4',
-        wall_side: 'north',
-        description: '8" vinyl cove base trim - Room 4 north wall (inside)'
-      }
-    },
-    
-    // Room 4 - West wall trim
-    {
-      id: 'cove-trim-room4-west',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.25, // INSIDE room wall (30.0625 + 0.1875 = 30.25)
-        y: 124.3542,
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375,
-        height: 24.5625,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-4',
-        wall_side: 'west',
-        description: '8" vinyl cove base trim - Room 4 west wall (inside)'
-      }
-    },
-    
-    // Room 4 - East wall trim
-    {
-      id: 'cove-trim-room4-east',
-      type: 'fixture' as const,
-      position: { 
-        x: 110.1875, // INSIDE room wall (110.375 - 0.1875 = 110.1875)
-        y: 124.3542,
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375,
-        height: 24.5625,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-4',
-        wall_side: 'east',
-        description: '8" vinyl cove base trim - Room 4 east wall (inside)'
-      }
-    },
-
-    // ROOM 5 COVE BASE TRIM (4 walls)
-    // Room 5 boundaries: x: 30.0625 to 110.375, y: 99.7917 to 124.3542 (24.5625')
-    
-    // Room 5 - South wall trim (INSIDE room)
-    {
-      id: 'cove-trim-room5-south',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.0625,
-        y: 99.9792, // INSIDE room wall (99.7917 + 0.1875 = 99.9792)
-        z: 0
-      },
-      dimensions: { 
-        width: 80.3125,
-        height: 0.375,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-5',
-        wall_side: 'south',
-        description: '8" vinyl cove base trim - Room 5 south wall (inside)'
-      }
-    },
-    
-    // Room 5 - North wall trim (INSIDE room)
-    {
-      id: 'cove-trim-room5-north',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.0625,
-        y: 124.1667, // INSIDE room wall (124.3542 - 0.1875 = 124.1667)
-        z: 0
-      },
-      dimensions: { 
-        width: 80.3125,
-        height: 0.375,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-5',
-        wall_side: 'north',
-        firewall_adjacent: true,
-        description: '8" vinyl cove base trim - Room 5 north wall (inside)'
-      }
-    },
-    
-    // Room 5 - West wall trim
-    {
-      id: 'cove-trim-room5-west',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.25, // INSIDE room wall (30.0625 + 0.1875 = 30.25)
-        y: 99.7917,
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375,
-        height: 24.5625,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-5',
-        wall_side: 'west',
-        description: '8" vinyl cove base trim - Room 5 west wall (inside)'
-      }
-    },
-    
-    // Room 5 - East wall trim
-    {
-      id: 'cove-trim-room5-east',
-      type: 'fixture' as const,
-      position: { 
-        x: 110.1875, // INSIDE room wall (110.375 - 0.1875 = 110.1875)
-        y: 99.7917,
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375,
-        height: 24.5625,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-5',
-        wall_side: 'east',
-        description: '8" vinyl cove base trim - Room 5 east wall (inside)'
-      }
-    },
-
-    // ROOM 6 COVE BASE TRIM (4 walls)
-    // Room 6 boundaries: x: 30.0625 to 110.375, y: 75.2292 to 99.7917 (24.5625')
-    
-    // Room 6 - South wall trim (INSIDE room)
-    {
-      id: 'cove-trim-room6-south',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.0625,
-        y: 75.4167, // INSIDE room wall (75.2292 + 0.1875 = 75.4167)
-        z: 0
-      },
-      dimensions: { 
-        width: 80.3125,
-        height: 0.375,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-6',
-        wall_side: 'south',
-        description: '8" vinyl cove base trim - Room 6 south wall (inside)'
-      }
-    },
-    
-    // Room 6 - North wall trim (INSIDE room)
-    {
-      id: 'cove-trim-room6-north',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.0625,
-        y: 99.6042, // INSIDE room wall (99.7917 - 0.1875 = 99.6042)
-        z: 0
-      },
-      dimensions: { 
-        width: 80.3125,
-        height: 0.375,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-6',
-        wall_side: 'north',
-        description: '8" vinyl cove base trim - Room 6 north wall (inside)'
-      }
-    },
-    
-    // Room 6 - West wall trim
-    {
-      id: 'cove-trim-room6-west',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.25, // INSIDE room wall (30.0625 + 0.1875 = 30.25)
-        y: 75.2292,
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375,
-        height: 24.5625,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-6',
-        wall_side: 'west',
-        description: '8" vinyl cove base trim - Room 6 west wall (inside)'
-      }
-    },
-    
-    // Room 6 - East wall trim
-    {
-      id: 'cove-trim-room6-east',
-      type: 'fixture' as const,
-      position: { 
-        x: 110.1875, // INSIDE room wall (110.375 - 0.1875 = 110.1875)
-        y: 75.2292,
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375,
-        height: 24.5625,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-6',
-        wall_side: 'east',
-        description: '8" vinyl cove base trim - Room 6 east wall (inside)'
-      }
-    },
-
-    // ROOM 7 COVE BASE TRIM (4 walls)
-    // Room 7 boundaries: x: 30.0625 to 110.375, y: 48.6667 to 75.2292 (26.5625')
-    
-    // Room 7 - South wall trim (INSIDE room)
-    {
-      id: 'cove-trim-room7-south',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.0625,
-        y: 48.8542, // INSIDE room wall (48.6667 + 0.1875 = 48.8542)
-        z: 0
-      },
-      dimensions: { 
-        width: 80.3125,
-        height: 0.375,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-7',
-        wall_side: 'south',
-        description: '8" vinyl cove base trim - Room 7 south wall (inside)'
-      }
-    },
-    
-    // Room 7 - North wall trim (INSIDE room)
-    {
-      id: 'cove-trim-room7-north',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.0625,
-        y: 75.0417, // INSIDE room wall (75.2292 - 0.1875 = 75.0417)
-        z: 0
-      },
-      dimensions: { 
-        width: 80.3125,
-        height: 0.375,
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-7',
-        wall_side: 'north',
-        description: '8" vinyl cove base trim - Room 7 north wall (inside)'
-      }
-    },
-    
-    // Room 7 - West wall trim
-    {
-      id: 'cove-trim-room7-west',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.25, // INSIDE room wall (30.0625 + 0.1875 = 30.25)
-        y: 48.6667,
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375,
-        height: 26.5625, // Room 7 length (75.2292 - 48.6667)
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-7',
-        wall_side: 'west',
-        description: '8" vinyl cove base trim - Room 7 west wall (inside)'
-      }
-    },
-    
-    // Room 7 - East wall trim
-    {
-      id: 'cove-trim-room7-east',
-      type: 'fixture' as const,
-      position: { 
-        x: 110.1875, // INSIDE room wall (110.375 - 0.1875 = 110.1875)
-        y: 48.6667,
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375,
-        height: 26.5625, // Room 7 length
-        depth: 0.67
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-7',
-        wall_side: 'east',
-        description: '8" vinyl cove base trim - Room 7 east wall (inside)'
-      }
-    },
-
-    // LONGWAYS WALLS COVE BASE TRIM - North/South running walls
-    // These are the continuous walls that run the length of the building
-    
-    // LEFT LONGWAYS WALL TRIM (West side) - OUTSIDE towards west hallway
-    // This wall runs from Room 7 south to Room 2 north (y: 48.6667 to y: 198.0417)
-    {
-      id: 'cove-trim-longways-left-west',
-      type: 'fixture' as const,
-      position: { 
-        x: 29.875, // OUTSIDE longways wall (30.0625 - 0.1875 = 29.875)
-        y: 48.6667, // Start at Room 7 south wall
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375, // 4.5" thick
-        height: 149.375, // Full length (198.0417 - 48.6667 = 149.375')
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        wall_type: 'longways_wall',
-        wall_side: 'west',
-        description: '8" vinyl cove base trim - Left longways wall (west side, outside)'
-      }
-    },
-    
-    // LEFT LONGWAYS WALL TRIM (East side) - INSIDE towards rooms
-    {
-      id: 'cove-trim-longways-left-east',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.25, // INSIDE longways wall (30.0625 + 0.1875 = 30.25)
-        y: 48.6667, // Start at Room 7 south wall
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375, // 4.5" thick
-        height: 149.375, // Full length
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        wall_type: 'longways_wall',
-        wall_side: 'east',
-        description: '8" vinyl cove base trim - Left longways wall (east side, inside rooms)'
-      }
-    },
-
-    // RIGHT LONGWAYS WALL TRIM (West side) - INSIDE towards rooms
-    // This wall runs from Room 7 south to north exterior (y: 49.0417 to y: 222)
-    {
-      id: 'cove-trim-longways-right-west',
-      type: 'fixture' as const,
-      position: { 
-        x: 110.1875, // INSIDE longways wall (110.375 - 0.1875 = 110.1875)
-        y: 49.0417, // Start after room-wall-7
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375, // 4.5" thick
-        height: 172.9583, // Full length to north (222 - 49.0417 = 172.9583')
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        wall_type: 'longways_wall',
-        wall_side: 'west',
-        description: '8" vinyl cove base trim - Right longways wall (west side, inside rooms)'
-      }
-    },
-    
-    // RIGHT LONGWAYS WALL TRIM (East side) - OUTSIDE towards east hallway
-    {
-      id: 'cove-trim-longways-right-east',
-      type: 'fixture' as const,
-      position: { 
-        x: 110.5625, // OUTSIDE longways wall (110.375 + 0.1875 = 110.5625)
-        y: 49.0417, // Start after room-wall-7
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375, // 4.5" thick
-        height: 172.9583, // Full length to north
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        wall_type: 'longways_wall',
-        wall_side: 'east',
-        description: '8" vinyl cove base trim - Right longways wall (east side, outside)'
-      }
-    },
-
-    // ROOM 8 COVE BASE TRIM (4 walls)
-    // Room 8 boundaries: South wall (y=25), North wall (room-wall-7, y=48.6667), 
-    // West wall (south hallway wall, x=30.0625), East wall (room-8-closure-wall, x=98.625)
-    
-    // Room 8 - South wall trim (INSIDE room) - South exterior wall
-    {
-      id: 'cove-trim-room8-south',
-      type: 'fixture' as const,
-      position: { 
-        x: 25, // Start at south exterior wall west edge
-        y: 25.1875, // INSIDE room wall (25 + 0.1875 = 25.1875)
-        z: 0 // Floor level
-      },
-      dimensions: { 
-        width: 73.625, // Full width of south wall segment (98.625 - 25 = 73.625')
-        height: 0.375, // 4.5" thick for visibility (0.375')
-        depth: 0.67 // 8" tall (8/12 = 0.67')
-      },
-      rotation: 0,
-      material: 'concrete', // Use concrete material for solid rendering
-      color: '#1a202c', // Very dark gray for maximum visibility
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        thickness_inches: 4.5,
-        room: 'room-8',
-        wall_side: 'south',
-        description: '8" vinyl cove base trim - Room 8 south wall (inside)'
-      }
-    },
-    
-    // Room 8 - North wall trim (INSIDE room) - room-wall-7
-    {
-      id: 'cove-trim-room8-north',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.0625, // Start at west longway wall
-        y: 48.4792, // INSIDE room wall (48.6667 - 0.1875 = 48.4792)
-        z: 0
-      },
-      dimensions: { 
-        width: 68.5625, // Width from longway wall to closure wall (98.625 - 30.0625 = 68.5625')
-        height: 0.375, // 4.5" thick
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c', // Very dark gray
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-8',
-        wall_side: 'north',
-        description: '8" vinyl cove base trim - Room 8 north wall (inside)'
-      }
-    },
-    
-    // Room 8 - West wall trim (INSIDE room) - South hallway wall
-    {
-      id: 'cove-trim-room8-west',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.25, // INSIDE room wall (30.0625 + 0.1875 = 30.25)
-        y: 25, // Start at south exterior wall
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375, // 4.5" thick
-        height: 23.6667, // Height from south wall to room-wall-7 (48.6667 - 25 = 23.6667')
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c', // Very dark gray
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-8',
-        wall_side: 'west',
-        description: '8" vinyl cove base trim - Room 8 west wall (inside)'
-      }
-    },
-    
-    // Room 8 - East wall trim (INSIDE room) - room-8-closure-wall
-    {
-      id: 'cove-trim-room8-east',
-      type: 'fixture' as const,
-      position: { 
-        x: 98.4375, // INSIDE room wall (98.625 - 0.1875 = 98.4375)
-        y: 25, // Start at south exterior wall
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375, // 4.5" thick
-        height: 23.6667, // Height from south wall to room-wall-7 (48.6667 - 25 = 23.6667')
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c', // Very dark gray
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'room-8',
-        wall_side: 'east',
-        description: '8" vinyl cove base trim - Room 8 east wall (inside)'
-      }
-    },
-
-    // SOUTH DRY ROOM COVE BASE TRIM (4 walls)
-    // South Dry Room boundaries: West wall (x=81.875), East wall (x=110.375), 
-    // South wall (y=198.0417), North wall (y=208.5209)
-    // Dimensions: 28.5' wide x 10.4792' deep
-    
-    // South Dry Room - South wall trim (INSIDE room) - North hallway wall
-    {
-      id: 'cove-trim-south-dry-room-south',
-      type: 'fixture' as const,
-      position: { 
-        x: 81.875, // Start at west wall
-        y: 198.2292, // INSIDE room wall (198.0417 + 0.1875 = 198.2292)
-        z: 0 // Floor level
-      },
-      dimensions: { 
-        width: 28.5, // Full width of dry room (110.375 - 81.875 = 28.5')
-        height: 0.375, // 4.5" thick for visibility (0.375')
-        depth: 0.67 // 8" tall (8/12 = 0.67')
-      },
-      rotation: 0,
-      material: 'concrete', // Use concrete material for solid rendering
-      color: '#1a202c', // Very dark gray for maximum visibility
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        thickness_inches: 4.5,
-        room: 'south-dry-room',
-        wall_side: 'south',
-        description: '8" vinyl cove base trim - South Dry Room south wall (inside)'
-      }
-    },
-    
-    // South Dry Room - North wall trim (INSIDE room) - room-wall-1
-    {
-      id: 'cove-trim-south-dry-room-north',
-      type: 'fixture' as const,
-      position: { 
-        x: 81.875, // Start at west wall
-        y: 208.3334, // INSIDE room wall (208.5209 - 0.1875 = 208.3334)
-        z: 0
-      },
-      dimensions: { 
-        width: 28.5, // Full width of dry room
-        height: 0.375, // 4.5" thick
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c', // Very dark gray
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'south-dry-room',
-        wall_side: 'north',
-        description: '8" vinyl cove base trim - South Dry Room north wall (inside)'
-      }
-    },
-    
-    // South Dry Room - West wall trim (INSIDE room) - dry-room-west-cap-wall
-    {
-      id: 'cove-trim-south-dry-room-west',
-      type: 'fixture' as const,
-      position: { 
-        x: 82.0625, // INSIDE room wall (81.875 + 0.1875 = 82.0625)
-        y: 198.0417, // Start at south wall
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375, // 4.5" thick
-        height: 10.4792, // Full depth of dry room (208.5209 - 198.0417 = 10.4792')
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c', // Very dark gray
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'south-dry-room',
-        wall_side: 'west',
-        description: '8" vinyl cove base trim - South Dry Room west wall (inside)'
-      }
-    },
-    
-    // South Dry Room - East wall trim (INSIDE room) - room-1-second-divider-wall
-    {
-      id: 'cove-trim-south-dry-room-east',
-      type: 'fixture' as const,
-      position: { 
-        x: 110.1875, // INSIDE room wall (110.375 - 0.1875 = 110.1875)
-        y: 198.0417, // Start at south wall
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375, // 4.5" thick
-        height: 10.4792, // Full depth of dry room
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c', // Very dark gray
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'south-dry-room',
-        wall_side: 'east',
-        description: '8" vinyl cove base trim - South Dry Room east wall (inside)'
-      }
-    },
-
-    // NORTH DRY ROOM COVE BASE TRIM (4 walls)
-    // North Dry Room boundaries: West wall (x=81.875), East wall (x=110.375), 
-    // South wall (y=211.5209), North wall (y=222)
-    // Dimensions: 28.5' wide x 10.4791' deep
-    
-    // North Dry Room - South wall trim (INSIDE room) - middle-hallway-south-wall
-    {
-      id: 'cove-trim-north-dry-room-south',
-      type: 'fixture' as const,
-      position: { 
-        x: 81.875, // Start at west wall
-        y: 211.7084, // INSIDE room wall (211.5209 + 0.1875 = 211.7084)
-        z: 0 // Floor level
-      },
-      dimensions: { 
-        width: 28.5, // Full width of dry room (110.375 - 81.875 = 28.5')
-        height: 0.375, // 4.5" thick for visibility (0.375')
-        depth: 0.67 // 8" tall (8/12 = 0.67')
-      },
-      rotation: 0,
-      material: 'concrete', // Use concrete material for solid rendering
-      color: '#1a202c', // Very dark gray for maximum visibility
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        thickness_inches: 4.5,
-        room: 'north-dry-room',
-        wall_side: 'south',
-        description: '8" vinyl cove base trim - North Dry Room south wall (inside)'
-      }
-    },
-    
-    // North Dry Room - North wall trim (INSIDE room) - north-dry-room-north-wall
-    {
-      id: 'cove-trim-north-dry-room-north',
-      type: 'fixture' as const,
-      position: { 
-        x: 81.875, // Start at west wall
-        y: 221.8125, // INSIDE room wall (222 - 0.1875 = 221.8125)
-        z: 0
-      },
-      dimensions: { 
-        width: 28.5, // Full width of dry room
-        height: 0.375, // 4.5" thick
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c', // Very dark gray
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'north-dry-room',
-        wall_side: 'north',
-        description: '8" vinyl cove base trim - North Dry Room north wall (inside)'
-      }
-    },
-    
-    // North Dry Room - West wall trim (INSIDE room) - north-dry-room-west-wall
-    {
-      id: 'cove-trim-north-dry-room-west',
-      type: 'fixture' as const,
-      position: { 
-        x: 82.0625, // INSIDE room wall (81.875 + 0.1875 = 82.0625)
-        y: 211.5209, // Start at south wall
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375, // 4.5" thick
-        height: 10.4791, // Full depth of dry room (222 - 211.5209 = 10.4791')
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c', // Very dark gray
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'north-dry-room',
-        wall_side: 'west',
-        description: '8" vinyl cove base trim - North Dry Room west wall (inside)'
-      }
-    },
-    
-    // North Dry Room - East wall trim (INSIDE room) - north-dry-room-east-wall
-    {
-      id: 'cove-trim-north-dry-room-east',
-      type: 'fixture' as const,
-      position: { 
-        x: 110.1875, // INSIDE room wall (110.375 - 0.1875 = 110.1875)
-        y: 211.5209, // Start at south wall
-        z: 0
-      },
-      dimensions: { 
-        width: 0.375, // 4.5" thick
-        height: 10.4791, // Full depth of dry room
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c', // Very dark gray
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        room: 'north-dry-room',
-        wall_side: 'east',
-        description: '8" vinyl cove base trim - North Dry Room east wall (inside)'
-      }
-    },
-
-    // DRY ROOM WHITE EPOXY FLOORS
-    // High-performance white epoxy flooring for clean room environments
-    
-    // South Dry Room - White Epoxy Floor
-    {
-      id: 'south-dry-room-white-epoxy-floor',
-      type: 'fixture' as const,
-      position: { 
-        x: 81.875, // Start at west wall
-        y: 198.0417, // Start at south wall
-        z: -0.125 // Slightly below floor level (-1.5" = -0.125')
-      },
-      dimensions: { 
-        width: 28.5, // Full room width (110.375 - 81.875 = 28.5')
-        height: 10.4792, // Full room depth (208.5209 - 198.0417 = 10.4792')
-        depth: 0.125 // 1.5" thick epoxy system (0.125')
-      },
-      rotation: 0,
-      material: 'concrete', // Use concrete for solid rendering
-      color: '#ffffff', // Pure white epoxy
-      metadata: { 
-        category: 'flooring',
-        material_type: 'white_epoxy',
-        thickness_inches: 1.5,
-        room: 'south-dry-room',
-        finish: 'high-gloss',
-        chemical_resistant: true,
-        anti_static: true,
-        seamless: true,
-        description: 'White epoxy floor - South Dry Room (28.5\' x 10.4792\')'
-      }
-    },
-    
-    // North Dry Room - White Epoxy Floor
-    {
-      id: 'north-dry-room-white-epoxy-floor',
-      type: 'fixture' as const,
-      position: { 
-        x: 81.875, // Start at west wall
-        y: 211.5209, // Start at south wall
-        z: -0.125 // Slightly below floor level (-1.5" = -0.125')
-      },
-      dimensions: { 
-        width: 28.5, // Full room width (110.375 - 81.875 = 28.5')
-        height: 10.4791, // Full room depth (222 - 211.5209 = 10.4791')
-        depth: 0.125 // 1.5" thick epoxy system (0.125')
-      },
-      rotation: 0,
-      material: 'concrete', // Use concrete for solid rendering
-      color: '#ffffff', // Pure white epoxy
-      metadata: { 
-        category: 'flooring',
-        material_type: 'white_epoxy',
-        thickness_inches: 1.5,
-        room: 'north-dry-room',
-        finish: 'high-gloss',
-        chemical_resistant: true,
-        anti_static: true,
-        seamless: true,
-        description: 'White epoxy floor - North Dry Room (28.5\' x 10.4791\')'
-      }
-    },
-
-    // HALLWAY WALLS COVE BASE TRIM
-    
-    // SOUTH HALLWAY WALL TRIM (North side) - OUTSIDE towards Room 8
-    {
-      id: 'cove-trim-south-hallway-north',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.0625, // Start at longways wall
-        y: 28.8125, // OUTSIDE south hallway wall (29 - 0.1875 = 28.8125)
-        z: 0
-      },
-      dimensions: { 
-        width: 68.5625, // Length to end (98.625 - 30.0625 = 68.5625')
-        height: 0.375, // 4.5" thick
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        wall_type: 'hallway_wall',
-        wall_side: 'north',
-        description: '8" vinyl cove base trim - South hallway wall (north side, outside)'
-      }
-    },
-    
-    // SOUTH HALLWAY WALL TRIM (South side) - INSIDE towards south hallway
-    {
-      id: 'cove-trim-south-hallway-south',
-      type: 'fixture' as const,
-      position: { 
-        x: 30.0625, // Start at longways wall
-        y: 29.1875, // INSIDE south hallway wall (29 + 0.1875 = 29.1875)
-        z: 0
-      },
-      dimensions: { 
-        width: 68.5625, // Length to end
-        height: 0.375, // 4.5" thick
-        depth: 0.67 // 8" tall
-      },
-      rotation: 0,
-      material: 'concrete',
-      color: '#1a202c',
-      metadata: { 
-        category: 'flooring_trim',
-        material_type: 'vinyl_cove_base',
-        height_inches: 8,
-        wall_type: 'hallway_wall',
-        wall_side: 'south',
-        description: '8" vinyl cove base trim - South hallway wall (south side, inside)'
-      }
-    },
 
     // BLACK GLOSS EPOXY FLOORS
     // High-performance black gloss epoxy flooring for hallways and control areas
     
-    // West Longway Hallway - Black Gloss Epoxy Floor (5' wide hallway)
+    // West Longway Hallway - Black Gloss Epoxy Floor (15' wide hallway)
     {
       id: 'west-longway-hallway-black-epoxy-floor',
       type: 'fixture' as const,
       position: { 
         x: 25, // Start at west exterior wall
-        y: 48.6667, // Start at Room 8 north wall (room-wall-7)
+        y: 25, // EXTENDED to south exterior wall
         z: -0.125 // Slightly below floor level (-1.5" = -0.125')
       },
       dimensions: { 
-        width: 5.0625, // 5' hallway width (30.0625 - 25 = 5.0625')
-        height: 149.3542, // From Room 8 north wall to Room 2 north wall (198.0417 - 48.6667 = 149.3542')
+        width: 12.0625, // 12' hallway width (37.0625 - 25 = 12.0625')
+        height: 173.0417, // FULL LENGTH from south exterior wall to Room 2 north wall (198.0417 - 25 = 173.0417')
         depth: 0.125 // 1.5" thick epoxy system (0.125')
       },
       rotation: 0,
@@ -3390,22 +1871,22 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         chemical_resistant: true,
         anti_slip: false, // Gloss finish
         seamless: true,
-        description: 'Black gloss epoxy floor - West longway hallway (5\' x 149.35\')'
+        description: 'Black gloss epoxy floor - West longway hallway (12\' x 173\')'
       }
     },
     
-    // East Longway Hallway - Black Gloss Epoxy Floor (3' wide hallway)
+    // East Longway Hallway - Black Gloss Epoxy Floor (6' wide hallway)
     {
       id: 'east-longway-hallway-black-epoxy-floor',
       type: 'fixture' as const,
       position: { 
-        x: 110.375, // Start at east longway wall
-        y: 48.6667, // Start at Room 7 north wall (room-wall-7)
+        x: 106.75, // Start at east longway wall
+        y: 25, // EXTENDED to south exterior wall
         z: -0.125 // Slightly below floor level (-1.5" = -0.125')
       },
       dimensions: { 
-        width: 2.375, // 3' hallway width (112.75 - 110.375 = 2.375')
-        height: 149.3542, // From Room 7 north wall to Room 2 north wall (198.0417 - 48.6667 = 149.3542')
+        width: 6.0, // 6' hallway width (112.75 - 106.75 = 6.0')
+        height: 173.0417, // FULL LENGTH from south exterior wall to Room 2 north wall (198.0417 - 25 = 173.0417')
         depth: 0.125 // 1.5" thick epoxy system (0.125')
       },
       rotation: 0,
@@ -3420,358 +1901,40 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         chemical_resistant: true,
         anti_slip: false, // Gloss finish
         seamless: true,
-        description: 'Black gloss epoxy floor - East longway hallway (3\' x 149.35\')'
+        description: 'Black gloss epoxy floor - East longway hallway (6\' x 173\')'
       }
     },
     
-    // South Cross Hallway - Black Gloss Epoxy Floor (4' wide hallway)
+    // Room 8 - White Epoxy Floor (full room coverage)
     {
-      id: 'south-cross-hallway-black-epoxy-floor',
+      id: 'room-8-white-epoxy-floor',
       type: 'fixture' as const,
       position: { 
-        x: 30.0625, // Start at west longway wall
+        x: 37.0625, // Start at left longways wall (Room 8 west boundary)
         y: 25, // Start at south exterior wall
         z: -0.125 // Slightly below floor level (-1.5" = -0.125')
       },
       dimensions: { 
-        width: 68.5625, // From west to end of south hallway wall (98.625 - 30.0625 = 68.5625')
-        height: 4, // 4' hallway width (29 - 25 = 4')
+        width: 75.6875, // Room 8 width: east exterior wall to left longways wall (112.75 - 37.0625 = 75.6875')
+        height: 23.6667, // Room 8 depth: south exterior wall to room-wall-7 (48.6667 - 25 = 23.6667')
         depth: 0.125 // 1.5" thick epoxy system (0.125')
       },
       rotation: 0,
       material: 'concrete', // Use concrete for solid rendering
-      color: '#0a0a0a', // Deep black gloss epoxy
+      color: '#ffffff', // Pure white epoxy for Room 8
       metadata: { 
         category: 'flooring',
-        material_type: 'black_gloss_epoxy',
+        material_type: 'white_epoxy',
         thickness_inches: 1.5,
-        area: 'south-cross-hallway',
-        finish: 'high-gloss',
+        area: 'room-8',
+        room: 'room-8',
+        finish: 'semi-gloss',
         chemical_resistant: true,
-        anti_slip: false, // Gloss finish
+        anti_slip: true,
         seamless: true,
-        description: 'Black gloss epoxy floor - South cross hallway (4\' x 68.56\')'
+        description: 'White epoxy floor - Room 8 (75.69\' x 23.67\')'
       }
     },
-    
-    // Middle Cross Hallway - Black Gloss Epoxy Floor (3' wide hallway between dry rooms)
-    {
-      id: 'middle-cross-hallway-black-epoxy-floor',
-      type: 'fixture' as const,
-      position: { 
-        x: 81.875, // Start at dry room west wall
-        y: 208.5209, // Start at south wall of middle hallway
-        z: -0.125 // Slightly below floor level (-1.5" = -0.125')
-      },
-      dimensions: { 
-        width: 28.5, // Full dry room width (110.375 - 81.875 = 28.5')
-        height: 3, // 3' hallway width (211.5209 - 208.5209 = 3')
-        depth: 0.125 // 1.5" thick epoxy system (0.125')
-      },
-      rotation: 0,
-      material: 'concrete', // Use concrete for solid rendering
-      color: '#0a0a0a', // Deep black gloss epoxy
-      metadata: { 
-        category: 'flooring',
-        material_type: 'black_gloss_epoxy',
-        thickness_inches: 1.5,
-        area: 'middle-cross-hallway',
-        finish: 'high-gloss',
-        chemical_resistant: true,
-        anti_slip: false, // Gloss finish
-        seamless: true,
-        description: 'Black gloss epoxy floor - Middle cross hallway between dry rooms (3\' x 28.5\')'
-      }
-    },
-    
-    // Control Area - Black Gloss Epoxy Floor (northwest corner area)
-    {
-      id: 'control-area-black-epoxy-floor',
-      type: 'fixture' as const,
-      position: { 
-        x: 25, // Start at west exterior wall
-        y: 198.0417, // Start at Room 2 north wall (north hallway wall)
-        z: -0.125 // Slightly below floor level (-1.5" = -0.125')
-      },
-      dimensions: { 
-        width: 51.875, // From west wall to dry rooms west edge (76.875 - 25 = 51.875')
-        height: 24, // From Room 2 north wall to north wall (222 - 198.0417 = 23.9583', rounded to 24')
-        depth: 0.125 // 1.5" thick epoxy system (0.125')
-      },
-      rotation: 0,
-      material: 'concrete', // Use concrete for solid rendering
-      color: '#0a0a0a', // Deep black gloss epoxy
-      metadata: { 
-        category: 'flooring',
-        material_type: 'black_gloss_epoxy',
-        thickness_inches: 1.5,
-        area: 'control-area',
-        finish: 'high-gloss',
-        chemical_resistant: true,
-        anti_slip: false, // Gloss finish
-        seamless: true,
-        description: 'Black gloss epoxy floor - Control area northwest corner (51.875\' x 24\')'
-      }
-    },
-    
-    // West End of South Hallway - Black Gloss Epoxy Floor (missing section)
-    {
-      id: 'west-end-south-hallway-black-epoxy-floor',
-      type: 'fixture' as const,
-      position: { 
-        x: 25, // Start at west exterior wall
-        y: 25, // Start at south exterior wall
-        z: -0.125 // Slightly below floor level (-1.5" = -0.125')
-      },
-      dimensions: { 
-        width: 5.0625, // From west wall to west longway wall (30.0625 - 25 = 5.0625')
-        height: 4, // 4' hallway width (29 - 25 = 4')
-        depth: 0.125 // 1.5" thick epoxy system (0.125')
-      },
-      rotation: 0,
-      material: 'concrete', // Use concrete for solid rendering
-      color: '#0a0a0a', // Deep black gloss epoxy
-      metadata: { 
-        category: 'flooring',
-        material_type: 'black_gloss_epoxy',
-        thickness_inches: 1.5,
-        area: 'west-end-south-hallway',
-        finish: 'high-gloss',
-        chemical_resistant: true,
-        anti_slip: false, // Gloss finish
-        seamless: true,
-        description: 'Black gloss epoxy floor - West end of south hallway (5.0625\' x 4\')'
-      }
-    },
-    
-    // West Side of Room 8 Area - Black Gloss Epoxy Floor (gap between west wall and Room 8)
-    {
-      id: 'west-side-room8-area-black-epoxy-floor',
-      type: 'fixture' as const,
-      position: { 
-        x: 25, // Start at west exterior wall
-        y: 29, // Start after south hallway (29 = 25 + 4)
-        z: -0.125 // Slightly below floor level (-1.5" = -0.125')
-      },
-      dimensions: { 
-        width: 5.0625, // From west wall to west longway wall (30.0625 - 25 = 5.0625')
-        height: 19.6667, // From end of south hallway to Room 8 north wall (48.6667 - 29 = 19.6667')
-        depth: 0.125 // 1.5" thick epoxy system (0.125')
-      },
-      rotation: 0,
-      material: 'concrete', // Use concrete for solid rendering
-      color: '#0a0a0a', // Deep black gloss epoxy
-      metadata: { 
-        category: 'flooring',
-        material_type: 'black_gloss_epoxy',
-        thickness_inches: 1.5,
-        area: 'west-side-room8-area',
-        finish: 'high-gloss',
-        chemical_resistant: true,
-        anti_slip: false, // Gloss finish
-        seamless: true,
-        description: 'Black gloss epoxy floor - West side of Room 8 area (5.0625\' x 19.67\')'
-      }
-    },
-
-
-
-    // ELECTRICAL PANEL - Eaton Pow-R-Line 600A on North Exterior Wall
-    // Positioned 10' from west exterior wall, mounted on interior face of north wall
-    {
-      id: 'electrical-panel-main',
-      type: 'fixture' as const,
-      position: { 
-        x: 35, // 10' from west exterior wall (25 + 10 = 35)
-        y: 221, // Interior face of north wall (222 - 1 = 221)
-        z: 3.5 // Lowered mounting height: 3.5' from floor (dropped 2') (bottom of panel at 5.5', top at 12.5')
-      },
-      dimensions: { width: 2.5, height: 7, depth: 0.67 }, // 30"x84"x8" = 2.5'x7'x0.67'
-      rotation: 0,
-      material: 'electrical_panel',
-      color: '#808080', // Gray finish
-      metadata: { 
-        category: 'electrical',
-        equipment_type: 'electrical_panel',
-        manufacturer: 'eaton',
-        model: 'Pow-R-Line',
-        main_breaker: '600A',
-        voltage: '120/208V',
-        phases: '3-phase, 4-wire',
-        circuit_breakers: 42,
-        bus_type: 'copper',
-        finish: 'gray',
-        enclosure_type: 'surface',
-        interrupting_capacity: '22kAIC',
-        weight_lbs: 350,
-        nec_clearances: {
-          front: 36, // 36" minimum working space
-          sides: 30, // 30" minimum
-          top: 36    // 36" minimum
-        },
-        description: 'Eaton Pow-R-Line 600A main electrical panel - 84" × 30" × 8" (7\'0" × 2\'6" × 8")',
-        installation_notes: 'Surface mounted on interior face of north exterior wall, 10\' from west wall'
-      }
-    },
-
-    // WEST EXTERIOR WALL ELECTRICAL PANELS - 600A Distribution Panels
-    // Positioned on west exterior wall across from truss beams for structural support
-    // Panels face east into the west longway hallway
-
-    // West Wall Panel #1 - Across from First Truss Beam (Room 2 North)
-    {
-      id: 'electrical-panel-west-wall-1',
-      type: 'fixture' as const,
-      position: { 
-        x: 25, // Mounted directly on west exterior wall surface
-        y: 198.2292, // Aligned with first truss beam position (Room 2 north)
-        z: 3.5 // Lowered mounting height: 3.5' from floor (dropped 2')
-      },
-      dimensions: { width: 2.5, height: 7, depth: 0.67 }, // 30"x84"x8" = 2.5'x7'x0.67'
-      rotation: 90, // Face east into hallway
-      material: 'electrical_panel',
-      color: '#808080', // Gray finish
-      metadata: { 
-        category: 'electrical',
-        equipment_type: 'electrical_panel',
-        manufacturer: 'eaton',
-        model: 'Pow-R-Line',
-        main_breaker: '600A',
-        voltage: '120/208V or 277/480V',
-        phases: '3-phase, 4-wire',
-        circuit_breakers: 42,
-        bus_type: 'copper',
-        finish: 'gray',
-        enclosure_type: 'surface',
-        interrupting_capacity: '22kAIC',
-        weight_lbs: 350,
-        structural_support: 'first-truss-beam',
-        nec_clearances: {
-          front: 36, // 36" minimum working space (into hallway)
-          sides: 30, // 30" minimum
-          top: 36    // 36" minimum
-        },
-        description: 'West Wall 600A Panel #1 - mounted on west exterior wall across from first truss beam (Room 2 north)',
-        installation_notes: 'Surface mounted directly on west exterior wall, structurally supported by first truss beam'
-      }
-    },
-
-    // West Wall Panel #2 - Across from Third Truss Beam
-    {
-      id: 'electrical-panel-west-wall-2',
-      type: 'fixture' as const,
-      position: { 
-        x: 25, // Mounted directly on west exterior wall surface
-        y: 149.1042, // Aligned with third truss beam position
-        z: 3.5 // Lowered mounting height: 3.5' from floor (dropped 2')
-      },
-      dimensions: { width: 2.5, height: 7, depth: 0.67 }, // 30"x84"x8" = 2.5'x7'x0.67'
-      rotation: 90, // Face east into hallway
-      material: 'electrical_panel',
-      color: '#808080', // Gray finish
-      metadata: { 
-        category: 'electrical',
-        equipment_type: 'electrical_panel',
-        manufacturer: 'eaton',
-        model: 'Pow-R-Line',
-        main_breaker: '600A',
-        voltage: '120/208V or 277/480V',
-        phases: '3-phase, 4-wire',
-        circuit_breakers: 42,
-        bus_type: 'copper',
-        finish: 'gray',
-        enclosure_type: 'surface',
-        interrupting_capacity: '22kAIC',
-        weight_lbs: 350,
-        structural_support: 'third-truss-beam',
-        nec_clearances: {
-          front: 36, // 36" minimum working space (into hallway)
-          sides: 30, // 30" minimum
-          top: 36    // 36" minimum
-        },
-        description: 'West Wall 600A Panel #2 - mounted on west exterior wall across from third truss beam',
-        installation_notes: 'Surface mounted directly on west exterior wall, structurally supported by third truss beam'
-      }
-    },
-
-    // West Wall Panel #3 - Across from Fifth Truss Beam (First South of Firewall)
-    {
-      id: 'electrical-panel-west-wall-3',
-      type: 'fixture' as const,
-      position: { 
-        x: 25, // Mounted directly on west exterior wall surface
-        y: 99.9792, // Aligned with fifth truss beam position (first truss south of firewall)
-        z: 3.5 // Lowered mounting height: 3.5' from floor (dropped 2')
-      },
-      dimensions: { width: 2.5, height: 7, depth: 0.67 }, // 30"x84"x8" = 2.5'x7'x0.67'
-      rotation: 90, // Face east into hallway
-      material: 'electrical_panel',
-      color: '#808080', // Gray finish
-      metadata: { 
-        category: 'electrical',
-        equipment_type: 'electrical_panel',
-        manufacturer: 'eaton',
-        model: 'Pow-R-Line',
-        main_breaker: '600A',
-        voltage: '120/208V or 277/480V',
-        phases: '3-phase, 4-wire',
-        circuit_breakers: 42,
-        bus_type: 'copper',
-        finish: 'gray',
-        enclosure_type: 'surface',
-        interrupting_capacity: '22kAIC',
-        weight_lbs: 350,
-        structural_support: 'fifth-truss-beam',
-        position_reference: 'first-truss-south-of-firewall',
-        nec_clearances: {
-          front: 36, // 36" minimum working space (into hallway)
-          sides: 30, // 30" minimum
-          top: 36    // 36" minimum
-        },
-        description: 'West Wall 600A Panel #3 - mounted on west exterior wall across from fifth truss beam (first truss south of firewall)',
-        installation_notes: 'Surface mounted directly on west exterior wall, structurally supported by fifth truss beam'
-      }
-    },
-
-    // West Wall Panel #4 - Across from Seventh Truss Beam (Second-to-Last from South)
-    {
-      id: 'electrical-panel-west-wall-4',
-      type: 'fixture' as const,
-      position: { 
-        x: 25, // Mounted directly on west exterior wall surface
-        y: 48.8542, // Aligned with seventh truss beam position (second-to-last from south exterior wall)
-        z: 3.5 // Lowered mounting height: 3.5' from floor (dropped 2')
-      },
-      dimensions: { width: 2.5, height: 7, depth: 0.67 }, // 30"x84"x8" = 2.5'x7'x0.67'
-      rotation: 90, // Face east into hallway
-      material: 'electrical_panel',
-      color: '#808080', // Gray finish
-      metadata: { 
-        category: 'electrical',
-        equipment_type: 'electrical_panel',
-        manufacturer: 'eaton',
-        model: 'Pow-R-Line',
-        main_breaker: '600A',
-        voltage: '120/208V or 277/480V',
-        phases: '3-phase, 4-wire',
-        circuit_breakers: 42,
-        bus_type: 'copper',
-        finish: 'gray',
-        enclosure_type: 'surface',
-        interrupting_capacity: '22kAIC',
-        weight_lbs: 350,
-        structural_support: 'seventh-truss-beam',
-        position_reference: 'second-to-last-from-south-wall',
-        nec_clearances: {
-          front: 36, // 36" minimum working space (into hallway)
-          sides: 30, // 30" minimum
-          top: 36    // 36" minimum
-        },
-        description: 'West Wall 600A Panel #4 - mounted on west exterior wall across from seventh truss beam (second-to-last from south exterior wall)',
-        installation_notes: 'Surface mounted directly on west exterior wall, structurally supported by seventh truss beam'
-      }
-    },
-
 
 
   ],
@@ -3779,6 +1942,228 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
   units: 'feet' as const,
   createdAt: new Date(),
   updatedAt: new Date(),
+}
+
+/**
+ * Model templates for creating new warehouses
+ */
+export const MODEL_TEMPLATES = {
+  EMPTY_1000: {
+    id: 'empty-warehouse-1000',
+    name: 'Empty 1000x1000 Warehouse',
+    dimensions: { width: 1000, height: 1000 },
+    elements: [],
+    scale: 1,
+    units: 'feet' as const,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  
+  EMPTY_500: {
+    id: 'empty-warehouse-500',
+    name: 'Empty 500x500 Warehouse',
+    dimensions: { width: 500, height: 500 },
+    elements: [],
+    scale: 1,
+    units: 'feet' as const,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }
+} as const
+
+/**
+ * COVE BASE TRIM LIBRARY
+ * Available cove base trim configurations for warehouse flooring
+ */
+
+/**
+ * Creates a cove base trim element at specified position
+ * @param position - The x, y, z coordinates in feet
+ * @param config - Configuration options for the trim (optional)
+ * @param id - Optional custom ID for the element
+ */
+export function createWarehouseCoveBaseTrim(
+  position: { x: number; y: number; z: number },
+  config?: Partial<CoveBaseTrimConfig>,
+  id?: string
+) {
+  const trimConfig: CoveBaseTrimConfig = {
+    ...defaultCoveBaseTrimConfig,
+    ...config,
+    position: { x: position.x, y: position.y, z: position.z },
+    rotation: { x: 0, y: 0, z: config?.rotation?.z || 0 }
+  };
+
+
+  if (id) {
+    trim.userData.id = id;
+  }
+  
+  return trim;
+}
+
+/**
+ * Creates a perimeter cove base trim system for a room
+ * @param roomCorner - Bottom-left corner of the room
+ * @param roomWidth - Width of the room in feet
+ * @param roomLength - Length of the room in feet
+ * @param config - Configuration options for all trim pieces
+ */
+export function createRoomCoveBaseTrimSystem(
+  roomCorner: { x: number; y: number; z: number },
+  roomWidth: number,
+  roomLength: number,
+  config?: Partial<CoveBaseTrimConfig>
+) {
+  const trimPieces = [];
+  const baseConfig = { ...defaultCoveBaseTrimConfig, ...config };
+  
+  // Calculate standard 4-foot piece length
+  const pieceLength = 48; // 4 feet in inches
+  const pieceLengthFeet = 4;
+  
+  // South wall (bottom) - running east-west
+  const southPieces = Math.ceil(roomWidth / pieceLengthFeet);
+  for (let i = 0; i < southPieces; i++) {
+    const pieceWidth = Math.min(pieceLengthFeet, roomWidth - (i * pieceLengthFeet));
+    const position = {
+      x: roomCorner.x + (i * pieceLengthFeet),
+      y: roomCorner.y,
+      z: roomCorner.z
+    };
+    
+    const trimConfig = {
+      ...baseConfig,
+      length: pieceWidth * 12, // Convert to inches
+      position: { x: position.x, y: position.y, z: position.z },
+      rotation: { x: 0, y: 0, z: 0 }
+    };
+    
+    trimPieces.push(createCoveBaseTrim(trimConfig));
+  }
+  
+  // North wall (top) - running east-west
+  const northPieces = Math.ceil(roomWidth / pieceLengthFeet);
+  for (let i = 0; i < northPieces; i++) {
+    const pieceWidth = Math.min(pieceLengthFeet, roomWidth - (i * pieceLengthFeet));
+    const position = {
+      x: roomCorner.x + (i * pieceLengthFeet),
+      y: roomCorner.y + roomLength,
+      z: roomCorner.z
+    };
+    
+    const trimConfig = {
+      ...baseConfig,
+      length: pieceWidth * 12, // Convert to inches
+      position: { x: position.x, y: position.y, z: position.z },
+      rotation: { x: 0, y: 0, z: 0 }
+    };
+    
+    trimPieces.push(createCoveBaseTrim(trimConfig));
+  }
+  
+  // West wall (left) - running north-south
+  const westPieces = Math.ceil;
+  for (let i = 0; i < westPieces; i++) {
+    const pieceLength = Math.min(pieceLengthFeet, roomLength - (i * pieceLengthFeet));
+    const position = {
+      x: roomCorner.x,
+      y: roomCorner.y + (i * pieceLengthFeet),
+      z: roomCorner.z
+    };
+    
+    const trimConfig = {
+      ...baseConfig,
+      length: pieceLength * 12, // Convert to inches
+      position: { x: position.x, y: position.y, z: position.z },
+      rotation: { x: 0, y: 0, z: Math.PI / 2 } // 90 degrees for north-south orientation
+    };
+    
+    trimPieces.push(createCoveBaseTrim(trimConfig));
+  }
+  
+  // East wall (right) - running north-south
+  const eastPieces = Math.ceil(roomLength / pieceLengthFeet);
+  for (let i = 0; i < eastPieces; i++) {
+    const pieceLength = Math.min(pieceLengthFeet, roomLength - (i * pieceLengthFeet));
+    const position = {
+      x: roomCorner.x + roomWidth,
+      y: roomCorner.y + (i * pieceLengthFeet),
+      z: roomCorner.z
+    };
+    
+    const trimConfig = {
+      ...baseConfig,
+      length: pieceLength * 12, // Convert to inches
+      position: { x: position.x, y: position.y, z: position.z },
+      rotation: { x: 0, y: 0, z: Math.PI / 2 } // 90 degrees for north-south orientation
+    };
+    
+    trimPieces.push(createCoveBaseTrim(trimConfig));
+  }
+  
+  return trimPieces;
+}
+
+/**
+ * COVE BASE TRIM CATALOG
+ * Pre-configured trim options for common warehouse applications
+ */
+export const COVE_BASE_TRIM_CATALOG = {
+  // Standard vinyl cove base trims
+  VINYL_4_INCH: {
+    name: '4" Vinyl Cove Base',
+    config: coveBaseTrimPresets.standard4inch,
+    description: 'Standard 4" vinyl cove base for office areas'
+  },
+  
+  VINYL_6_INCH: {
+    name: '6" Vinyl Cove Base',
+    config: coveBaseTrimPresets.standard6inch,
+    description: 'Standard 6" vinyl cove base for storage areas'
+  },
+  
+  VINYL_8_INCH: {
+    name: '8" Vinyl Cove Base',
+    config: coveBaseTrimPresets.standard8inch,
+    description: 'Standard 8" vinyl cove base for production areas'
+  },
+  
+  // Heavy duty rubber cove base
+  RUBBER_HEAVY_DUTY: {
+    name: 'Heavy Duty Rubber Cove Base',
+    config: coveBaseTrimPresets.heavyDutyRubber,
+    description: 'Heavy duty rubber cove base for high-traffic manufacturing areas'
+  },
+  
+  // Aluminum trim for clean rooms
+  ALUMINUM_TRIM: {
+    name: 'Aluminum Cove Base Trim',
+    config: coveBaseTrimPresets.aluminumTrim,
+    description: 'Aluminum cove base trim for clean rooms and food processing'
+  }
+};
+
+/**
+ * Gets recommended cove base trim for a specific warehouse area
+ * @param areaType - Type of warehouse area
+ */
+export function getRecommendedCoveBaseTrim(areaType: string) {
+  const recommendations = {
+    'office': COVE_BASE_TRIM_CATALOG.VINYL_4_INCH,
+    'break_room': COVE_BASE_TRIM_CATALOG.VINYL_4_INCH,
+    'storage': COVE_BASE_TRIM_CATALOG.VINYL_6_INCH,
+    'warehouse': COVE_BASE_TRIM_CATALOG.VINYL_6_INCH,
+    'production': COVE_BASE_TRIM_CATALOG.VINYL_8_INCH,
+    'loading_dock': COVE_BASE_TRIM_CATALOG.VINYL_8_INCH,
+    'manufacturing': COVE_BASE_TRIM_CATALOG.RUBBER_HEAVY_DUTY,
+    'maintenance': COVE_BASE_TRIM_CATALOG.RUBBER_HEAVY_DUTY,
+    'clean_room': COVE_BASE_TRIM_CATALOG.ALUMINUM_TRIM,
+    'food_processing': COVE_BASE_TRIM_CATALOG.ALUMINUM_TRIM,
+    'laboratory': COVE_BASE_TRIM_CATALOG.ALUMINUM_TRIM
+  };
+  
+  return recommendations[areaType.toLowerCase()] || COVE_BASE_TRIM_CATALOG.VINYL_6_INCH;
 }
 
 /**
@@ -3916,596 +2301,4 @@ export function touchModel(model: FloorplanData): FloorplanData {
     ...model,
     updatedAt: new Date()
   }
-}
-
-/**
- * WAREHOUSE EQUIPMENT AND FIXTURES
- */
-
-/**
- * 330 Gallon IBC Tote - Industrial Bulk Container
- * Standard intermediate bulk container for liquid storage and transport
- * Dimensions: 48" L × 40" W × 46" H (4' × 3.33' × 3.83')
- */
-export const IBC_TOTE_330_GALLON = {
-  id: 'ibc-tote-330gal',
-  type: 'fixture' as const,
-  name: '330 Gallon IBC Tote',
-  dimensions: { 
-    width: 4, // 48 inches = 4 feet (length in original spec)
-    height: 3.33, // 40 inches = 3.33 feet (width in original spec) 
-    depth: 3.83 // 46 inches = 3.83 feet (height in original spec)
-  },
-  rotation: 0,
-  material: 'composite', // HDPE tank with steel cage
-  color: '#f0f0f0', // Light gray/white tank color
-  metadata: {
-    category: 'storage',
-    equipment_type: 'ibc_tote',
-    capacity_gallons: 330,
-    capacity_liters: 1250,
-    empty_weight_lbs: 140,
-    max_fill_weight_lbs: 2900, // Approx with water (330 gal × 8.34 lbs/gal + 140)
-    material_tank: 'HDPE',
-    material_cage: 'steel',
-    features: [
-      'bottom_discharge_valve',
-      'top_fill_cap',
-      'forklift_accessible',
-      'stackable',
-      'un_approved'
-    ],
-    valve_height_feet: 0.5, // 6 inches from ground
-    valve_size_inches: 2,
-    pallet_integrated: true,
-    description: '330 US Gallon IBC Tote - HDPE tank in steel cage with integrated pallet base'
-  }
-}
-
-/**
- * Creates an IBC Tote element at specified position
- * @param position - The x, y, z coordinates in feet
- * @param id - Optional custom ID for the element
- * @param rotation - Optional rotation in degrees (default: 0)
- */
-export function createIBCTote(
-  position: { x: number; y: number; z: number },
-  id?: string,
-  rotation: number = 0
-) {
-  return {
-    ...IBC_TOTE_330_GALLON,
-    id: id || `ibc-tote-${Date.now()}`,
-    position,
-    rotation
-  }
-}
-
-/**
- * Creates a row of IBC Totes
- * @param startPosition - Starting position for the row
- * @param count - Number of totes in the row
- * @param spacing - Space between totes in feet (default: 0.5)
- * @param direction - 'horizontal' or 'vertical' alignment
- */
-export function createIBCToteRow(
-  startPosition: { x: number; y: number; z: number },
-  count: number,
-  spacing: number = 0.5,
-  direction: 'horizontal' | 'vertical' = 'horizontal'
-) {
-  const totes = []
-  const toteWidth = IBC_TOTE_330_GALLON.dimensions.width
-  const toteHeight = IBC_TOTE_330_GALLON.dimensions.height
-  
-  for (let i = 0; i < count; i++) {
-    const position = {
-      x: direction === 'horizontal' 
-        ? startPosition.x + (i * (toteWidth + spacing))
-        : startPosition.x,
-      y: direction === 'vertical'
-        ? startPosition.y + (i * (toteHeight + spacing))
-        : startPosition.y,
-      z: startPosition.z
-    }
-    
-    totes.push(createIBCTote(position, `ibc-tote-row-${i}`))
-  }
-  
-  return totes
-}
-
-/**
- * Creates a storage area filled with IBC Totes in a grid pattern
- * @param topLeftPosition - Top-left corner of the storage area
- * @param rows - Number of rows
- * @param columns - Number of columns
- * @param rowSpacing - Space between rows in feet
- * @param columnSpacing - Space between columns in feet
- */
-export function createIBCToteStorageArea(
-  topLeftPosition: { x: number; y: number; z: number },
-  rows: number,
-  columns: number,
-  rowSpacing: number = 0.5,
-  columnSpacing: number = 0.5
-) {
-  const totes = []
-  const toteWidth = IBC_TOTE_330_GALLON.dimensions.width
-  const toteHeight = IBC_TOTE_330_GALLON.dimensions.height
-  
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < columns; col++) {
-      const position = {
-        x: topLeftPosition.x + (col * (toteWidth + columnSpacing)),
-        y: topLeftPosition.y - (row * (toteHeight + rowSpacing)), // Subtract for top-to-bottom
-        z: topLeftPosition.z
-      }
-      
-      totes.push(createIBCTote(position, `ibc-tote-${row}-${col}`))
-    }
-  }
-  
-  return totes
-}
-
-/**
- * Norwesco 1000 Gallon Vertical Storage Tank (Model 40152)
- * Dimensions: 64" diameter × 80" height
- * Creates a fixture element for placement in the warehouse
- */
-export function createNorwesco1000GallonTank(
-  position: { x: number; y: number; z: number },
-  id?: string
-) {
-  // Convert dimensions from inches to feet
-  const tankDiameter = 64 / 12; // 64" = 5.33'
-  const tankHeight = 80 / 12; // 80" = 6.67'
-  
-  return {
-    id: id || `norwesco-tank-${Date.now()}`,
-    type: 'fixture' as const,
-    position,
-    dimensions: { 
-      width: tankDiameter, // 5.33'
-      height: tankDiameter, // 5.33' (circular footprint)
-      depth: tankHeight // 6.67' tall
-    },
-    rotation: 0,
-    material: 'norwesco_tank',
-    color: '#e8e8e8', // Light gray/white
-    metadata: {
-      category: 'storage',
-      equipment_type: 'norwesco_tank',
-      model_number: '40152',
-      capacity_gallons: 1000,
-      diameter_inches: 64,
-      height_inches: 80,
-      material_tank: 'polyethylene',
-      manufacturer: 'Norwesco',
-      description: 'Norwesco 40152 - 1000 Gallon Vertical Storage Tank'
-    }
-  }
-}
-
-/**
- * TJI I-Joist Beam - 11 7/8" height
- * Standard engineered lumber joist with OSB web and lumber flanges
- * Dimensions: 1.5" width × 11.875" height × customizable length
- */
-export const TJI_IJOIST_11_7_8 = {
-  id: 'tji-ijoist-11-7-8',
-  type: 'fixture' as const,
-  name: 'TJI I-Joist 11 7/8"',
-  dimensions: { 
-    width: 0.125, // 1.5" = 0.125' 
-    height: 8, // Default 8' length (customizable)
-    depth: 0.99 // 11.875" = 0.99'
-  },
-  rotation: 0,
-  material: 'tji_beam',
-  color: '#D2B48C', // OSB brown color
-  metadata: {
-    category: 'structural',
-    equipment_type: 'tji_ijoist',
-    height_inches: 11.875,
-    width_inches: 1.5,
-    web_thickness_inches: 0.375,
-    web_material: 'OSB',
-    flange_material: 'lumber',
-    load_bearing: true,
-    engineered_lumber: true,
-    description: 'TJI I-Joist 11 7/8" - OSB web with lumber flanges'
-  }
-}
-
-/**
- * Creates a single TJI I-Joist beam at specified position
- * @param position - The x, y, z coordinates in feet
- * @param length - Length of the joist in feet (default: 8 feet)
- * @param id - Optional custom ID for the element
- * @param rotation - Optional rotation in degrees (default: 0)
- */
-export function createTJIJoist11_7_8(
-  position: { x: number; y: number; z: number },
-  length: number = 8,
-  id?: string,
-  rotation: number = 0
-) {
-  return {
-    ...TJI_IJOIST_11_7_8,
-    id: id || `tji-joist-${Date.now()}`,
-    position,
-    dimensions: {
-      ...TJI_IJOIST_11_7_8.dimensions,
-      height: length // Length is the horizontal dimension
-    },
-    rotation,
-    metadata: {
-      ...TJI_IJOIST_11_7_8.metadata,
-      length_feet: length,
-      length_inches: length * 12,
-      description: `TJI I-Joist 11 7/8" - ${length}' long - OSB web with lumber flanges`
-    }
-  }
-}
-
-/**
- * Creates an array of TJI I-Joists with specified spacing
- * @param startPosition - Starting position for the first joist
- * @param numberOfJoists - Number of joists to create (default: 6)
- * @param spacing - Spacing between joists in feet (default: 1.33' = 16" on center)
- * @param length - Length of each joist in feet (default: 8 feet)
- * @param direction - 'parallel-x' (joists run along X-axis) or 'parallel-y' (joists run along Y-axis)
- */
-export function createTJIJoistArray11_7_8(
-  startPosition: { x: number; y: number; z: number },
-  numberOfJoists: number = 6,
-  spacing: number = 1.33, // 16" on center
-  length: number = 8,
-  direction: 'parallel-x' | 'parallel-y' = 'parallel-x'
-) {
-  const joists = []
-  
-  for (let i = 0; i < numberOfJoists; i++) {
-    const position = {
-      x: direction === 'parallel-x' 
-        ? startPosition.x
-        : startPosition.x + (i * spacing),
-      y: direction === 'parallel-y'
-        ? startPosition.y  
-        : startPosition.y + (i * spacing),
-      z: startPosition.z
-    }
-    
-    const rotation = direction === 'parallel-y' ? 90 : 0 // Rotate 90° if running parallel to Y-axis
-    
-    joists.push(createTJIJoist11_7_8(
-      position, 
-      length, 
-      `tji-joist-array-${i}`, 
-      rotation
-    ))
-  }
-  
-  return joists
-}
-
-/**
- * Creates a TJI joist floor system with cross-pattern layout
- * @param cornerPosition - Bottom-left corner of the floor system
- * @param systemWidth - Width of the floor system in feet
- * @param systemLength - Length of the floor system in feet  
- * @param joistSpacing - Spacing between joists in feet (default: 1.33' = 16" OC)
- * @param joistLength - Length of individual joists in feet
- */
-export function createTJIFloorSystem11_7_8(
-  cornerPosition: { x: number; y: number; z: number },
-  systemWidth: number,
-  systemLength: number,
-  joistSpacing: number = 1.33, // 16" on center
-  joistLength?: number
-) {
-  const joists = []
-  
-  // Calculate joist length if not provided (span the system width)
-  const actualJoistLength = joistLength || systemWidth
-  
-  // Calculate number of joists needed
-  const numberOfJoists = Math.ceil(systemLength / joistSpacing) + 1
-  
-  for (let i = 0; i < numberOfJoists; i++) {
-    const position = {
-      x: cornerPosition.x,
-      y: cornerPosition.y + (i * joistSpacing),
-      z: cornerPosition.z
-    }
-    
-    joists.push(createTJIJoist11_7_8(
-      position,
-      actualJoistLength,
-      `tji-floor-joist-${i}`,
-      0 // Joists run parallel to X-axis (spanning width)
-    ))
-  }
-  
-  return joists
-}
-
-/**
- * Model templates for creating new warehouses
- */
-export const MODEL_TEMPLATES = {
-  EMPTY_1000: {
-    id: 'empty-warehouse-1000',
-    name: 'Empty 1000x1000 Warehouse',
-    dimensions: { width: 1000, height: 1000 },
-    elements: [],
-    scale: 1,
-    units: 'feet' as const,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  EMPTY_500: {
-    id: 'empty-warehouse-500',
-    name: 'Empty 500x500 Warehouse',
-    dimensions: { width: 500, height: 500 },
-    elements: [],
-    scale: 1,
-    units: 'feet' as const,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  BASIC_100: {
-    id: 'basic-warehouse-100',
-    name: 'Basic 100x100 Warehouse',
-    dimensions: { width: 100, height: 100 },
-    elements: [
-      {
-        id: 'wall-bottom',
-        type: 'wall' as const,
-        position: { x: 0, y: 0, z: 0 },
-        dimensions: { width: 100, height: 1, depth: 20 },
-        rotation: 0,
-        material: 'concrete',
-        color: '#4a5568',
-        metadata: { category: 'exterior', material_type: 'concrete' }
-      },
-      {
-        id: 'wall-top',
-        type: 'wall' as const,
-        position: { x: 0, y: 99, z: 0 },
-        dimensions: { width: 100, height: 1, depth: 20 },
-        rotation: 0,
-        material: 'concrete',
-        color: '#4a5568',
-        metadata: { category: 'exterior', material_type: 'concrete' }
-      },
-      {
-        id: 'wall-left',
-        type: 'wall' as const,
-        position: { x: 0, y: 0, z: 0 },
-        dimensions: { width: 1, height: 100, depth: 20 },
-        rotation: 0,
-        material: 'concrete',
-        color: '#4a5568',
-        metadata: { category: 'exterior', material_type: 'concrete' }
-      },
-      {
-        id: 'wall-right',
-        type: 'wall' as const,
-        position: { x: 99, y: 0, z: 0 },
-        dimensions: { width: 1, height: 100, depth: 20 },
-        rotation: 0,
-        material: 'concrete',
-        color: '#4a5568',
-        metadata: { category: 'exterior', material_type: 'concrete' }
-      },
-    ],
-    scale: 1,
-    units: 'feet' as const,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }
-} as const
-
-/**
- * COVE BASE TRIM LIBRARY
- * Available cove base trim configurations for warehouse flooring
- */
-
-/**
- * Creates a cove base trim element at specified position
- * @param position - The x, y, z coordinates in feet
- * @param config - Configuration options for the trim (optional)
- * @param id - Optional custom ID for the element
- */
-export function createWarehouseCoveBaseTrim(
-  position: { x: number; y: number; z: number },
-  config?: Partial<CoveBaseTrimConfig>,
-  id?: string
-) {
-  const trimConfig: CoveBaseTrimConfig = {
-    ...defaultCoveBaseTrimConfig,
-    ...config,
-    position: { x: position.x, y: position.y, z: position.z },
-    rotation: { x: 0, y: 0, z: config?.rotation?.z || 0 }
-  };
-
-  const trim = createCoveBaseTrim(trimConfig);
-  if (id) {
-    trim.userData.id = id;
-  }
-  
-  return trim;
-}
-
-/**
- * Creates a perimeter cove base trim system for a room
- * @param roomCorner - Bottom-left corner of the room
- * @param roomWidth - Width of the room in feet
- * @param roomLength - Length of the room in feet
- * @param config - Configuration options for all trim pieces
- */
-export function createRoomCoveBaseTrimSystem(
-  roomCorner: { x: number; y: number; z: number },
-  roomWidth: number,
-  roomLength: number,
-  config?: Partial<CoveBaseTrimConfig>
-) {
-  const trimPieces = [];
-  const baseConfig = { ...defaultCoveBaseTrimConfig, ...config };
-  
-  // Calculate standard 4-foot piece length
-  const pieceLength = 48; // 4 feet in inches
-  const pieceLengthFeet = 4;
-  
-  // South wall (bottom) - running east-west
-  const southPieces = Math.ceil(roomWidth / pieceLengthFeet);
-  for (let i = 0; i < southPieces; i++) {
-    const pieceWidth = Math.min(pieceLengthFeet, roomWidth - (i * pieceLengthFeet));
-    const position = {
-      x: roomCorner.x + (i * pieceLengthFeet),
-      y: roomCorner.y,
-      z: roomCorner.z
-    };
-    
-    const trimConfig = {
-      ...baseConfig,
-      length: pieceWidth * 12, // Convert to inches
-      position: { x: position.x, y: position.y, z: position.z },
-      rotation: { x: 0, y: 0, z: 0 }
-    };
-    
-    trimPieces.push(createCoveBaseTrim(trimConfig));
-  }
-  
-  // North wall (top) - running east-west
-  const northPieces = Math.ceil(roomWidth / pieceLengthFeet);
-  for (let i = 0; i < northPieces; i++) {
-    const pieceWidth = Math.min(pieceLengthFeet, roomWidth - (i * pieceLengthFeet));
-    const position = {
-      x: roomCorner.x + (i * pieceLengthFeet),
-      y: roomCorner.y + roomLength,
-      z: roomCorner.z
-    };
-    
-    const trimConfig = {
-      ...baseConfig,
-      length: pieceWidth * 12, // Convert to inches
-      position: { x: position.x, y: position.y, z: position.z },
-      rotation: { x: 0, y: 0, z: 0 }
-    };
-    
-    trimPieces.push(createCoveBaseTrim(trimConfig));
-  }
-  
-  // West wall (left) - running north-south
-  const westPieces = Math.ceil(roomLength / pieceLengthFeet);
-  for (let i = 0; i < westPieces; i++) {
-    const pieceLength = Math.min(pieceLengthFeet, roomLength - (i * pieceLengthFeet));
-    const position = {
-      x: roomCorner.x,
-      y: roomCorner.y + (i * pieceLengthFeet),
-      z: roomCorner.z
-    };
-    
-    const trimConfig = {
-      ...baseConfig,
-      length: pieceLength * 12, // Convert to inches
-      position: { x: position.x, y: position.y, z: position.z },
-      rotation: { x: 0, y: 0, z: Math.PI / 2 } // 90 degrees for north-south orientation
-    };
-    
-    trimPieces.push(createCoveBaseTrim(trimConfig));
-  }
-  
-  // East wall (right) - running north-south
-  const eastPieces = Math.ceil(roomLength / pieceLengthFeet);
-  for (let i = 0; i < eastPieces; i++) {
-    const pieceLength = Math.min(pieceLengthFeet, roomLength - (i * pieceLengthFeet));
-    const position = {
-      x: roomCorner.x + roomWidth,
-      y: roomCorner.y + (i * pieceLengthFeet),
-      z: roomCorner.z
-    };
-    
-    const trimConfig = {
-      ...baseConfig,
-      length: pieceLength * 12, // Convert to inches
-      position: { x: position.x, y: position.y, z: position.z },
-      rotation: { x: 0, y: 0, z: Math.PI / 2 } // 90 degrees for north-south orientation
-    };
-    
-    trimPieces.push(createCoveBaseTrim(trimConfig));
-  }
-  
-  return trimPieces;
-}
-
-/**
- * COVE BASE TRIM CATALOG
- * Pre-configured trim options for common warehouse applications
- */
-export const COVE_BASE_TRIM_CATALOG = {
-  // Standard vinyl cove base trims
-  VINYL_4_INCH: {
-    name: '4" Vinyl Cove Base',
-    config: coveBaseTrimPresets.standard4inch,
-    description: 'Standard 4" vinyl cove base for light commercial use',
-    applications: ['offices', 'break_rooms', 'light_storage']
-  },
-  
-  VINYL_6_INCH: {
-    name: '6" Vinyl Cove Base', 
-    config: coveBaseTrimPresets.standard6inch,
-    description: 'Tall 6" vinyl cove base for enhanced wall protection',
-    applications: ['warehouses', 'production_areas', 'loading_docks']
-  },
-  
-  VINYL_8_INCH: {
-    name: '8" Vinyl Cove Base',
-    config: coveBaseTrimPresets.standard8inch,
-    description: 'Extra tall 8" vinyl cove base for maximum protection',
-    applications: ['industrial_areas', 'chemical_storage', 'heavy_equipment_zones']
-  },
-  
-  // Heavy duty rubber options
-  RUBBER_HEAVY_DUTY: {
-    name: 'Heavy Duty Rubber Cove Base',
-    config: coveBaseTrimPresets.heavyDutyRubber,
-    description: 'Thick rubber cove base for high-impact environments',
-    applications: ['manufacturing', 'automotive_bays', 'maintenance_areas']
-  },
-  
-  // Aluminum trim for specialized areas
-  ALUMINUM_TRIM: {
-    name: 'Aluminum Cove Base',
-    config: coveBaseTrimPresets.aluminumTrim,
-    description: 'Metal cove base for clean rooms and food service areas',
-    applications: ['clean_rooms', 'food_processing', 'laboratories', 'medical_facilities']
-  }
-} as const;
-
-/**
- * Gets recommended cove base trim for a specific warehouse area
- * @param areaType - Type of warehouse area
- * @returns Recommended trim configuration
- */
-export function getRecommendedCoveBaseTrim(areaType: string) {
-  const recommendations = {
-    'office': COVE_BASE_TRIM_CATALOG.VINYL_4_INCH,
-    'break_room': COVE_BASE_TRIM_CATALOG.VINYL_4_INCH,
-    'storage': COVE_BASE_TRIM_CATALOG.VINYL_6_INCH,
-    'warehouse': COVE_BASE_TRIM_CATALOG.VINYL_6_INCH,
-    'production': COVE_BASE_TRIM_CATALOG.VINYL_8_INCH,
-    'loading_dock': COVE_BASE_TRIM_CATALOG.VINYL_8_INCH,
-    'manufacturing': COVE_BASE_TRIM_CATALOG.RUBBER_HEAVY_DUTY,
-    'maintenance': COVE_BASE_TRIM_CATALOG.RUBBER_HEAVY_DUTY,
-    'clean_room': COVE_BASE_TRIM_CATALOG.ALUMINUM_TRIM,
-    'food_processing': COVE_BASE_TRIM_CATALOG.ALUMINUM_TRIM,
-    'laboratory': COVE_BASE_TRIM_CATALOG.ALUMINUM_TRIM
-  };
-  
-  return recommendations[areaType.toLowerCase()] || COVE_BASE_TRIM_CATALOG.VINYL_6_INCH;
-}
+} 
