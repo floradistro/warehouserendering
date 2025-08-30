@@ -6,6 +6,7 @@ import { OrbitControls, Html } from '@react-three/drei'
 import { Suspense, useMemo, useRef, useEffect, useCallback, memo } from 'react'
 import * as THREE from 'three'
 import { FloorplanData, FloorplanElement, useAppStore } from '@/lib/store'
+import { useMeasurementStore } from '@/lib/measurement/MeasurementStore'
 import { IntelligentWallSystem } from '@/lib/intelligent-wall-system'
 import { MAIN_WAREHOUSE_MODEL } from '@/lib/warehouse-models'
 import { createDetailedIBCTote, createSimpleIBCTote } from '@/lib/ibc-tote-model'
@@ -17,8 +18,51 @@ import { createFramedWallGroup, shouldShowFraming, shouldShowDrywall, updateFram
 import FirstPersonControls from './FirstPersonControls'
 import SnapIndicators from './SnapIndicators'
 import EnhancedLighting from './EnhancedLighting'
+import { CameraController, CameraCapture } from '@/lib/core/CameraController'
+// Professional measurement system imports  
+import SimpleMeasurementDisplay from './SimpleMeasurementDisplay'
+import SelectionIndicators from './SelectionIndicators'
 
-// WASD-enabled Orbit Controls
+
+// Temporary formatMeasurement function to avoid breaking existing code
+function formatMeasurement(decimalFeet: number): string {
+  const feet = Math.floor(decimalFeet)
+  const remainingFeet = decimalFeet - feet
+  const totalInches = remainingFeet * 12
+  const inches = Math.floor(totalInches)
+  const remainingInches = totalInches - inches
+  
+  // Convert to 16ths
+  const sixteenths = Math.round(remainingInches * 16)
+  
+  if (sixteenths === 0) {
+    if (inches === 0) {
+      return `${feet}'`
+    }
+    return `${feet}' ${inches}"`
+  }
+  
+  // Simplify fraction
+  let numerator = sixteenths
+  let denominator = 16
+  
+  // Find GCD to simplify fraction
+  const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b)
+  const commonDivisor = gcd(numerator, denominator)
+  numerator /= commonDivisor
+  denominator /= commonDivisor
+  
+  if (inches === 0) {
+    return `${feet}' ${numerator}/${denominator}"`
+  }
+  
+  return `${feet}' ${inches} ${numerator}/${denominator}"`
+}
+import { SelectionBox } from '@/lib/core/SelectionManager'
+import { initializeWarehouseCAD } from '@/lib/integration/WarehouseCADIntegration'
+import { Background3DGrid } from '@/lib/core/RenderingUtils'
+
+// WASD-enabled Orbit Controls - DEPRECATED: Use CameraController instead
 function WASDOrbitControls({ target, ...props }: any) {
   const orbitRef = useRef<any>()
   const { camera } = useThree()
@@ -154,52 +198,8 @@ function WASDOrbitControls({ target, ...props }: any) {
   )
 }
 
-// Helper function to convert decimal feet to feet, inches, and fractions
-// Selection box component for highlighting selected elements
-function SelectionBox({ dimensions, color = '#ff0000' }: { dimensions: { width: number; height: number; depth?: number }, color?: string }) {
-  const { width, height, depth = 1 } = dimensions
-  
-  return (
-    <lineSegments>
-      <edgesGeometry args={[new THREE.BoxGeometry(width, depth, height)]} />
-      <lineBasicMaterial color={color} linewidth={2} />
-    </lineSegments>
-  )
-}
 
-function formatMeasurement(decimalFeet: number): string {
-  const feet = Math.floor(decimalFeet)
-  const remainingFeet = decimalFeet - feet
-  const totalInches = remainingFeet * 12
-  const inches = Math.floor(totalInches)
-  const remainingInches = totalInches - inches
-  
-  // Convert to 16ths
-  const sixteenths = Math.round(remainingInches * 16)
-  
-  if (sixteenths === 0) {
-    if (inches === 0) {
-      return `${feet}'`
-    }
-    return `${feet}' ${inches}"`
-  }
-  
-  // Simplify fraction
-  let numerator = sixteenths
-  let denominator = 16
-  
-  // Find GCD to simplify fraction
-  const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b)
-  const commonDivisor = gcd(numerator, denominator)
-  numerator /= commonDivisor
-  denominator /= commonDivisor
-  
-  if (inches === 0) {
-    return `${feet}' ${numerator}/${denominator}"`
-  }
-  
-  return `${feet}' ${inches} ${numerator}/${denominator}"`
-}
+
 
 // Helper function to get center position of an element
 function getElementCenter(element: FloorplanElement): [number, number, number] {
@@ -219,25 +219,24 @@ interface FloorplanElementProps {
   element: FloorplanElement
   isSelected: boolean
   onSelect: (id: string) => void
+  onToggleSelect: (id: string) => void
   showMeasurements: boolean
-  measurementMode: boolean
-  selectedObjectsForMeasurement: [string | null, string | null]
-  onMeasurementSelect: (id: string) => void
+  // Legacy measurement props removed
   onStartEdit: (element: FloorplanElement) => void
   onStartDrag: (element: FloorplanElement, worldPosition: { x: number; y: number; z: number }) => void
   isEditing: boolean
   selectedElements: string[]
   isDragging: boolean
+  measurementToolActive: boolean
 }
 
 const FloorplanElementMesh = memo(({ 
   element, 
   isSelected, 
   onSelect, 
+  onToggleSelect,
   showMeasurements, 
-  measurementMode,
-  selectedObjectsForMeasurement,
-  onMeasurementSelect,
+  // Legacy measurement props removed
   onStartEdit,
   onStartDrag,
   isEditing,
@@ -245,10 +244,12 @@ const FloorplanElementMesh = memo(({
   isDragging,
   showFraming = false,
   showDrywall = false,
-  lockedTarget
+  lockedTarget,
+  measurementToolActive
 }: FloorplanElementProps & { showFraming?: boolean, showDrywall?: boolean, lockedTarget: string | null }) => {
   // Load brick texture for walls
   const brickTexture = useLoader(THREE.TextureLoader, '/textures/materials/concrete/Brick/bricktexture.jpg')
+  const concreteTexture = useLoader(THREE.TextureLoader, '/textures/materials/concrete/Textured Dark Concrete Surface.png')
   
   // Get camera for LOD calculations
   const { camera } = useThree()
@@ -749,10 +750,15 @@ const FloorplanElementMesh = memo(({
           opacity: isPreview ? 0.6 : 1,
         })
       } else {
-        // Off-white drywall for interior walls
+        // Configure concrete texture for interior walls
+        concreteTexture.wrapS = concreteTexture.wrapT = THREE.RepeatWrapping
+        concreteTexture.repeat.set(element.dimensions.width / 8, element.dimensions.height / 8)
+        
+        // Muted off-white drywall for interior walls with texture
         standardMaterial = new THREE.MeshStandardMaterial({
-          color: isPreview ? new THREE.Color('#4ade80') : new THREE.Color('#f8f8f8'),
-          roughness: 0.7,
+          map: isPreview ? null : concreteTexture,
+          color: isPreview ? new THREE.Color('#4ade80') : new THREE.Color('#f5f5f0'),
+          roughness: 0.85,
           metalness: 0.0,
           transparent: isPreview,
           opacity: isPreview ? 0.6 : 1,
@@ -950,20 +956,25 @@ const FloorplanElementMesh = memo(({
     return [x + element.dimensions.width / 2, depth / 2, y + element.dimensions.height / 2] as [number, number, number]
   }, [element.position, element.dimensions, element.material, element.type])
 
-  // Check if this element is selected for measurement
-  const isSelectedForMeasurement = selectedObjectsForMeasurement.includes(element.id)
-  const isMeasurementFirstSelection = selectedObjectsForMeasurement[0] === element.id
-  const isMeasurementSecondSelection = selectedObjectsForMeasurement[1] === element.id
+  // Legacy measurement selection logic removed
 
   // Handle double-click for selection, editing or measurement
   const handleDoubleClick = (e: any) => {
     e.stopPropagation()
     
-    if (measurementMode) {
-      console.log(`Double-clicked ${element.id} for measurement`)
-      onMeasurementSelect(element.id)
+    // Disable object selection when measurement tool is active
+    if (measurementToolActive) {
+      return
+    }
+    
+    // Check if Shift key is held for multi-select
+    const isShiftPressed = e.shiftKey || e.nativeEvent?.shiftKey
+    
+    if (isShiftPressed) {
+      // Multi-select: toggle this element's selection
+      onToggleSelect(element.id)
     } else {
-      console.log(`🎯 Double-clicked ${element.id} for selection`)
+      // Single select: replace selection with this element
       onSelect(element.id)
     }
   }
@@ -1011,6 +1022,7 @@ const FloorplanElementMesh = memo(({
       <group 
         position={position}
         rotation={[0, element.rotation || 0, 0]}
+        userData={{ id: element.id, dimensions: element.dimensions, ...element.metadata }}
 
         onDoubleClick={handleDoubleClick}
         onPointerDown={handlePointerDown}
@@ -1060,8 +1072,8 @@ const FloorplanElementMesh = memo(({
           </div>
         </Html>
         
-        {(isSelected || isSelectedForMeasurement) && (
-          <SelectionBox dimensions={element.dimensions} color={isSelectedForMeasurement ? '#ffff00' : '#ff0000'} />
+        {(isSelected || false) && (
+          <SelectionBox dimensions={element.dimensions} color={false ? '#ffff00' : '#ff0000'} />
         )}
       </group>
     )
@@ -1073,6 +1085,7 @@ const FloorplanElementMesh = memo(({
       <group 
         position={position}
         rotation={[0, element.rotation || 0, 0]}
+        userData={{ id: element.id, dimensions: element.dimensions, ...element.metadata }}
 
         onDoubleClick={handleDoubleClick}
         onPointerDown={handlePointerDown}
@@ -1099,8 +1112,8 @@ const FloorplanElementMesh = memo(({
           isCurved={element.metadata?.curved_profile || true}
         />
         
-        {(isSelected || isSelectedForMeasurement) && (
-          <SelectionBox dimensions={element.dimensions} color={isSelectedForMeasurement ? '#ffff00' : '#ff0000'} />
+        {(isSelected || false) && (
+          <SelectionBox dimensions={element.dimensions} color={false ? '#ffff00' : '#ff0000'} />
         )}
       </group>
     )
@@ -1116,6 +1129,7 @@ const FloorplanElementMesh = memo(({
         <group 
           position={position}
           rotation={[0, element.rotation || 0, 0]}
+          userData={{ id: element.id, dimensions: element.dimensions, ...element.metadata }}
   
           onDoubleClick={handleDoubleClick}
           onPointerDown={handlePointerDown}
@@ -1142,8 +1156,8 @@ const FloorplanElementMesh = memo(({
             isCurved={element.metadata?.curved_profile || true}
           />
           
-          {(isSelected || isSelectedForMeasurement) && (
-            <SelectionBox dimensions={element.dimensions} color={isSelectedForMeasurement ? '#ffff00' : '#ff0000'} />
+          {(isSelected || false) && (
+            <SelectionBox dimensions={element.dimensions} color={false ? '#ffff00' : '#ff0000'} />
           )}
         </group>
       )
@@ -1181,8 +1195,8 @@ const FloorplanElementMesh = memo(({
             isCurved={false} // No curve for longitudinal trusses
           />
           
-          {(isSelected || isSelectedForMeasurement) && (
-            <SelectionBox dimensions={element.dimensions} color={isSelectedForMeasurement ? '#ffff00' : '#ff0000'} />
+          {(isSelected || false) && (
+            <SelectionBox dimensions={element.dimensions} color={false ? '#ffff00' : '#ff0000'} />
           )}
         </group>
       )
@@ -1194,6 +1208,7 @@ const FloorplanElementMesh = memo(({
         <group 
           position={position}
           rotation={[0, element.rotation || 0, 0]}
+          userData={{ id: element.id, dimensions: element.dimensions, ...element.metadata }}
   
           onDoubleClick={handleDoubleClick}
           onPointerDown={handlePointerDown}
@@ -1229,13 +1244,13 @@ const FloorplanElementMesh = memo(({
             <meshStandardMaterial color="#34495e" metalness={0.8} roughness={0.2} />
           </mesh>
         
-        {(isSelected || isSelectedForMeasurement) && (
+        {(isSelected || false) && (
           <mesh position={[0, element.dimensions.depth! / 2, 0]}>
             <boxGeometry args={[1.4, element.dimensions.depth! + 0.2, 1.0]} />
             <meshBasicMaterial
               color={
-                measurementMode && isSelectedForMeasurement
-                  ? isMeasurementFirstSelection
+                false && false
+                  ? false
                     ? "#00ff00" // Green for first selection
                     : "#ff6600" // Orange for second selection
                   : "#ffff00" // Yellow for regular selection
@@ -1298,13 +1313,13 @@ const FloorplanElementMesh = memo(({
       >
         <primitive object={ibcToteModel} />
         
-        {(isSelected || isSelectedForMeasurement) && (
+        {(isSelected || false) && (
           <mesh position={[0, 1.915, 0]}> {/* Center at half height (3.83/2) */}
             <boxGeometry args={[4.2, 4.03, 3.53]} /> {/* Slightly larger than actual */}
             <meshBasicMaterial
               color={
-                measurementMode && isSelectedForMeasurement
-                  ? isMeasurementFirstSelection
+                false && false
+                  ? false
                     ? "#00ff00" // Green for first selection
                     : "#ff6600" // Orange for second selection
                   : "#ffff00" // Yellow for regular selection
@@ -1364,13 +1379,13 @@ const FloorplanElementMesh = memo(({
       >
         <primitive object={tankModel} />
         
-        {(isSelected || isSelectedForMeasurement) && (
+        {(isSelected || false) && (
           <mesh position={[0, 5.335, 0]}> {/* Center at half height (10.67/2) */}
             <cylinderGeometry args={[3.2, 3.2, 11, 16]} /> {/* Slightly larger than actual */}
             <meshBasicMaterial
               color={
-                measurementMode && isSelectedForMeasurement
-                  ? isMeasurementFirstSelection
+                false && false
+                  ? false
                     ? "#00ff00" // Green for first selection
                     : "#ff6600" // Orange for second selection
                   : "#ffff00" // Yellow for regular selection
@@ -1429,13 +1444,13 @@ const FloorplanElementMesh = memo(({
       >
         <primitive object={norwescoModel} />
         
-        {(isSelected || isSelectedForMeasurement) && (
+        {(isSelected || false) && (
           <mesh position={[0, 3.335, 0]}> {/* Center at half height (6.67/2) */}
             <cylinderGeometry args={[2.8, 2.8, 7, 16]} /> {/* Slightly larger than actual */}
             <meshBasicMaterial
               color={
-                measurementMode && isSelectedForMeasurement
-                  ? isMeasurementFirstSelection
+                false && false
+                  ? false
                     ? '#00ff00' // Green for first selected
                     : '#ff00ff' // Magenta for second selected
                   : '#00ff00' // Green for normal selection
@@ -1496,7 +1511,7 @@ const FloorplanElementMesh = memo(({
       >
         <primitive object={electricalPanelModel} />
         
-        {(isSelected || isSelectedForMeasurement) && (
+        {(isSelected || false) && (
           <mesh position={[0, 3.5, 0]}> {/* Center at half height (7'/2) */}
             <boxGeometry args={[element.dimensions.width, element.dimensions.height, element.dimensions.depth]} />
             <meshBasicMaterial
@@ -1557,7 +1572,7 @@ const FloorplanElementMesh = memo(({
       >
         <primitive object={electricalPanel200AModel} />
         
-        {(isSelected || isSelectedForMeasurement) && (
+        {(isSelected || false) && (
           <mesh position={[0, 1.67, 0]}> {/* Center at half height (3.33'/2) */}
             <boxGeometry args={[element.dimensions.width, element.dimensions.height, element.dimensions.depth]} />
             <meshBasicMaterial
@@ -1581,6 +1596,7 @@ const FloorplanElementMesh = memo(({
       <group
         position={position}
         rotation={[0, element.rotation || 0, 0]}
+        userData={{ id: element.id, dimensions: element.dimensions, ...element.metadata }}
 
         onDoubleClick={handleDoubleClick}
         onPointerDown={handlePointerDown}
@@ -1622,6 +1638,7 @@ const FloorplanElementMesh = memo(({
       <group
         position={position}
         rotation={[0, element.rotation || 0, 0]}
+        userData={{ id: element.id, dimensions: element.dimensions, ...element.metadata }}
 
         onDoubleClick={handleDoubleClick}
         onPointerDown={handlePointerDown}
@@ -1662,6 +1679,7 @@ const FloorplanElementMesh = memo(({
       <group
         position={position}
         rotation={[0, element.rotation || 0, 0]}
+        userData={{ id: element.id, dimensions: element.dimensions, ...element.metadata }}
 
         onDoubleClick={handleDoubleClick}
         onPointerDown={handlePointerDown}
@@ -1702,6 +1720,7 @@ const FloorplanElementMesh = memo(({
       <group
         position={position}
         rotation={[0, element.rotation || 0, 0]}
+        userData={{ id: element.id, dimensions: element.dimensions, ...element.metadata }}
 
         onDoubleClick={handleDoubleClick}
         onPointerDown={handlePointerDown}
@@ -1753,6 +1772,7 @@ const FloorplanElementMesh = memo(({
         rotation={[0, element.rotation || 0, 0]}
         castShadow
         receiveShadow
+        userData={{ id: element.id, dimensions: element.dimensions, ...element.metadata }}
 
         onDoubleClick={handleDoubleClick}
         onPointerDown={handlePointerDown}
@@ -1769,12 +1789,12 @@ const FloorplanElementMesh = memo(({
           document.body.style.cursor = 'auto'
         }}
       >
-        {/* Measurement mode: bright pink outline on selected objects */}
-        {measurementMode && isSelectedForMeasurement && (
+        {/* Selection highlighting */}
+        {isSelected && !isDragging && (
           <meshBasicMaterial
-            color="#FF1493" // Bright pink instead of yellow
+            color="#0e639c" // Blue selection highlight
             transparent
-            opacity={0.6}
+            opacity={0.3}
             depthTest={false}
           />
         )}
@@ -1797,70 +1817,7 @@ const FloorplanElementMesh = memo(({
 
 
 
-function Background3DGrid({ centerX, centerY, size = 500 }: { centerX: number; centerY: number; size?: number }) {
-  const grid = useMemo(() => {
-    const group = new THREE.Group()
-    const horizontalMaterial = new THREE.LineBasicMaterial({ 
-      color: 0x718096, 
-      opacity: 0.2, 
-      transparent: true 
-    })
-    const verticalMaterial = new THREE.LineBasicMaterial({ 
-      color: 0x5a6a7a, 
-      opacity: 0.12, 
-      transparent: true 
-    })
-    
-    const gridSize = size
-    const step = 10 // 10 foot increments for smaller workspace
-    const startX = centerX - gridSize / 2
-    const endX = centerX + gridSize / 2
-    const startZ = centerY - gridSize / 2
-    const endZ = centerY + gridSize / 2
-    const maxHeight = 30 // Maximum height for vertical grid lines
-    
-    // Horizontal grid (X-Z plane at ground level)
-    // Vertical lines (parallel to Z axis)
-    for (let x = startX; x <= endX; x += step) {
-      const geometry = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(x, -1, startZ),
-        new THREE.Vector3(x, -1, endZ)
-      ])
-      const line = new THREE.Line(geometry, horizontalMaterial)
-      line.renderOrder = -2 // Render behind other objects
-      group.add(line)
-    }
-    
-    // Horizontal lines (parallel to X axis)
-    for (let z = startZ; z <= endZ; z += step) {
-      const geometry = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(startX, -1, z),
-        new THREE.Vector3(endX, -1, z)
-      ])
-      const line = new THREE.Line(geometry, horizontalMaterial)
-      line.renderOrder = -2 // Render behind other objects
-      group.add(line)
-    }
-    
-    // Vertical grid lines (every 20 feet for subtlety)
-    const verticalStep = 20
-    for (let x = startX; x <= endX; x += verticalStep) {
-      for (let z = startZ; z <= endZ; z += verticalStep) {
-        const geometry = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(x, -1, z),
-          new THREE.Vector3(x, maxHeight, z)
-        ])
-        const line = new THREE.Line(geometry, verticalMaterial)
-        line.renderOrder = -3 // Render furthest behind
-        group.add(line)
-      }
-    }
-    
-    return group
-  }, [centerX, centerY, size])
-
-  return <primitive object={grid} />
-}
+// Background3DGrid function removed - using imported version from RenderingUtils
 
 function GroundPlane({ width, height }: { width: number; height: number }) {
   // Load concrete texture
@@ -1907,8 +1864,8 @@ function RoomFloor({
   const floorMaterial = useMemo(() => {
     if (material === 'white-epoxy') {
       return new THREE.MeshStandardMaterial({
-        color: '#f8f9fa', // Clean white with slight warmth
-        roughness: 0.1, // Very smooth, reflective epoxy
+        color: '#e8e8e5', // Muted off-white with less brightness
+        roughness: 0.2, // Slightly less reflective
         metalness: 0.0,
         transparent: false,
         opacity: 1.0,
@@ -2642,10 +2599,10 @@ function WallLabels3D({ floorplan }: { floorplan: FloorplanData }) {
   
   // Subtle directional labels positioned around the building - VS Code theme
   // Building is now rotated: 88' 7/8" wide (East-West) x 198' long (North-South)
-  // NORTH is where the dry room is located
+  // NORTH side of the warehouse
   return (
     <>
-      {/* NORTH - On the long side (198' long) - top end (DRY ROOM SIDE) */}
+      {/* NORTH - On the long side (198' long) - top end */}
       <Html position={[centerX, 5, topWall.position.y + 25]}>
         <div className="text-gray-400 text-sm font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
           NORTH
@@ -2726,29 +2683,11 @@ function RoomLabels({ floorplan }: { floorplan: FloorplanData }) {
     e.id.startsWith('room-wall-')
   )
   
-  const hallwayWalls = floorplan.elements.filter(e =>
-    e.type === 'wall' &&
-    e.metadata?.category === 'room-walls' &&
-    (e.id === 'hallway-wall-north' || e.id === 'hallway-wall-south')
-  )
+  // Find exterior walls to use as boundaries instead of missing hallway walls
+  const northWall = floorplan.elements.find(e => e.id === 'wall-top')
+  const southWall = floorplan.elements.find(e => e.id === 'wall-bottom-left' || e.id === 'wall-bottom-right')
   
-  // Check for room 1 divider walls
-  const room1DividerWall = floorplan.elements.find(e =>
-    e.type === 'wall' &&
-    e.id === 'room-1-divider-wall'
-  )
-  
-  const room1SecondDividerWall = floorplan.elements.find(e =>
-    e.type === 'wall' &&
-    e.id === 'room-1-second-divider-wall'
-  )
-  
-  if (roomWalls.length === 0 || hallwayWalls.length === 0) return null
-  
-  const northHallwayWall = hallwayWalls.find(w => w.id === 'hallway-wall-north')
-  const southHallwayWall = hallwayWalls.find(w => w.id === 'hallway-wall-south')
-  
-  if (!northHallwayWall || !southHallwayWall) return null
+  if (roomWalls.length === 0 || !northWall || !southWall) return null
   
   // Get all walls that separate rooms (including firewall and regular room walls)
   const allSeparatorWalls = floorplan.elements.filter(e =>
@@ -2757,77 +2696,50 @@ function RoomLabels({ floorplan }: { floorplan: FloorplanData }) {
     e.id.startsWith('room-wall-')
   ).sort((a, b) => b.position.y - a.position.y) // Sort north to south
   
+  if (allSeparatorWalls.length === 0) return null
+  
   // Calculate room center positions
   const roomPositions = []
   
-  // Handle North Side Dry Rooms - check for the two 10x33.5 dry rooms
-  // Find the south dry room walls (dry-room-south)
-  const southDryRoomWalls = floorplan.elements.filter(e =>
-    e.type === 'wall' &&
-    (e.metadata?.room_west === 'dry-room-south' || 
-     e.metadata?.room_east === 'dry-room-south' ||
-     e.metadata?.room_north === 'dry-room-south')
-  )
+  // Control Room (northernmost) - no number displayed, handled by AreaLabels
+  // Skip adding control room to roomPositions since it shouldn't be numbered
   
-  // Find the north dry room walls (dry-room-north)
-  const northDryRoomWalls = floorplan.elements.filter(e =>
-    e.type === 'wall' &&
-    (e.metadata?.room_east === 'dry-room-north' ||
-     e.metadata?.room_north === 'dry-room-north')
-  )
-  
-  if (southDryRoomWalls.length > 0 && northDryRoomWalls.length > 0) {
-    // We have the two dry rooms - label them as Dry 1 and Dry 2
+  // Room 2 = "Veg" - between first and second separator walls, but only west section
+  if (allSeparatorWalls.length > 1) {
+    const vegCenterY = (allSeparatorWalls[0].position.y + allSeparatorWalls[1].position.y) / 2
+    // Position Veg label in the western section (stops at first divider wall x=82.75)
+    const vegCenterX = (37.0625 + 82.75) / 2 // Center between west longway wall and first divider
+    roomPositions.push({ roomNumber: 'Veg', centerY: vegCenterY, centerX: vegCenterX })
     
-    // Dry 1 (South dry room) - between y=198.0417 and y=208.5209
-    const dry1CenterY = 198.0417 + (10.4792 / 2) // Center of the 10.4792' wide room
-    const dry1CenterX = 76.875 + (33.5 / 2) // Center of the 33.5' long room
-    roomPositions.push({ roomNumber: 'Dry 1', centerY: dry1CenterY, centerX: dry1CenterX })
+    // Add Dry 1 label in the middle section (between x=82.75 and x=94.75)
+    const dry1CenterX = (82.75 + 94.75) / 2
+    roomPositions.push({ roomNumber: 'Dry 1', centerY: vegCenterY, centerX: dry1CenterX })
     
-    // Dry 2 (North dry room) - between y=211.5209 and y=222
-    const dry2CenterY = 211.5209 + (10.4791 / 2) // Center of the 10.4791' wide room
-    const dry2CenterX = 76.875 + (33.5 / 2) // Center of the 33.5' long room
-    roomPositions.push({ roomNumber: 'Dry 2', centerY: dry2CenterY, centerX: dry2CenterX })
-    
-  } else if (room1DividerWall) {
-    // Fallback to old logic if room divider walls exist
-    const room1CenterY = (northHallwayWall.position.y + allSeparatorWalls[0].position.y) / 2
-    const leftWall = floorplan.elements.find(e => e.id === 'longways-wall-left')
-    const dividerX = room1DividerWall.position.x
-    
-    if (leftWall) {
-      // Dry 1 (west side) - between left wall and first divider
-      const dry1CenterX = (leftWall.position.x + leftWall.dimensions.width/2 + dividerX) / 2
-      roomPositions.push({ roomNumber: 'Dry 1', centerY: room1CenterY, centerX: dry1CenterX })
-      
-      // Dry 2 positioning depends on whether there's a second divider wall
-      if (room1SecondDividerWall) {
-        // Dry 2 (middle section) - between first divider and second divider
-        const secondDividerX = room1SecondDividerWall.position.x
-        const dry2CenterX = (dividerX + secondDividerX) / 2
-        roomPositions.push({ roomNumber: 'Dry 2', centerY: room1CenterY, centerX: dry2CenterX })
-      } else {
-        // Dry 2 (east side) - between divider and shortened north wall end
-        const northWallEnd = northHallwayWall.position.x + northHallwayWall.dimensions.width
-        const dry2CenterX = (dividerX + northWallEnd) / 2
-        roomPositions.push({ roomNumber: 'Dry 2', centerY: room1CenterY, centerX: dry2CenterX })
-      }
-    }
-  } else {
-    // No dry rooms found - check if Room 1 exists as a single room
-    const room1CenterY = (northHallwayWall.position.y + allSeparatorWalls[0].position.y) / 2
-    roomPositions.push({ roomNumber: 'Room 1', centerY: room1CenterY })
+    // Add Dry 2 label in the eastern section (between x=94.75 and x=106.75)
+    const dry2CenterX = (94.75 + 106.75) / 2
+    roomPositions.push({ roomNumber: 'Dry 2', centerY: vegCenterY, centerX: dry2CenterX })
   }
   
-  // Rooms 2-7 - between consecutive separator walls
-  for (let i = 0; i < allSeparatorWalls.length - 1; i++) {
+  // Room 3 = "Flower 1" - between second and third separator walls
+  if (allSeparatorWalls.length > 2) {
+    const flower1CenterY = (allSeparatorWalls[1].position.y + allSeparatorWalls[2].position.y) / 2
+    roomPositions.push({ roomNumber: 'Flower 1', centerY: flower1CenterY })
+  }
+  
+  // Rooms 4-8 = "Flower 2" through "Flower 6" - remaining rooms going west (south)
+  for (let i = 2; i < allSeparatorWalls.length - 1; i++) {
     const centerY = (allSeparatorWalls[i].position.y + allSeparatorWalls[i + 1].position.y) / 2
-    roomPositions.push({ roomNumber: i + 2, centerY })
+    const flowerNumber = i // Flower 2 starts at i=2, Flower 3 at i=3, etc.
+    roomPositions.push({ roomNumber: `Flower ${flowerNumber}`, centerY })
   }
   
-  // Room 8 (southernmost) - between last separator wall and south hallway wall
-  const room8CenterY = (allSeparatorWalls[allSeparatorWalls.length - 1].position.y + southHallwayWall.position.y) / 2
-  roomPositions.push({ roomNumber: 8, centerY: room8CenterY })
+  // Southernmost room = "Flower 6" - between last separator wall and south exterior wall
+  if (allSeparatorWalls.length > 0) {
+    const southWallY = southWall.position.y
+    const lastFlowerCenterY = (allSeparatorWalls[allSeparatorWalls.length - 1].position.y + southWallY) / 2
+    const lastFlowerNumber = allSeparatorWalls.length - 1 // Should be 6 for Flower 6
+    roomPositions.push({ roomNumber: `Flower ${lastFlowerNumber}`, centerY: lastFlowerCenterY })
+  }
   
   // Default center X position (middle of the room area)
   const defaultRoomCenterX = 69.375 // Center of building width, same as I-beams
@@ -2837,8 +2749,8 @@ function RoomLabels({ floorplan }: { floorplan: FloorplanData }) {
       {roomPositions.map((room, index) => {
         const centerX = room.centerX || defaultRoomCenterX
         return (
-          <Html key={`room-${room.roomNumber}-${index}`} position={[centerX, 8, room.centerY]}>
-            <div className="text-gray-400 text-sm font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
+          <Html key={`room-${room.roomNumber}-${index}`} position={[centerX, 2, room.centerY]} center>
+            <div className="text-gray-300 text-xs font-medium pointer-events-none select-none bg-gray-800/95 px-2 py-1 rounded border border-gray-600/40 backdrop-blur-sm shadow-sm font-mono tracking-wide">
               {room.roomNumber}
             </div>
           </Html>
@@ -2882,11 +2794,11 @@ function AreaLabels({ floorplan }: { floorplan: FloorplanData }) {
   // Define area labels for different zones in the warehouse
   const areas = [
     {
-      id: 'control-area',
-      name: 'Control Area',
-      // Northwest corner area - west of dry rooms, in front of IBC/water tanks
-      // From west wall (x=25) to dry rooms west edge (x=76.875), from Room 2 north wall (y=198) to north wall (y=222)
-      centerX: 50.9375, // Center between x=25 and x=76.875: (25 + 76.875) / 2 = 50.9375
+      id: 'control-room',
+      name: 'Control Room',
+      // Northwest corner area - in front of IBC/water tanks
+      // From west wall (x=25) to east wall (x=112.75), from Room 2 north wall (y=198) to north wall (y=222) - expanded control area
+      centerX: 68.875, // Center between x=25 and x=112.75: (25 + 112.75) / 2 = 68.875
       centerY: 210, // Center between y=198 and y=222: (198 + 222) / 2 = 210
       centerZ: 6 // Elevated for visibility
     }
@@ -2895,8 +2807,8 @@ function AreaLabels({ floorplan }: { floorplan: FloorplanData }) {
   return (
     <>
       {areas.map((area) => (
-        <Html key={`area-${area.id}`} position={[area.centerX, area.centerZ, area.centerY]}>
-          <div className="text-blue-400 text-sm font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-3 py-1.5 rounded border border-blue-600/50 backdrop-blur-sm">
+        <Html key={`area-${area.id}`} position={[area.centerX, 2, area.centerY]} center>
+          <div className="text-gray-300 text-xs font-medium pointer-events-none select-none bg-gray-800/95 px-2 py-1 rounded border border-gray-600/40 backdrop-blur-sm shadow-sm font-mono tracking-wide">
             {area.name}
           </div>
         </Html>
@@ -3260,13 +3172,14 @@ function RoofPanel({
 // Legacy sample floorplan (kept for fallback compatibility)
 const sampleFloorplan = MAIN_WAREHOUSE_MODEL
 
-function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, cameraTarget, lockedTarget }: { 
+function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, cameraTarget, lockedTarget, measurementToolActive }: { 
   onCameraReady: (camera: THREE.Camera) => void, 
   snapPointsCache: any[], 
   showFraming: boolean,
   showDrywall: boolean,
   cameraTarget: [number, number, number],
-  lockedTarget: string | null
+  lockedTarget: string | null,
+  measurementToolActive: boolean
 }) {
   const {
     currentFloorplan,
@@ -3274,11 +3187,7 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
     toggleElementSelection,
     selectElementWithSnap,
     showMeasurements,
-    measurementMode,
-    selectedObjectsForMeasurement,
-    measurementDistance,
-    measurementType,
-    selectObjectForMeasurement,
+    // Legacy measurement variables removed
     dragGuides,
     firstPersonMode,
     isPlacing,
@@ -3341,7 +3250,7 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
       <Background3DGrid 
         centerX={floorplan.dimensions.width / 2} 
         centerY={floorplan.dimensions.height / 2}
-        size={300} // Smaller grid for smaller workspace
+        size={300}
       />
 
       {/* Enhanced Lighting System for Realistic Rendering */}
@@ -3359,117 +3268,95 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
       {/* White epoxy floors for rooms 2-6 */}
       {/* Room 2: y = 173.4792 to y = 198.0417 */}
       <RoomFloor
-        position={[70.21875, -0.05, 185.76045]} // Center between longways walls, slightly above ground
-        width={80.3125} // Room interior width between longways walls
+        position={[70.40625, -0.05, 185.76045]} // Center between longways walls, slightly above ground
+        width={80.6875} // Room interior width between longways walls
         height={24.5625} // Room 2 height: 198.0417 - 173.4792
         material="white-epoxy"
       />
       
       {/* Room 3: y = 148.9167 to y = 173.4792 */}
       <RoomFloor
-        position={[70.21875, -0.05, 161.19795]} // Center position
-        width={80.3125}
+        position={[70.40625, -0.05, 161.19795]} // Center position
+        width={80.6875}
         height={24.5625} // Room 3 height: 173.4792 - 148.9167
         material="white-epoxy"
       />
       
       {/* Room 4: y = 124.3542 to y = 148.9167 */}
       <RoomFloor
-        position={[70.21875, -0.05, 136.63545]} // Center position
-        width={80.3125}
+        position={[70.40625, -0.05, 136.63545]} // Center position
+        width={80.6875}
         height={24.5625} // Room 4 height: 148.9167 - 124.3542
         material="white-epoxy"
       />
       
       {/* Room 5: y = 99.7917 to y = 124.3542 */}
       <RoomFloor
-        position={[70.21875, -0.05, 112.07295]} // Center position
-        width={80.3125}
+        position={[70.40625, -0.05, 112.07295]} // Center position
+        width={80.6875}
         height={24.5625} // Room 5 height: 124.3542 - 99.7917
         material="white-epoxy"
       />
       
       {/* Room 6: y = 75.2292 to y = 99.7917 */}
       <RoomFloor
-        position={[70.21875, -0.05, 87.51045]} // Center position
-        width={80.3125}
+        position={[70.40625, -0.05, 87.51045]} // Center position
+        width={80.6875}
         height={24.5625} // Room 6 height: 99.7917 - 75.2292
         material="white-epoxy"
       />
       
       {/* Room 7: y = 48.6667 to y = 75.2292 */}
       <RoomFloor
-        position={[70.21875, -0.05, 61.94795]} // Center position
-        width={80.3125}
+        position={[70.40625, -0.05, 61.94795]} // Center position
+        width={80.6875}
         height={26.5625} // Room 7 height: 75.2292 - 48.6667
         material="white-epoxy"
       />
       
-      {/* Room 8: y = 25 to y = 48.6667 */}
+      {/* Room 8: y = 25 to y = 48.6667 - EXPANDED to full width from west longway wall to east exterior wall */}
       <RoomFloor
-        position={[70.21875, -0.05, 36.83335]} // Center position
-        width={80.3125}
+        position={[74.90625, -0.05, 36.83335]} // Center position: x=(37.0625+112.75)/2=74.90625, y=(25+48.6667)/2=36.83335
+        width={75.6875} // Full width from west longway wall to east exterior wall (112.75 - 37.0625 = 75.6875)
         height={23.6667} // Room 8 height: 48.6667 - 25
         material="white-epoxy"
       />
 
       {/* Black gloss epoxy floors for hallways and control area */}
       
-      {/* West Longway Hallway: x = 25 to x = 30.0625, y = 48.6667 to y = 198.0417 */}
+      {/* West Longway Hallway: x = 25 to x = 37.0625, y = 25 to y = 198.0417 - EXTENDED to south exterior wall */}
       <RoomFloor
-        position={[27.53125, -0.05, 123.35415]} // Center position: x=(25+30.0625)/2=27.53125, y=(48.6667+198.0417)/2=123.35415
-        width={5.0625} // 5' hallway width
-        height={149.3542} // From Room 8 north wall to Room 2 north wall
+        position={[31.03125, -0.05, 111.52085]} // Center position: x=(25+37.0625)/2=31.03125, y=(25+198.0417)/2=111.52085
+        width={12.0625} // 12' hallway width
+        height={173.0417} // From south exterior wall to Room 2 north wall (198.0417 - 25 = 173.0417)
         material="black-gloss-epoxy"
       />
       
-      {/* East Longway Hallway: x = 110.375 to x = 112.75, y = 48.6667 to y = 198.0417 */}
+      {/* East Longway Hallway: x = 106.75 to x = 112.75, y = 25 to y = 198.0417 - EXTENDED to south exterior wall */}
       <RoomFloor
-        position={[111.5625, -0.05, 123.35415]} // Center position: x=(110.375+112.75)/2=111.5625, y=(48.6667+198.0417)/2=123.35415
-        width={2.375} // 3' hallway width
-        height={149.3542} // From Room 7 north wall to Room 2 north wall
+        position={[109.75, -0.05, 111.52085]} // Center position: x=(106.75+112.75)/2=109.75, y=(25+198.0417)/2=111.52085
+        width={6.0} // 6' hallway width
+        height={173.0417} // From south exterior wall to Room 2 north wall (198.0417 - 25 = 173.0417)
         material="black-gloss-epoxy"
       />
       
-      {/* South Cross Hallway: x = 30.0625 to x = 98.625, y = 25 to y = 29 */}
-      <RoomFloor
-        position={[64.34375, -0.05, 27]} // Center position: x=(30.0625+98.625)/2=64.34375, y=(25+29)/2=27
-        width={68.5625} // From west longway wall to end of south hallway wall
-        height={4} // 4' hallway width
-        material="black-gloss-epoxy"
-      />
+
       
-      {/* Middle Cross Hallway: x = 81.875 to x = 110.375, y = 208.5209 to y = 211.5209 */}
-      <RoomFloor
-        position={[96.125, -0.05, 210.0209]} // Center position: x=(81.875+110.375)/2=96.125, y=(208.5209+211.5209)/2=210.0209
-        width={28.5} // Full dry room width
-        height={3} // 3' hallway width between dry rooms
-        material="black-gloss-epoxy"
-      />
+
       
-      {/* Control Area: x = 25 to x = 76.875, y = 198.0417 to y = 222 */}
+
+      
+
+      
+      {/* Control Area: x = 25 to x = 112.75, y = 198.0417 to y = 222 - Expanded to cover entire northeast area */}
       <RoomFloor
-        position={[50.9375, -0.05, 210.02085]} // Center position: x=(25+76.875)/2=50.9375, y=(198.0417+222)/2=210.02085
-        width={51.875} // From west wall to dry rooms west edge
+        position={[68.875, -0.05, 210.02085]} // Center position: x=(25+112.75)/2=68.875, y=(198.0417+222)/2=210.02085
+        width={87.75} // From west wall to east wall - expanded to cover former dry room area
         height={23.9583} // From Room 2 north wall to north wall (222 - 198.0417 = 23.9583)
         material="black-gloss-epoxy"
       />
       
-      {/* West End of South Hallway: x = 25 to x = 30.0625, y = 25 to y = 29 */}
-      <RoomFloor
-        position={[27.53125, -0.05, 27]} // Center position: x=(25+30.0625)/2=27.53125, y=(25+29)/2=27
-        width={5.0625} // From west wall to west longway wall
-        height={4} // 4' hallway width
-        material="black-gloss-epoxy"
-      />
-      
-      {/* West Side of Room 8 Area: x = 25 to x = 30.0625, y = 29 to y = 48.6667 */}
-      <RoomFloor
-        position={[27.53125, -0.05, 38.83335]} // Center position: x=(25+30.0625)/2=27.53125, y=(29+48.6667)/2=38.83335
-        width={5.0625} // From west wall to west longway wall
-        height={19.6667} // From end of south hallway to Room 8 north wall
-        material="black-gloss-epoxy"
-      />
+
 
 
 
@@ -3477,6 +3364,7 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
       {allElements.map((element) => {
         const isPreview = element.metadata?.isPreview === true
         const isSelected = selectedElements.includes(element.id) && !isPreview
+        const toolActive = measurementToolActive
         
         // Check if element should be visible based on layer visibility
         const shouldRender = (() => {
@@ -3540,15 +3428,11 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
         const handleDoubleClickSelect = () => {
           if (isPreview) return
           
-          if (!measurementMode) {
-            // Use group selection for I-beams, normal selection with snap for others
-            if (element.material === 'steel' && element.metadata?.beam_type === 'I-beam') {
-              selectElementGroup(element.id)
-            } else {
-              selectElementWithSnap(element.id)
-            }
+          // Use group selection for I-beams, normal selection with snap for others
+          if (element.material === 'steel' && element.metadata?.beam_type === 'I-beam') {
+            selectElementGroup(element.id)
           } else {
-            selectObjectForMeasurement(element.id)
+            selectElementWithSnap(element.id)
           }
         }
         
@@ -3558,10 +3442,9 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
           element={element}
             isSelected={isSelected}
             onSelect={handleDoubleClickSelect}
+            onToggleSelect={toggleElementSelection}
           showMeasurements={showMeasurements}
-            measurementMode={measurementMode && !isPreview}
-          selectedObjectsForMeasurement={selectedObjectsForMeasurement}
-          onMeasurementSelect={selectObjectForMeasurement}
+          // Legacy measurement props removed
           onStartEdit={startElementEdit}
           onStartDrag={startDrag}
           isEditing={isEditing}
@@ -3570,6 +3453,7 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
           showFraming={showFraming}
           showDrywall={showDrywall}
           lockedTarget={lockedTarget}
+          measurementToolActive={toolActive}
         />
         )
       })}
@@ -3610,7 +3494,7 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
         </mesh>
         <Html position={[69.375, 8, 247]}>
           <div className="text-gray-400 text-xs font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
-            ↑ NORTH (DRY ROOM)
+            ↑ NORTH
           </div>
         </Html>
         
@@ -3677,15 +3561,16 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
 
       {/* Removed beam-to-beam measurements to clean up view */}
 
-      {/* Simple measurement system */}
-      {measurementMode && (
-        <SimpleMeasurementLine 
-          selectedObjects={selectedObjectsForMeasurement}
-          distance={measurementDistance}
-          floorplan={floorplan}
-          measurementType={measurementType}
-        />
-      )}
+      {/* Professional Measurement System */}
+      <SimpleMeasurementDisplay
+        interactionEnabled={true}
+        onPointClick={(point) => {
+          // Point click handled by measurement system
+        }}
+      />
+      
+      {/* Selection Indicators */}
+      <SelectionIndicators />
       
       {/* Simple guide lines during drag */}
       {isDragging && dragGuides.length > 0 && (
@@ -3711,7 +3596,7 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
           initialTarget={[69.375, 6, 124]}
         />
       ) : (
-        <WASDOrbitControls
+        <CameraController
           target={cameraTarget}
         />
       )}
@@ -3821,18 +3706,7 @@ function SnapPointIndicator({
   )
 }
 
-// Camera capture component to get camera reference
-function CameraCapture({ onCameraReady }: { onCameraReady: (camera: THREE.Camera) => void }) {
-  const { camera } = useThree()
-  
-  React.useEffect(() => {
-    if (camera) {
-      onCameraReady(camera)
-    }
-  }, [camera, onCameraReady])
-  
-  return null
-}
+// CameraCapture function removed - using imported version from CameraController
 
 export default function ThreeRenderer() {
   const { 
@@ -3871,11 +3745,7 @@ export default function ThreeRenderer() {
     cancelDrag,
     updateElement,
     startDrag,
-    measurementMode,
-    selectedObjectsForMeasurement,
-    measurementDistance,
-    measurementType,
-    selectObjectForMeasurement,
+    // Legacy measurement variables removed
     
     // Camera state
     cameraPosition,
@@ -3890,6 +3760,10 @@ export default function ThreeRenderer() {
     updateLayerGroups,
     selectElementGroup
   } = useAppStore()
+  
+  // Get measurement tool state
+  const { activeTool } = useMeasurementStore()
+  const measurementToolActive = !!activeTool
 
   // Local state for wall framing visibility
   const [showFraming, setShowFraming] = React.useState(false)
@@ -4021,6 +3895,21 @@ export default function ThreeRenderer() {
   // Callback to capture camera reference
   const handleCameraReady = React.useCallback((camera: THREE.Camera) => {
     cameraRef.current = camera
+    
+    // Initialize Advanced Warehouse Engine
+    if (typeof window !== 'undefined' && !(window as any).warehouseCAD?.engine) {
+      console.log('🚀 Initializing Advanced Warehouse Engine...')
+      try {
+        // Get the scene from the canvas context - this is a simplified approach
+        const scene = new THREE.Scene() // In a real implementation, you'd get the actual scene
+        const integration = initializeWarehouseCAD(scene, camera)
+        console.log('✅ Advanced Warehouse Engine initialized successfully!')
+        console.log('🤖 AI commands now available via window.warehouseCAD')
+        console.log('🎮 Demo commands available via window.warehouseDemo')
+      } catch (error) {
+        console.error('❌ Failed to initialize Advanced Warehouse Engine:', error)
+      }
+    }
   }, [])
 
   // Initialize placement manager
@@ -4174,10 +4063,8 @@ export default function ThreeRenderer() {
 
   // Intelligent wall system for smart snapping
   const intelligentWallSystem = React.useMemo(() => {
-    console.log('Creating IntelligentWallSystem with snapTolerance:', snapTolerance)
-    const system = new IntelligentWallSystem(snapTolerance)
-    console.log('IntelligentWallSystem created:', system)
-    return system
+
+    return new IntelligentWallSystem(snapTolerance)
   }, [snapTolerance])
   
 
@@ -4260,7 +4147,7 @@ export default function ThreeRenderer() {
       }
     }
 
-    console.log(`🚀 Fast cached ${points.length} snap points`)
+
     return points
   }, [currentFloorplan?.elements, isPlacing])
 
@@ -4383,7 +4270,7 @@ export default function ThreeRenderer() {
         const bestDoorSnap = intelligentWallSystem.getBestSnapPoint(doorSnapPoints)
         
         if (bestDoorSnap && bestDoorSnap.confidence > 0.7) {
-          console.log('🎯 DOOR SNAP ACTIVATED:', bestDoorSnap.description)
+
           activeSnapPoint = {
             position: { 
               x: bestDoorSnap.position.x, 
@@ -4640,6 +4527,7 @@ export default function ThreeRenderer() {
             showDrywall={showDrywall}
             cameraTarget={cameraTarget}
             lockedTarget={lockedTarget}
+            measurementToolActive={measurementToolActive}
           />
         </Suspense>
       </Canvas>

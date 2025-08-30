@@ -68,26 +68,22 @@ const CoveBaseTrim = () => {
       switch(config.material) {
         case 'vinyl':
           baseMaterial = new THREE.MeshLambertMaterial({ 
-            color: config.color,
-            shininess: 20
+            color: config.color
           });
           break;
         case 'rubber':
           baseMaterial = new THREE.MeshLambertMaterial({ 
-            color: config.color,
-            shininess: 5
+            color: config.color
           });
           break;
         case 'aluminum':
           baseMaterial = new THREE.MeshLambertMaterial({ 
-            color: config.color,
-            shininess: 60
+            color: config.color
           });
           break;
         default:
           baseMaterial = new THREE.MeshLambertMaterial({ 
-            color: config.color,
-            shininess: 20
+            color: config.color
           });
       }
       

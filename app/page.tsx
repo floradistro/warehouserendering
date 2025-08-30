@@ -2,10 +2,17 @@
 
 import { Suspense, useState, useEffect, useRef, useCallback, memo } from 'react'
 import dynamic from 'next/dynamic'
-import { Ruler, X, Move3D, Square, Eye, EyeOff, User, Layers, ChevronDown } from 'lucide-react'
+import { X, Move3D, Square, Eye, EyeOff, User, Layers, ChevronDown } from 'lucide-react'
 import ClientOnly from '@/components/ClientOnly'
 import ModelToolbar from '@/components/ModelToolbar'
+import PhotoshopMeasurementTools from '@/components/PhotoshopMeasurementTools'
+import GeometryCalculatorPanel from '@/components/GeometryCalculatorPanel'
+import MeasurementStatusBar from '@/components/MeasurementStatusBar'
+import { SelectionInfoSystem } from '@/components/SelectionInfoSystem'
 import { useAppStore } from '@/lib/store'
+
+// Import selection utilities to make them globally available
+import '@/lib/selection-utils'
 
 const ThreeRenderer = dynamic(() => import('@/components/ThreeRenderer'), {
   ssr: false,
@@ -21,13 +28,7 @@ export default function Home() {
   const dropdownRef = useRef<HTMLDivElement>(null)
   
   const { 
-    measurementMode, 
-    selectedObjectsForMeasurement,
-    measurementDistance,
-    measurementType,
-    toggleMeasurementMode, 
-    clearMeasurementSelection,
-    setMeasurementType,
+    // Legacy measurement variables removed
 
     selectedElements,
     clearSelection,
@@ -70,36 +71,14 @@ export default function Home() {
           {/* Center: Tools */}
           <div className="flex items-center gap-1">
             {/* Selection indicator */}
-            {!measurementMode && selectedElements.length > 0 && (
+            {selectedElements.length > 0 && (
               <div className="flex items-center gap-1 text-[10px] text-[#cccccc] bg-[#3c3c3c] px-2 py-0.5 rounded">
                 <Square size={8} />
                 {selectedElements.length}
               </div>
             )}
             
-            {/* Measurement tool */}
-            <button
-              onClick={toggleMeasurementMode}
-              className={`flex items-center justify-center w-6 h-6 rounded transition-colors ${
-                measurementMode 
-                  ? 'bg-[#0e639c] text-white' 
-                  : 'text-[#cccccc] hover:bg-[#3c3c3c]'
-              }`}
-              title="Measure Distance"
-            >
-              <Ruler size={12} />
-            </button>
-            
-            {/* Clear measurement - always visible when in measurement mode */}
-            {measurementMode && (
-              <button
-                onClick={clearMeasurementSelection}
-                className="flex items-center justify-center w-6 h-6 rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
-                title="Clear Measurement Selection"
-              >
-                <X size={12} />
-              </button>
-            )}
+            {/* Legacy measurement tool removed - will be replaced by professional system */}
             
             {/* Toggle measurements visibility */}
             <button
@@ -426,7 +405,7 @@ export default function Home() {
             </button>
             
             {/* Clear selection */}
-            {!measurementMode && selectedElements.length > 0 && (
+            {selectedElements.length > 0 && (
               <button
                 onClick={clearSelection}
                 className="flex items-center justify-center w-6 h-6 rounded text-[#cccccc] hover:bg-[#3c3c3c] transition-colors"
@@ -446,80 +425,8 @@ export default function Home() {
                 First Person • WASD + Mouse
               </div>
             )}
-            {!firstPersonMode && measurementMode && (
-              <div className="flex items-center gap-2">
-                <div className="text-[10px] text-[#cccccc]">
-                  {selectedObjectsForMeasurement[0] && selectedObjectsForMeasurement[1] && measurementDistance
-                    ? `${measurementType.toUpperCase()}: ${measurementDistance.toFixed(1)}ft`
-                    : selectedObjectsForMeasurement[0] 
-                    ? 'Click 2nd object'
-                    : 'Click 1st object'
-                  }
-                </div>
-                
-                {/* Clear measurement button - always visible in measurement mode */}
-                {(selectedObjectsForMeasurement[0] || selectedObjectsForMeasurement[1]) && (
-                  <button
-                    onClick={clearMeasurementSelection}
-                    className="flex items-center justify-center w-5 h-5 rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
-                    title="Clear Measurement Selection"
-                  >
-                    <X size={10} />
-                  </button>
-                )}
-                
-                {/* Measurement type buttons */}
-                {selectedObjectsForMeasurement[0] && selectedObjectsForMeasurement[1] && (
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => setMeasurementType('horizontal')}
-                      className={`px-1 py-0.5 text-[8px] rounded ${
-                        measurementType === 'horizontal' 
-                          ? 'bg-cyan-600 text-white' 
-                          : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
-                      }`}
-                      title="Horizontal distance (X-axis)"
-                    >
-                      H
-                    </button>
-                    <button
-                      onClick={() => setMeasurementType('vertical')}
-                      className={`px-1 py-0.5 text-[8px] rounded ${
-                        measurementType === 'vertical' 
-                          ? 'bg-green-600 text-white' 
-                          : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
-                      }`}
-                      title="Vertical distance (Y-axis)"
-                    >
-                      V
-                    </button>
-                    <button
-                      onClick={() => setMeasurementType('height')}
-                      className={`px-1 py-0.5 text-[8px] rounded ${
-                        measurementType === 'height' 
-                          ? 'bg-orange-600 text-white' 
-                          : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
-                      }`}
-                      title="Height distance (Z-axis)"
-                    >
-                      Z
-                    </button>
-                    <button
-                      onClick={() => setMeasurementType('direct')}
-                      className={`px-1 py-0.5 text-[8px] rounded ${
-                        measurementType === 'direct' 
-                          ? 'bg-gray-100 text-gray-900' 
-                          : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
-                      }`}
-                      title="Direct 3D distance"
-                    >
-                      D
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-            {!firstPersonMode && !measurementMode && selectedElements.length === 0 && (
+            {/* Legacy measurement status removed - will be replaced by professional system */}
+            {!firstPersonMode && selectedElements.length === 0 && (
               <div className="text-[10px] text-[#858585]">
                 Ready
               </div>
@@ -531,24 +438,50 @@ export default function Home() {
       {/* Model Management Toolbar */}
       <ModelToolbar />
 
-      {/* 3D Viewport */}
-      <div className="flex-1 min-h-0 w-full">
-        <ClientOnly
-          fallback={
-            <div className="w-full h-full flex items-center justify-center bg-gray-700">
-              <div className="text-white text-xl">Initializing 3D Renderer...</div>
-            </div>
-          }
-        >
-          <Suspense fallback={
-            <div className="w-full h-full flex items-center justify-center bg-gray-700">
-              <div className="text-white">Loading 3D scene...</div>
-            </div>
-          }>
-            <ThreeRenderer />
-          </Suspense>
+            {/* Main Content Area with Bottom Status Bar */}
+      <div className="flex flex-col flex-1 min-h-0">
+        {/* Content Area */}
+        <div className="flex flex-1 min-h-0">
+          {/* Monochrome Measurement Toolbar - Continuation of Header */}
+          <ClientOnly fallback={null}>
+            <PhotoshopMeasurementTools className="flex-shrink-0" />
+          </ClientOnly>
+          
+          {/* Geometry Calculator Panel */}
+          <ClientOnly fallback={null}>
+            <GeometryCalculatorPanel className="flex-shrink-0" />
+          </ClientOnly>
+          
+          {/* 3D Viewport */}
+          <div className="flex-1 min-h-0 relative">
+            <ClientOnly
+              fallback={
+                <div className="w-full h-full flex items-center justify-center bg-gray-700">
+                  <div className="text-white text-xl">Initializing 3D Renderer...</div>
+                </div>
+              }
+            >
+              <Suspense fallback={
+                <div className="w-full h-full flex items-center justify-center bg-gray-700">
+                  <div className="text-white">Loading 3D scene...</div>
+                </div>
+              }>
+                <ThreeRenderer />
+              </Suspense>
+            </ClientOnly>
+          </div>
+        </div>
+        
+        {/* Bottom Status Bar with Integrated Info Panel */}
+        <ClientOnly fallback={null}>
+          <MeasurementStatusBar />
         </ClientOnly>
       </div>
+      
+      {/* Selection Info System - Background Service */}
+      <ClientOnly fallback={null}>
+        <SelectionInfoSystem />
+      </ClientOnly>
     </div>
   )
 }

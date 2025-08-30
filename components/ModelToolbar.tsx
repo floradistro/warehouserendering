@@ -18,11 +18,13 @@ import {
   X,
   RotateCw,
   RotateCcw,
-  Maximize2
+  Maximize2,
+  Home
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { modelManager } from '@/lib/model-manager'
 import { ELEMENT_TEMPLATES, TEMPLATE_CATEGORIES, createElement } from '@/lib/element-tools'
+import { autoGenerateWallFraming, removeWallFraming, validateWallFraming, WAREHOUSE_CONFIGS } from '@/lib/auto-wall-framing'
 
 interface ModelToolbarProps {
   className?: string
@@ -78,6 +80,8 @@ export default function ModelToolbar({ className = '' }: ModelToolbarProps) {
   const [showSaveMenu, setShowSaveMenu] = useState(false)
   const [showImportDialog, setShowImportDialog] = useState(false)
   const [importData, setImportData] = useState('')
+  const [showWallFramingMenu, setShowWallFramingMenu] = useState(false)
+  const [wallFramingStatus, setWallFramingStatus] = useState<string>('')
 
   // Save functions
   const handleSaveScreenshot = (format: 'png' | 'jpeg' = 'png', quality: number = 1.0) => {
@@ -170,6 +174,35 @@ export default function ModelToolbar({ className = '' }: ModelToolbarProps) {
       setImportData(content)
     }
     reader.readAsText(file)
+  }
+
+  // Wall framing functions
+  const handleAutoGenerateWallFraming = (configType: keyof typeof WAREHOUSE_CONFIGS = 'light-industrial') => {
+    const result = autoGenerateWallFraming(undefined, configType)
+    setWallFramingStatus(result.summary)
+    setShowWallFramingMenu(false)
+    
+    setTimeout(() => setWallFramingStatus(''), 3000) // Clear status after 3 seconds
+  }
+
+  const handleRemoveWallFraming = () => {
+    const result = removeWallFraming()
+    setWallFramingStatus(result.summary)
+    setShowWallFramingMenu(false)
+    
+    setTimeout(() => setWallFramingStatus(''), 3000)
+  }
+
+  const handleValidateWallFraming = () => {
+    const result = validateWallFraming()
+    const statusMsg = result.isValid 
+      ? `✓ Valid: ${result.wallsFramed} walls framed, ${result.totalConnections} connections`
+      : `⚠ Issues: ${result.issues.critical.length} critical, ${result.issues.warnings.length} warnings`
+    
+    setWallFramingStatus(statusMsg)
+    setShowWallFramingMenu(false)
+    
+    setTimeout(() => setWallFramingStatus(''), 5000)
   }
 
   React.useEffect(() => {
@@ -655,7 +688,66 @@ export default function ModelToolbar({ className = '' }: ModelToolbarProps) {
           >
             <Upload size={12} />
           </button>
+
+          {/* Wall Framing */}
+          <div className="relative">
+            <button
+              onClick={() => setShowWallFramingMenu(!showWallFramingMenu)}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-[#cccccc] hover:bg-[#3c3c3c] rounded transition-colors"
+              title="Wall-to-Truss Framing"
+            >
+              <Home size={12} />
+            </button>
+            
+            {showWallFramingMenu && (
+              <div className="absolute top-full right-0 mt-1 bg-[#252526] border border-[#3e3e3e] rounded shadow-lg z-50 min-w-48">
+                <div className="p-2">
+                  <div className="text-[10px] text-[#858585] uppercase tracking-wide mb-1">
+                    Wall-to-Truss Framing
+                  </div>
+                  <button
+                    onClick={() => handleAutoGenerateWallFraming('light-industrial')}
+                    className="w-full text-left px-2 py-1 text-xs text-[#cccccc] hover:bg-[#3c3c3c] rounded transition-colors"
+                  >
+                    Auto Generate (Light)
+                  </button>
+                  <button
+                    onClick={() => handleAutoGenerateWallFraming('heavy-industrial')}
+                    className="w-full text-left px-2 py-1 text-xs text-[#cccccc] hover:bg-[#3c3c3c] rounded transition-colors"
+                  >
+                    Auto Generate (Heavy)
+                  </button>
+                  <button
+                    onClick={() => handleAutoGenerateWallFraming('commercial')}
+                    className="w-full text-left px-2 py-1 text-xs text-[#cccccc] hover:bg-[#3c3c3c] rounded transition-colors"
+                  >
+                    Auto Generate (Commercial)
+                  </button>
+                  <div className="border-t border-[#3e3e3e] my-1"></div>
+                  <button
+                    onClick={handleValidateWallFraming}
+                    className="w-full text-left px-2 py-1 text-xs text-[#cccccc] hover:bg-[#3c3c3c] rounded transition-colors"
+                  >
+                    Validate Framing
+                  </button>
+                  <button
+                    onClick={handleRemoveWallFraming}
+                    className="w-full text-left px-2 py-1 text-xs text-[#ff6b6b] hover:bg-[#3c3c3c] rounded transition-colors"
+                  >
+                    Remove All Framing
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Wall Framing Status */}
+        {wallFramingStatus && (
+          <div className="px-2 py-1 text-xs bg-[#3c3c3c] text-[#cccccc] rounded">
+            {wallFramingStatus}
+          </div>
+        )}
       </div>
 
       {/* Export Dialog */}

@@ -306,11 +306,11 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'room-wall-1',
       type: 'wall' as const,
       position: { 
-        x: 36.0625, // Aligned with new left longways wall position
+        x: 37.0625, // Starts at left longways wall (west hallway boundary)
         y: 198.0417, // Room 2's north boundary
         z: 0 
       },
-      dimensions: { width: 70.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
+      dimensions: { width: 69.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -329,7 +329,30 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
           studSpacing: 16, // inches on center
           studCount: Math.ceil(70.6875 * 12 / 16), // calculated stud count
           hasFraming: true
-        }
+        },
+        openings: [
+          {
+            id: 'room-2-west-north-opening',
+            type: 'door',
+            position: { x: 22.85, z: 0 }, // West section center (59.91 - 37.0625 = 22.85)
+            dimensions: { width: 8, height: 8 },
+            metadata: { doorType: 'double', description: 'Room 2 west section north entrance - double door' }
+          },
+          {
+            id: 'room-2-middle-north-opening',
+            type: 'door', 
+            position: { x: 51.69, z: 0 }, // Middle section center (88.75 - 37.0625 = 51.69)
+            dimensions: { width: 8, height: 8 },
+            metadata: { doorType: 'double', description: 'Room 2 middle section north entrance - double door' }
+          },
+          {
+            id: 'room-2-east-north-opening',
+            type: 'door',
+            position: { x: 63.69, z: 0 }, // East section center (100.75 - 37.0625 = 63.69)
+            dimensions: { width: 8, height: 8 },
+            metadata: { doorType: 'double', description: 'Room 2 east section north entrance - double door' }
+          }
+        ]
       }
     },
 
@@ -338,11 +361,11 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'room-wall-2',
       type: 'wall' as const,
       position: { 
-        x: 36.0625, // Aligned with new left longways wall position
+        x: 37.0625, // Starts at left longways wall (west hallway boundary)
         y: 173.4792, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 70.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
+      dimensions: { width: 69.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -356,7 +379,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       }
     },
 
-    // Room 2 East Divider Wall - 12' west of interior wall (north-south divider)
+    // Room 2 East Divider Wall - 12' west of interior east wall (north-south divider)
     {
       id: 'room-2-east-divider-wall',
       type: 'wall' as const,
@@ -373,13 +396,46 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         category: 'room-walls', 
         material_type: 'drywall',
         load_bearing: false,
-        room_west: 'room-2-west',
+        room_west: 'room-2-middle',
         room_east: 'room-2-east',
         curved_top: true,
         follows_roof_profile: true,
         center_height: 16.8906,
         exterior_height: 16.8438,
-        description: 'Room 2 east divider wall - 12\' west of east longway wall, divides Room 2 into west and east sections',
+        description: 'Room 2 east divider wall - 12\' west of east longway wall, divides Room 2 middle and east sections',
+        framing: {
+          studSize: '2x4',
+          studSpacing: 16, // inches on center
+          studCount: Math.ceil(24.5625 * 12 / 16), // calculated stud count
+          hasFraming: true
+        }
+      }
+    },
+
+    // Room 2 West Divider Wall - 12' west of east divider wall (creates middle section)
+    {
+      id: 'room-2-west-divider-wall',
+      type: 'wall' as const,
+      position: { 
+        x: 82.75, // 12' west of east divider wall (94.75 - 12 = 82.75)
+        y: 173.4792, // Start at Room 2 south wall
+        z: 0 
+      },
+      dimensions: { width: 0.375, height: 24.5625, depth: 17 }, // 4.5" thick, spans Room 2 height (198.0417 - 173.4792 = 24.5625'), 17' tall interior wall
+      rotation: 0,
+      material: 'concrete',
+      color: '#ffffff',
+      metadata: { 
+        category: 'room-walls', 
+        material_type: 'drywall',
+        load_bearing: false,
+        room_west: 'room-2-west',
+        room_east: 'room-2-middle',
+        curved_top: true,
+        follows_roof_profile: true,
+        center_height: 16.8906,
+        exterior_height: 16.8438,
+        description: 'Room 2 west divider wall - 12\' west of east divider wall, creates middle section in Room 2',
         framing: {
           studSize: '2x4',
           studSpacing: 16, // inches on center
@@ -420,11 +476,11 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'room-wall-4-regular',
       type: 'wall' as const,
       position: { 
-        x: 36.0625, // Aligned with new left longways wall position
+        x: 37.0625, // Starts at left longways wall (west hallway boundary)
         y: 124.3542, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 70.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
+      dimensions: { width: 69.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -442,11 +498,11 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'room-wall-5',
       type: 'wall' as const,
       position: { 
-        x: 36.0625, // Aligned with new left longways wall position
+        x: 37.0625, // Starts at left longways wall (west hallway boundary)
         y: 99.7917, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 70.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
+      dimensions: { width: 69.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -464,11 +520,11 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'room-wall-6',
       type: 'wall' as const,
       position: { 
-        x: 36.0625, // Aligned with new left longways wall position
+        x: 37.0625, // Starts at left longways wall (west hallway boundary)
         y: 75.2292, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 70.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
+      dimensions: { width: 69.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -486,11 +542,11 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'room-wall-7',
       type: 'wall' as const,
       position: { 
-        x: 36.0625, // Aligned with new left longways wall position
+        x: 37.0625, // Starts at left longways wall (west hallway boundary)
         y: 48.6667, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 70.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
+      dimensions: { width: 69.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -535,44 +591,44 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
           {
             id: 'room-7-west-opening', 
             type: 'door',
-            position: { x: 31.77, z: 0 }, // Room 7 centered (75.2292 + 48.6667)/2 - 29 = 31.77
+            position: { x: 36.95, z: 0 }, // Room 7 centered (75.2292 + 48.6667)/2 - 25 = 36.95
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 7 west entrance - 15\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Room 7 west entrance - 12\' hallway double door' }
           },
           {
             id: 'room-6-west-opening',
             type: 'door', 
-            position: { x: 58.51, z: 0 }, // Room 6 centered (75.2292 + 99.7917)/2 - 29 = 58.51
+            position: { x: 62.51, z: 0 }, // Room 6 centered (75.2292 + 99.7917)/2 - 25 = 62.51
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 6 west entrance - 15\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Room 6 west entrance - 12\' hallway double door' }
           },
           {
             id: 'room-5-west-opening',
             type: 'door',
-            position: { x: 83.07, z: 0 }, // Room 5 centered (99.7917 + 124.3542)/2 - 29 = 83.07
+            position: { x: 87.07, z: 0 }, // Room 5 centered (99.7917 + 124.3542)/2 - 25 = 87.07
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 5 west entrance - 15\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Room 5 west entrance - 12\' hallway double door' }
           },
           {
             id: 'room-4-west-opening',
             type: 'door',
-            position: { x: 107.64, z: 0 }, // Room 4 centered (124.3542 + 148.9167)/2 - 29 = 107.64
+            position: { x: 111.64, z: 0 }, // Room 4 centered (124.3542 + 148.9167)/2 - 25 = 111.64
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 4 west entrance - 15\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Room 4 west entrance - 12\' hallway double door' }
           },
           {
             id: 'room-3-west-opening',
             type: 'door',
-            position: { x: 132.20, z: 0 }, // Room 3 centered (148.9167 + 173.4792)/2 - 29 = 132.20
+            position: { x: 136.20, z: 0 }, // Room 3 centered (148.9167 + 173.4792)/2 - 25 = 136.20
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 3 west entrance - 15\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Room 3 west entrance - 12\' hallway double door' }
           },
           {
             id: 'room-2-west-opening',
             type: 'door',
-            position: { x: 156.76, z: 0 }, // Room 2 centered (173.4792 + 198.0417)/2 - 29 = 156.76
+            position: { x: 166.00, z: 0 }, // Room 2 centered (173.4792 + 208.5209)/2 - 25 = 166.00
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 2 west entrance - 15\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Room 2 west entrance - 12\' hallway double door' }
           }
         ]
       }
@@ -1905,7 +1961,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       }
     },
     
-    // Room 8 - White Epoxy Floor (full room coverage)
+    // Room 8 - White Epoxy Floor (excludes east hallway)
     {
       id: 'room-8-white-epoxy-floor',
       type: 'fixture' as const,
@@ -1915,7 +1971,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         z: -0.125 // Slightly below floor level (-1.5" = -0.125')
       },
       dimensions: { 
-        width: 75.6875, // Room 8 width: east exterior wall to left longways wall (112.75 - 37.0625 = 75.6875')
+        width: 69.6875, // Room 8 width: up to east longways wall (106.75 - 37.0625 = 69.6875')
         height: 23.6667, // Room 8 depth: south exterior wall to room-wall-7 (48.6667 - 25 = 23.6667')
         depth: 0.125 // 1.5" thick epoxy system (0.125')
       },
@@ -1932,7 +1988,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         chemical_resistant: true,
         anti_slip: true,
         seamless: true,
-        description: 'White epoxy floor - Room 8 (75.69\' x 23.67\')'
+        description: 'White epoxy floor - Room 8 (69.69\' x 23.67\') - excludes east hallway'
       }
     },
 

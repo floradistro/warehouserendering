@@ -25,21 +25,22 @@
 - **Building length**: 198' (north-south)
 
 ### Room Boundaries (North to South)
-1. **North Dry Room**: y = 211.5209 to y = 222
+1. **Dry Room**: y = 211.5209 to y = 222
 2. **Middle Hallway**: y = 208.5209 to y = 211.5209
-3. **South Dry Room**: y = 198.0417 to y = 208.5209
-4. **Room 2**: y = 173.4792 to y = 198.0417
-5. **Room 3**: y = 148.9167 to y = 173.4792
-6. **Room 4**: y = 124.3542 to y = 148.9167
-7. **Room 5**: y = 99.7917 to y = 124.3542
-8. **Room 6**: y = 75.2292 to y = 99.7917
-9. **Room 7**: y = 48.6667 to y = 75.2292
-10. **Room 8**: y = 25 to y = 48.6667
+3. **Room 2**: y = 173.4792 to y = 208.5209
+4. **Room 3**: y = 148.9167 to y = 173.4792
+5. **Room 4**: y = 124.3542 to y = 148.9167
+6. **Room 5**: y = 99.7917 to y = 124.3542
+7. **Room 6**: y = 75.2292 to y = 99.7917
+8. **Room 7**: y = 48.6667 to y = 75.2292
+9. **Room 8**: y = 25 to y = 48.6667
 
 ### Longways Walls
-- **West longway wall**: x = 30.0625
-- **East longway wall**: x = 110.375
-- **Room interior width**: 80.3125' (between longways walls)
+- **West longway wall**: x = 37.0625
+- **East longway wall**: x = 106.75
+- **Room interior width**: 70.6875' (between longways walls)
+- **West hallway width**: 12' (from exterior wall to west longway wall)
+- **East hallway width**: 6' (from east longway wall to exterior wall)
 
 ## 🏗️ Element Positioning Rules
 
@@ -185,8 +186,9 @@ Before adding any new element:
 
 ### Room Width Standards
 - **Full Building**: 88.75'
-- **Between Longways**: 80.3125'
+- **Between Longways**: 70.6875'
 - **Individual Room**: ~24.5' (varies)
-- **Hallway Width**: 3-5'
+- **West Hallway Width**: 12'
+- **East Hallway Width**: 6'
 
 This standardization ensures consistent, predictable object placement throughout the warehouse model.

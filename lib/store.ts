@@ -44,11 +44,7 @@ interface AppState {
   viewMode: '2d' | '3d'
   selectedElements: string[]
   
-  // Measurement state
-  measurementMode: boolean
-  selectedObjectsForMeasurement: [string | null, string | null]
-  measurementDistance: number | null
-  measurementType: 'horizontal' | 'vertical' | 'height' | 'direct'
+  // Legacy measurement state removed - replaced by professional measurement system
   
   // Renderer state
   cameraPosition: [number, number, number]
@@ -119,9 +115,7 @@ interface AppState {
   updateFloorplan: (updates: Partial<FloorplanData>) => void
   setViewMode: (mode: '2d' | '3d') => void
   toggleMeasurements: () => void
-  selectObjectForMeasurement: (objectId: string) => void
-  clearMeasurementSelection: () => void
-  setMeasurementType: (type: 'horizontal' | 'vertical' | 'height' | 'direct') => void
+  // Legacy measurement actions removed - replaced by professional measurement system
   
   // Camera actions
   toggleFirstPersonMode: () => void
@@ -187,8 +181,7 @@ interface AppState {
   lockedTarget: string | null
   setLockedTarget: (elementId: string | null) => void
   
-  // Measurement actions
-  toggleMeasurementMode: () => void
+  // Legacy measurement actions removed - replaced by professional measurement system
 
   
   // Camera actions

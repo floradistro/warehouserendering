@@ -40,7 +40,7 @@ export const ELEMENT_TEMPLATES: Record<string, ElementTemplate> = {
     name: 'Interior Wall',
     description: 'Non-load-bearing drywall interior wall',
     type: 'wall',
-    defaultDimensions: { width: 20, height: 1, depth: 12 },
+    defaultDimensions: { width: 20, height: 1, depth: 17 },
     defaultColor: '#ffffff',
     category: 'interior',
     metadata: { 
@@ -54,7 +54,7 @@ export const ELEMENT_TEMPLATES: Record<string, ElementTemplate> = {
     name: 'Partition Wall',
     description: 'Temporary or modular partition wall',
     type: 'wall',
-    defaultDimensions: { width: 20, height: 1, depth: 8 },
+    defaultDimensions: { width: 20, height: 1, depth: 17 },
     defaultColor: '#e2e8f0',
     category: 'interior',
     metadata: { 
@@ -69,7 +69,7 @@ export const ELEMENT_TEMPLATES: Record<string, ElementTemplate> = {
     name: 'Firewall',
     description: 'Fire-rated wall with enhanced safety features',
     type: 'wall',
-    defaultDimensions: { width: 20, height: 1, depth: 12 },
+    defaultDimensions: { width: 20, height: 1, depth: 17 },
     defaultColor: '#dc2626',
     material: 'concrete',
     category: 'fire-safety',
@@ -173,6 +173,206 @@ export const ELEMENT_TEMPLATES: Record<string, ElementTemplate> = {
       category: 'structural', 
       pillar_type: 'reinforced_concrete',
       load_bearing: true 
+    }
+  },
+
+  // === UNISTRUT SYSTEMS ===
+  UNISTRUT_P1000: {
+    id: 'unistrut-p1000',
+    name: 'Unistrut P1000 Standard',
+    description: 'Standard unistrut channel for mounting and support',
+    type: 'fixture',
+    defaultDimensions: { width: 1.625, height: 1.625, depth: 10 },
+    defaultColor: '#708090',
+    material: 'galvanized-steel',
+    category: 'structural',
+    metadata: { 
+      category: 'structural', 
+      subcategory: 'support-system',
+      manufacturer: 'Unistrut',
+      model: 'P1000',
+      load_bearing: true,
+      weight: 2.27
+    }
+  },
+  UNISTRUT_P1001: {
+    id: 'unistrut-p1001',
+    name: 'Unistrut P1001 Slotted',
+    description: 'Slotted unistrut channel for flexible mounting',
+    type: 'fixture',
+    defaultDimensions: { width: 1.625, height: 1.625, depth: 10 },
+    defaultColor: '#708090',
+    material: 'galvanized-steel',
+    category: 'structural',
+    metadata: { 
+      category: 'structural', 
+      subcategory: 'support-system',
+      manufacturer: 'Unistrut',
+      model: 'P1001',
+      load_bearing: true,
+      weight: 2.15,
+      slotted: true
+    }
+  },
+  UNISTRUT_P3000: {
+    id: 'unistrut-p3000',
+    name: 'Unistrut P3000 Heavy Duty',
+    description: 'Heavy duty unistrut channel for high-load applications',
+    type: 'fixture',
+    defaultDimensions: { width: 2.5, height: 1.625, depth: 10 },
+    defaultColor: '#708090',
+    material: 'galvanized-steel',
+    category: 'structural',
+    metadata: { 
+      category: 'structural', 
+      subcategory: 'support-system',
+      manufacturer: 'Unistrut',
+      model: 'P3000',
+      load_bearing: true,
+      weight: 3.42,
+      heavy_duty: true
+    }
+  },
+  UNISTRUT_BRACKET: {
+    id: 'unistrut-bracket-p1010',
+    name: 'Unistrut Bracket P1010',
+    description: 'Standard unistrut mounting bracket',
+    type: 'fixture',
+    defaultDimensions: { width: 1.625, height: 1.625, depth: 3 },
+    defaultColor: '#708090',
+    material: 'galvanized-steel',
+    category: 'structural',
+    metadata: { 
+      category: 'structural', 
+      subcategory: 'bracket',
+      manufacturer: 'Unistrut',
+      model: 'P1010',
+      weight: 0.5
+    }
+  },
+
+  // === CHANNEL SYSTEMS ===
+  C_CHANNEL_3X1_5: {
+    id: 'c-channel-3x1.5',
+    name: 'C-Channel 3" x 1.5"',
+    description: 'Standard C-channel steel beam',
+    type: 'fixture',
+    defaultDimensions: { width: 3, height: 1.5, depth: 10 },
+    defaultColor: '#696969',
+    material: 'steel',
+    category: 'structural',
+    metadata: { 
+      category: 'structural', 
+      subcategory: 'channel',
+      load_bearing: true,
+      weight: 3.85,
+      channel_type: 'c-channel'
+    }
+  },
+  U_CHANNEL_4X2: {
+    id: 'u-channel-4x2',
+    name: 'U-Channel 4" x 2"',
+    description: 'Standard U-channel steel beam',
+    type: 'fixture',
+    defaultDimensions: { width: 4, height: 2, depth: 10 },
+    defaultColor: '#696969',
+    material: 'steel',
+    category: 'structural',
+    metadata: { 
+      category: 'structural', 
+      subcategory: 'channel',
+      load_bearing: true,
+      weight: 5.4,
+      channel_type: 'u-channel'
+    }
+  },
+  HAT_CHANNEL: {
+    id: 'hat-channel',
+    name: 'Hat Channel',
+    description: 'Hat channel for drywall and ceiling systems',
+    type: 'fixture',
+    defaultDimensions: { width: 2.5, height: 0.5, depth: 10 },
+    defaultColor: '#708090',
+    material: 'galvanized-steel',
+    category: 'structural',
+    metadata: { 
+      category: 'structural', 
+      subcategory: 'channel',
+      weight: 1.2,
+      channel_type: 'hat-channel'
+    }
+  },
+
+  // === WALL-TO-TRUSS FRAMING ===
+  WALL_TO_TRUSS_2X4: {
+    id: 'wall-to-truss-2x4',
+    name: '2x4 Wall-to-Truss Framing',
+    description: '2x4 framing from interior wall top plate to truss bottom chord',
+    type: 'fixture',
+    defaultDimensions: { width: 0.125, height: 0.292, depth: 4 },
+    defaultColor: '#DEB887',
+    material: 'wood',
+    category: 'structural',
+    metadata: { 
+      category: 'structural', 
+      subcategory: 'wall-to-truss-framing',
+      framing_type: 'stud',
+      lumber_size: '2x4',
+      load_bearing: true,
+      connection_type: 'direct'
+    }
+  },
+  WALL_TOP_PLATE_2X4: {
+    id: 'wall-top-plate-2x4',
+    name: '2x4 Wall Top Plate (Double)',
+    description: 'Double 2x4 top plate for interior wall connections',
+    type: 'fixture',
+    defaultDimensions: { width: 10, height: 0.292, depth: 0.125 },
+    defaultColor: '#DEB887',
+    material: 'wood',
+    category: 'structural',
+    metadata: { 
+      category: 'structural', 
+      subcategory: 'wall-framing',
+      framing_type: 'top-plate',
+      lumber_size: '2x4',
+      load_bearing: true,
+      plate_count: 2
+    }
+  },
+  TRUSS_CONNECTION_CLIP: {
+    id: 'truss-connection-clip',
+    name: 'Truss Connection Hardware',
+    description: 'Simpson A35 angle clips for wall-to-truss connections',
+    type: 'fixture',
+    defaultDimensions: { width: 0.25, height: 0.25, depth: 0.125 },
+    defaultColor: '#708090',
+    material: 'galvanized-steel',
+    category: 'structural',
+    metadata: { 
+      category: 'structural', 
+      subcategory: 'hardware',
+      hardware_type: 'angle-clip',
+      model: 'Simpson-A35',
+      load_capacity: 1200,
+      connection_type: 'bearing'
+    }
+  },
+  WALL_BLOCKING_2X4: {
+    id: 'wall-blocking-2x4',
+    name: '2x4 Wall Blocking',
+    description: '2x4 blocking between wall-to-truss studs',
+    type: 'fixture',
+    defaultDimensions: { width: 1.25, height: 0.292, depth: 0.125 },
+    defaultColor: '#DEB887',
+    material: 'wood',
+    category: 'structural',
+    metadata: { 
+      category: 'structural', 
+      subcategory: 'wall-framing',
+      framing_type: 'blocking',
+      lumber_size: '2x4',
+      load_bearing: false
     }
   },
 
@@ -299,6 +499,9 @@ export const ELEMENT_TEMPLATES: Record<string, ElementTemplate> = {
 export const TEMPLATE_CATEGORIES = {
   WALLS: ['EXTERIOR_WALL', 'INTERIOR_WALL', 'PARTITION_WALL', 'FIREWALL'],
   STRUCTURAL: ['STEEL_BEAM', 'STEEL_COLUMN', 'CONCRETE_PILLAR'],
+  UNISTRUT: ['UNISTRUT_P1000', 'UNISTRUT_P1001', 'UNISTRUT_P3000', 'UNISTRUT_BRACKET'],
+  CHANNELS: ['C_CHANNEL_3X1_5', 'U_CHANNEL_4X2', 'HAT_CHANNEL'],
+  'WALL FRAMING': ['WALL_TO_TRUSS_2X4', 'WALL_TOP_PLATE_2X4', 'WALL_BLOCKING_2X4', 'TRUSS_CONNECTION_CLIP'],
   DOORS: ['SINGLE_DOOR', 'DOUBLE_DOOR', 'OVERHEAD_DOOR'],
   WINDOWS: ['STANDARD_WINDOW', 'INDUSTRIAL_WINDOW'],
   SPECIALIZED: ['LOADING_DOCK', 'OFFICE_SPACE', 'STORAGE_AREA']

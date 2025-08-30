@@ -1,0 +1,1 @@
+console.log('🧪 Testing Selection Store Access...'); setTimeout(() => { try { const appStore = window.__APP_STORE__ || {}; console.log('App Store selectedElements:', appStore.selectedElements || 'Not found'); console.log('Available store methods:', Object.keys(appStore).filter(k => k.includes('select'))); } catch(e) { console.log('Error accessing store:', e); } }, 1000);

@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 
 const MetalHandrailCatwalk = () => {
-  const mountRef = useRef(null);
+  const mountRef = useRef<HTMLDivElement>(null);
   const [config, setConfig] = useState({
     length: 120,
     postSpacing: 60,
@@ -17,7 +17,9 @@ const MetalHandrailCatwalk = () => {
     if (!mountRef.current) return;
 
     // Clear any existing content
-    mountRef.current.innerHTML = '';
+    if (mountRef.current) {
+      mountRef.current.innerHTML = '';
+    }
 
     // Scene
     const scene = new THREE.Scene();
@@ -145,7 +147,7 @@ const MetalHandrailCatwalk = () => {
     let rotationY = 0;
     let rotationX = 0;
 
-    const onMouseDown = (event) => {
+    const onMouseDown = (event: MouseEvent) => {
       isRotating = true;
       previousMousePosition = { x: event.clientX, y: event.clientY };
     };
@@ -154,7 +156,7 @@ const MetalHandrailCatwalk = () => {
       isRotating = false;
     };
 
-    const onMouseMove = (event) => {
+    const onMouseMove = (event: MouseEvent) => {
       if (!isRotating) return;
 
       const deltaMove = {
@@ -198,7 +200,7 @@ const MetalHandrailCatwalk = () => {
     };
 
     // Store update function globally for config changes
-    window.updateHandrailSystem = updateHandrail;
+    (window as any).updateHandrailSystem = updateHandrail;
 
     // Cleanup
     return () => {
