@@ -2923,6 +2923,15 @@ function AreaLabels({ floorplan }: { floorplan: FloorplanData }) {
     //   centerY: 210,
     //   centerZ: 6
     // }
+    
+    // External hallway (Access Corridor) - west of processing, north of building exterior wall
+    {
+      id: 'access-corridor',
+      name: 'Access Corridor',
+      centerX: 44.625, // Center of hallway: 25 + (39.25 / 2) = 44.625
+      centerY: 225, // Center of hallway: 222 + (6 / 2) = 225
+      centerZ: 6
+    }
   ]
   
   return (

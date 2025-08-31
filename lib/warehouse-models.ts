@@ -1980,64 +1980,6 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
     
 
 
-    // North Hallway South Wall - defines south boundary of north hallway
-    {
-      id: 'north-hallway-south-wall',
-      type: 'wall' as const,
-      position: { 
-        x: 38.0625, // Start at east edge of west hallway
-        y: 216, // South boundary of the 6' hallway
-        z: 0 
-      },
-      dimensions: { width: 26.1875, height: 0.375, depth: 12 }, // 4.5" thick, spans to processing room
-      rotation: 0,
-      material: 'concrete',
-      color: '#ffffff',
-      metadata: { 
-        category: 'room-walls', 
-        material_type: 'drywall',
-        load_bearing: false,
-        description: 'North hallway south wall - defines south boundary of north hallway connecting processing to west hallway',
-        framing: {
-          studSize: '2x4',
-          studSpacing: 16, // inches on center
-          studCount: Math.ceil(26.1875 * 12 / 16), // calculated stud count
-          hasFraming: true
-        }
-      }
-    },
-
-    // North Hallway - 6' wide hallway connecting processing to west hallway
-    // Runs along the north wall (y=222) from west hallway to processing room
-    {
-      id: 'north-hallway-black-epoxy-floor',
-      type: 'fixture' as const,
-      position: { 
-        x: 38.0625, // Start at east edge of west hallway
-        y: 216, // Position 6' south of north wall to create 6' wide hallway
-        z: -0.125 // Slightly below floor level (-1.5" = -0.125')
-      },
-      dimensions: { 
-        width: 26.1875, // From west hallway to processing room (64.25 - 38.0625 = 26.1875')
-        height: 6, // 6' wide hallway as requested
-        depth: 0.125 // 1.5" thick epoxy system (0.125')
-      },
-      rotation: 0,
-      material: 'concrete', // Use concrete for solid rendering
-      color: '#0a0a0a', // Deep black gloss epoxy to match west hallway
-      metadata: { 
-        category: 'flooring',
-        material_type: 'black_gloss_epoxy',
-        thickness_inches: 1.5,
-        area: 'north-hallway',
-        finish: 'high-gloss',
-        chemical_resistant: true,
-        anti_slip: false, // Gloss finish
-        seamless: true,
-        description: 'Black gloss epoxy floor - North hallway (26.2\' x 6\') - connects processing to west hallway'
-      }
-    },
-
     // Processing Room - Black Gloss Epoxy Floor (north extension room)
     {
       id: 'processing-room-black-epoxy-floor',
@@ -2068,6 +2010,102 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         description: 'Black gloss epoxy floor - Processing room (47.5\' x 20\') - matches west hallway'
       }
     },
+
+    // ============================================================================
+    // EXTERNAL HALLWAY - 6' wide connecting processing to northeast corner
+    // ============================================================================
+    // Runs along the north side of the building (outside/north of main building north wall)
+    
+    // External hallway floor - concrete pad (west of processing, hugging north building wall)
+    {
+      id: 'external-hallway-floor',
+      type: 'fixture' as const,
+      position: { 
+        x: 25, // Start at building west wall, aligned with main building
+        y: 222, // Directly against the north wall of main building
+        z: -0.125 // Floor level
+      },
+      dimensions: { width: 39.25, height: 6, depth: 0.125 }, // 39.25' long x 6' wide (from west wall to processing room)
+      rotation: 0,
+      material: 'concrete',
+      color: '#c0c0c0', // Light concrete color
+      metadata: { 
+        category: 'flooring',
+        material_type: 'concrete_pad',
+        area: 'external-hallway',
+        description: 'External hallway floor west of processing, hugging north building wall (39.25\' x 6\')'
+      }
+    },
+
+    // External hallway north wall (outer perimeter, 6' north of building wall)
+    {
+      id: 'external-hallway-north-wall',
+      type: 'wall' as const,
+      position: { x: 25, y: 228, z: 0 }, // 6' north of building north wall
+      dimensions: { width: 39.25, height: 1, depth: 8 }, // 8' tall wall
+      rotation: 0,
+      material: 'concrete',
+      color: '#8B7355',
+      metadata: { 
+        category: 'exterior', 
+        material_type: 'concrete_block',
+        description: 'External hallway north wall (39.25\' long, 8\' tall)',
+        framing: {
+          studSize: '2x4',
+          studSpacing: 16,
+          studCount: Math.ceil(39.25 * 12 / 16),
+          hasFraming: true
+        }
+      }
+    },
+
+    // External hallway west wall (closes off the west end)
+    {
+      id: 'external-hallway-west-wall',
+      type: 'wall' as const,
+      position: { x: 25, y: 222, z: 0 }, // At building west wall
+      dimensions: { width: 1, height: 6, depth: 8 }, // 6' long, 8' tall
+      rotation: 0,
+      material: 'concrete',
+      color: '#8B7355',
+      metadata: { 
+        category: 'exterior', 
+        material_type: 'concrete_block',
+        description: 'External hallway west wall (6\' long, 8\' tall)',
+        framing: {
+          studSize: '2x4',
+          studSpacing: 16,
+          studCount: Math.ceil(6 * 12 / 16),
+          hasFraming: true
+        }
+      }
+    },
+
+    // External hallway east wall (connects to processing room)
+    {
+      id: 'external-hallway-east-wall',
+      type: 'wall' as const,
+      position: { x: 64.25, y: 222, z: 0 }, // At processing room west edge
+      dimensions: { width: 1, height: 6, depth: 8 }, // 6' long, 8' tall
+      rotation: 0,
+      material: 'concrete',
+      color: '#8B7355',
+      metadata: { 
+        category: 'exterior', 
+        material_type: 'concrete_block',
+        description: 'External hallway east wall connecting to processing room (6\' long, 8\' tall)',
+        framing: {
+          studSize: '2x4',
+          studSpacing: 16,
+          studCount: Math.ceil(6 * 12 / 16),
+          hasFraming: true
+        }
+      }
+    },
+
+
+
+
 
     // ============================================================================
     // ROLLING TABLE FLOOR LAYOUT MARKINGS - FLOWER ROOMS 1-7
