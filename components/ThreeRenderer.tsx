@@ -2701,44 +2701,47 @@ function RoomLabels({ floorplan }: { floorplan: FloorplanData }) {
   // Calculate room center positions
   const roomPositions = []
   
-  // Control Room (northernmost) - no number displayed, handled by AreaLabels
-  // Skip adding control room to roomPositions since it shouldn't be numbered
+  // REMOVED: Control room no longer exists - west hallway extends to north wall
   
-  // Room 2 = "Veg" - between first and second separator walls, but only west section
+  // Room 2 = "Flower 1" - between first and second separator walls, now extends full width
   if (allSeparatorWalls.length > 1) {
-    const vegCenterY = (allSeparatorWalls[0].position.y + allSeparatorWalls[1].position.y) / 2
-    // Position Veg label in the western section (stops at first divider wall x=82.75)
-    const vegCenterX = (37.0625 + 82.75) / 2 // Center between west longway wall and first divider
-    roomPositions.push({ roomNumber: 'Veg', centerY: vegCenterY, centerX: vegCenterX })
+    const flower1CenterY = (allSeparatorWalls[0].position.y + allSeparatorWalls[1].position.y) / 2
+    // Position Flower 1 label across full width (no more internal divisions in Room 2)
+    const flower1CenterX = (37.0625 + 112.75) / 2 // Center between west longway wall and east exterior wall
+    roomPositions.push({ roomNumber: 'Flower 1', centerY: flower1CenterY, centerX: flower1CenterX })
     
-    // Add Dry 1 label in the middle section (between x=82.75 and x=94.75)
-    const dry1CenterX = (82.75 + 94.75) / 2
-    roomPositions.push({ roomNumber: 'Dry 1', centerY: vegCenterY, centerX: dry1CenterX })
+    // Add Veg label in the NEW northern area (west of Dry 1)
+    const northAreaCenterY = (198.0417 + 222) / 2 // Center between Room 2 north wall and north exterior wall
+    const vegCenterX = (37.0625 + 88.75) / 2 // Center between west longway wall and Dry 1 west wall
+    roomPositions.push({ roomNumber: 'Veg', centerY: northAreaCenterY, centerX: vegCenterX })
     
-    // Add Dry 2 label in the eastern section (between x=94.75 and x=106.75)
-    const dry2CenterX = (94.75 + 106.75) / 2
-    roomPositions.push({ roomNumber: 'Dry 2', centerY: vegCenterY, centerX: dry2CenterX })
+    // Add Dry 1 label in the NEW northern area (former control room, moved 6' east)
+    const dry1CenterX = (88.75 + 100.75) / 2 // Center between the two divider walls (moved 6' east)
+    roomPositions.push({ roomNumber: 'Dry 1', centerY: northAreaCenterY, centerX: dry1CenterX })
+    
+    // Add Dry 2 label in the NEW northern area (former control room, now exactly 12' wide)
+    const dry2CenterX = (100.75 + 112.75) / 2 // Center between east divider wall and east exterior wall (12' wide)
+    roomPositions.push({ roomNumber: 'Dry 2', centerY: northAreaCenterY, centerX: dry2CenterX })
   }
   
-  // Room 3 = "Flower 1" - between second and third separator walls
+  // Room 3 = "Flower 2" - between second and third separator walls
   if (allSeparatorWalls.length > 2) {
-    const flower1CenterY = (allSeparatorWalls[1].position.y + allSeparatorWalls[2].position.y) / 2
-    roomPositions.push({ roomNumber: 'Flower 1', centerY: flower1CenterY })
+    const flower2CenterY = (allSeparatorWalls[1].position.y + allSeparatorWalls[2].position.y) / 2
+    roomPositions.push({ roomNumber: 'Flower 2', centerY: flower2CenterY })
   }
   
-  // Rooms 4-8 = "Flower 2" through "Flower 6" - remaining rooms going west (south)
+  // Rooms 4-7 = "Flower 3" through "Flower 6" - remaining rooms going west (south)
   for (let i = 2; i < allSeparatorWalls.length - 1; i++) {
     const centerY = (allSeparatorWalls[i].position.y + allSeparatorWalls[i + 1].position.y) / 2
-    const flowerNumber = i // Flower 2 starts at i=2, Flower 3 at i=3, etc.
+    const flowerNumber = i + 1 // Flower 3 starts at i=2, Flower 4 at i=3, etc.
     roomPositions.push({ roomNumber: `Flower ${flowerNumber}`, centerY })
   }
   
-  // Southernmost room = "Flower 6" - between last separator wall and south exterior wall
+  // Southernmost room = "Flower 7" - between last separator wall and south exterior wall
   if (allSeparatorWalls.length > 0) {
     const southWallY = southWall.position.y
     const lastFlowerCenterY = (allSeparatorWalls[allSeparatorWalls.length - 1].position.y + southWallY) / 2
-    const lastFlowerNumber = allSeparatorWalls.length - 1 // Should be 6 for Flower 6
-    roomPositions.push({ roomNumber: `Flower ${lastFlowerNumber}`, centerY: lastFlowerCenterY })
+    roomPositions.push({ roomNumber: 'Flower 7', centerY: lastFlowerCenterY })
   }
   
   // Default center X position (middle of the room area)
@@ -2793,15 +2796,14 @@ function FirewallLabels({ floorplan }: { floorplan: FloorplanData }) {
 function AreaLabels({ floorplan }: { floorplan: FloorplanData }) {
   // Define area labels for different zones in the warehouse
   const areas = [
-    {
-      id: 'control-room',
-      name: 'Control Room',
-      // Northwest corner area - in front of IBC/water tanks
-      // From west wall (x=25) to east wall (x=112.75), from Room 2 north wall (y=198) to north wall (y=222) - expanded control area
-      centerX: 68.875, // Center between x=25 and x=112.75: (25 + 112.75) / 2 = 68.875
-      centerY: 210, // Center between y=198 and y=222: (198 + 222) / 2 = 210
-      centerZ: 6 // Elevated for visibility
-    }
+    // REMOVED: Control room - now part of extended west hallway
+    // {
+    //   id: 'control-room',
+    //   name: 'Control Room',
+    //   centerX: 68.875,
+    //   centerY: 210,
+    //   centerZ: 6
+    // }
   ]
   
   return (
@@ -3266,55 +3268,79 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
       />
 
       {/* White epoxy floors for rooms 2-6 */}
-      {/* Room 2: y = 173.4792 to y = 198.0417 */}
+      {/* Room 2 (Flower 1): y = 173.4792 to y = 198.0417 - EXPANDED to full width, no internal divisions */}
       <RoomFloor
-        position={[70.40625, -0.05, 185.76045]} // Center between longways walls, slightly above ground
-        width={80.6875} // Room interior width between longways walls
+        position={[74.90625, -0.05, 185.76045]} // Center: x=(37.0625+112.75)/2=74.90625
+        width={75.6875} // Full width to east exterior wall (112.75 - 37.0625 = 75.6875)
         height={24.5625} // Room 2 height: 198.0417 - 173.4792
         material="white-epoxy"
       />
-      
-      {/* Room 3: y = 148.9167 to y = 173.4792 */}
+
+      {/* Veg Room: y = 198.0417 to y = 222, x = 37.0625 to x = 88.75 - NEW vegetative room west of Dry 1 */}
       <RoomFloor
-        position={[70.40625, -0.05, 161.19795]} // Center position
-        width={80.6875}
+        position={[62.90625, -0.05, 210.02085]} // Center: x=(37.0625+88.75)/2=62.90625, y=(198.0417+222)/2=210.02085
+        width={51.6875} // Width from west longway wall to Dry 1 west wall (88.75 - 37.0625 = 51.6875)
+        height={23.9583} // Height: 222 - 198.0417 = 23.9583
+        material="white-epoxy"
+      />
+
+      {/* Dry 1 Room: y = 198.0417 to y = 222, x = 88.75 to x = 100.75 - MOVED 6' east, now 12' wide */}
+      <RoomFloor
+        position={[94.75, -0.05, 210.02085]} // Center: x=(88.75+100.75)/2=94.75, y=(198.0417+222)/2=210.02085
+        width={12} // Width between divider walls (100.75 - 88.75 = 12)
+        height={23.9583} // Height: 222 - 198.0417 = 23.9583
+        material="white-epoxy"
+      />
+
+      {/* Dry 2 Room: y = 198.0417 to y = 222, x = 100.75 to x = 112.75 - NOW exactly 12' wide */}
+      <RoomFloor
+        position={[106.75, -0.05, 210.02085]} // Center: x=(100.75+112.75)/2=106.75, y=(198.0417+222)/2=210.02085
+        width={12} // Width from divider wall to exterior wall (112.75 - 100.75 = 12)
+        height={23.9583} // Height: 222 - 198.0417 = 23.9583
+        material="white-epoxy"
+      />
+      
+      {/* Room 3 (Flower 2): y = 148.9167 to y = 173.4792 - EXPANDED to east exterior wall */}
+      <RoomFloor
+        position={[74.90625, -0.05, 161.19795]} // Center: x=(37.0625+112.75)/2=74.90625
+        width={75.6875} // Full width to east exterior wall
         height={24.5625} // Room 3 height: 173.4792 - 148.9167
         material="white-epoxy"
       />
       
-      {/* Room 4: y = 124.3542 to y = 148.9167 */}
+      {/* Room 4 (Flower 3): y = 124.3542 to y = 148.9167 - EXPANDED to east exterior wall */}
       <RoomFloor
-        position={[70.40625, -0.05, 136.63545]} // Center position
-        width={80.6875}
+        position={[74.90625, -0.05, 136.63545]} // Center: x=(37.0625+112.75)/2=74.90625
+        width={75.6875} // Full width to east exterior wall
         height={24.5625} // Room 4 height: 148.9167 - 124.3542
         material="white-epoxy"
       />
       
-      {/* Room 5: y = 99.7917 to y = 124.3542 */}
+      {/* Room 5 (Flower 4): y = 99.7917 to y = 124.3542 - EXPANDED to east exterior wall */}
       <RoomFloor
-        position={[70.40625, -0.05, 112.07295]} // Center position
-        width={80.6875}
+        position={[74.90625, -0.05, 112.07295]} // Center: x=(37.0625+112.75)/2=74.90625
+        width={75.6875} // Full width to east exterior wall
         height={24.5625} // Room 5 height: 124.3542 - 99.7917
         material="white-epoxy"
       />
       
-      {/* Room 6: y = 75.2292 to y = 99.7917 */}
+      {/* Room 6 (Flower 5): y = 75.2292 to y = 99.7917 - EXPANDED to east exterior wall */}
       <RoomFloor
-        position={[70.40625, -0.05, 87.51045]} // Center position
-        width={80.6875}
+        position={[74.90625, -0.05, 87.51045]} // Center: x=(37.0625+112.75)/2=74.90625
+        width={75.6875} // Full width to east exterior wall
         height={24.5625} // Room 6 height: 99.7917 - 75.2292
         material="white-epoxy"
       />
       
-      {/* Room 7: y = 48.6667 to y = 75.2292 */}
+      {/* Room 7 (Flower 6): y = 48.6667 to y = 75.2292 - EXPANDED to east exterior wall */}
       <RoomFloor
-        position={[70.40625, -0.05, 61.94795]} // Center position
-        width={80.6875}
+        position={[74.90625, -0.05, 61.94795]} // Center: x=(37.0625+112.75)/2=74.90625
+        width={75.6875} // Full width to east exterior wall
         height={26.5625} // Room 7 height: 75.2292 - 48.6667
         material="white-epoxy"
       />
       
-      {/* Room 8: y = 25 to y = 48.6667 - EXPANDED to full width from west longway wall to east exterior wall */}
+      {/* Room 8 (Flower 7): y = 25 to y = 48.6667 - EXPANDED to full width from west longway wall to east exterior wall */}
       <RoomFloor
         position={[74.90625, -0.05, 36.83335]} // Center position: x=(37.0625+112.75)/2=74.90625, y=(25+48.6667)/2=36.83335
         width={75.6875} // Full width from west longway wall to east exterior wall (112.75 - 37.0625 = 75.6875)
@@ -3324,21 +3350,15 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
 
       {/* Black gloss epoxy floors for hallways and control area */}
       
-      {/* West Longway Hallway: x = 25 to x = 37.0625, y = 25 to y = 198.0417 - EXTENDED to south exterior wall */}
+      {/* West Longway Hallway: x = 25 to x = 37.0625, y = 25 to y = 222 - EXTENDED to north exterior wall */}
       <RoomFloor
-        position={[31.03125, -0.05, 111.52085]} // Center position: x=(25+37.0625)/2=31.03125, y=(25+198.0417)/2=111.52085
+        position={[31.03125, -0.05, 123.5]} // Center position: x=(25+37.0625)/2=31.03125, y=(25+222)/2=123.5
         width={12.0625} // 12' hallway width
-        height={173.0417} // From south exterior wall to Room 2 north wall (198.0417 - 25 = 173.0417)
+        height={197} // From south exterior wall to north exterior wall (222 - 25 = 197)
         material="black-gloss-epoxy"
       />
       
-      {/* East Longway Hallway: x = 106.75 to x = 112.75, y = 25 to y = 198.0417 - EXTENDED to south exterior wall */}
-      <RoomFloor
-        position={[109.75, -0.05, 111.52085]} // Center position: x=(106.75+112.75)/2=109.75, y=(25+198.0417)/2=111.52085
-        width={6.0} // 6' hallway width
-        height={173.0417} // From south exterior wall to Room 2 north wall (198.0417 - 25 = 173.0417)
-        material="black-gloss-epoxy"
-      />
+      {/* REMOVED: East Longway Hallway - rooms now extend to east exterior wall */}
       
 
       
@@ -3348,13 +3368,7 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
       
 
       
-      {/* Control Area: x = 25 to x = 112.75, y = 198.0417 to y = 222 - Expanded to cover entire northeast area */}
-      <RoomFloor
-        position={[68.875, -0.05, 210.02085]} // Center position: x=(25+112.75)/2=68.875, y=(198.0417+222)/2=210.02085
-        width={87.75} // From west wall to east wall - expanded to cover former dry room area
-        height={23.9583} // From Room 2 north wall to north wall (222 - 198.0417 = 23.9583)
-        material="black-gloss-epoxy"
-      />
+      {/* REMOVED: Control Area - per user request, west hallway now extends to north wall */}
       
 
 

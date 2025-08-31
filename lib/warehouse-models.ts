@@ -311,7 +311,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         y: 198.0417, // Room 2's north boundary
         z: 0 
       },
-      dimensions: { width: 69.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
+      dimensions: { width: 75.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -366,7 +366,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         y: 173.4792, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 69.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
+      dimensions: { width: 75.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -380,16 +380,16 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       }
     },
 
-    // Room 2 East Divider Wall - 12' west of interior east wall (north-south divider)
+    // Dry Room East Divider Wall - Extended north to create Dry 2 room in former control area (moved 6' east)
     {
-      id: 'room-2-east-divider-wall',
+      id: 'dry-room-east-divider-wall',
       type: 'wall' as const,
       position: { 
-        x: 94.75, // 12' west of east longway wall (106.75 - 12 = 94.75)
-        y: 173.4792, // Start at Room 2 south wall
+        x: 100.75, // Moved 6' east from 94.75 to 100.75 to make Dry 2 exactly 12' wide (112.75 - 12 = 100.75)
+        y: 198.0417, // Start at Room 2 north wall, extend north
         z: 0 
       },
-      dimensions: { width: 0.375, height: 24.5625, depth: 17 }, // 4.5" thick, spans Room 2 height (198.0417 - 173.4792 = 24.5625'), 17' tall interior wall
+      dimensions: { width: 0.375, height: 23.9583, depth: 17 }, // 4.5" thick, spans to north wall (222 - 198.0417 = 23.9583'), 17' tall interior wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -397,32 +397,32 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         category: 'room-walls', 
         material_type: 'drywall',
         load_bearing: false,
-        room_west: 'room-2-middle',
-        room_east: 'room-2-east',
+        room_west: 'dry-1',
+        room_east: 'dry-2',
         curved_top: true,
         follows_roof_profile: true,
         center_height: 16.8906,
         exterior_height: 16.8438,
-        description: 'Room 2 east divider wall - 12\' west of east longway wall, divides Room 2 middle and east sections',
+        description: 'Dry room east divider wall - separates Dry 1 and Dry 2 in former control area (moved 6\' east, Dry 2 now 12\' wide)',
         framing: {
           studSize: '2x4',
           studSpacing: 16, // inches on center
-          studCount: Math.ceil(24.5625 * 12 / 16), // calculated stud count
+          studCount: Math.ceil(23.9583 * 12 / 16), // calculated stud count
           hasFraming: true
         }
       }
     },
 
-    // Room 2 West Divider Wall - 12' west of east divider wall (creates middle section)
+    // Dry Room West Divider Wall - Extended north to create Dry 1 room in former control area (moved 6' east)
     {
-      id: 'room-2-west-divider-wall',
+      id: 'dry-room-west-divider-wall',
       type: 'wall' as const,
       position: { 
-        x: 82.75, // 12' west of east divider wall (94.75 - 12 = 82.75)
-        y: 173.4792, // Start at Room 2 south wall
+        x: 88.75, // Moved 6' east from 82.75 to 88.75 (94.75 - 6 = 88.75)
+        y: 198.0417, // Start at Room 2 north wall, extend north
         z: 0 
       },
-      dimensions: { width: 0.375, height: 24.5625, depth: 17 }, // 4.5" thick, spans Room 2 height (198.0417 - 173.4792 = 24.5625'), 17' tall interior wall
+      dimensions: { width: 0.375, height: 23.9583, depth: 17 }, // 4.5" thick, spans to north wall (222 - 198.0417 = 23.9583'), 17' tall interior wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -430,17 +430,17 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         category: 'room-walls', 
         material_type: 'drywall',
         load_bearing: false,
-        room_west: 'room-2-west',
-        room_east: 'room-2-middle',
+        room_west: 'veg',
+        room_east: 'dry-1',
         curved_top: true,
         follows_roof_profile: true,
         center_height: 16.8906,
         exterior_height: 16.8438,
-        description: 'Room 2 west divider wall - 12\' west of east divider wall, creates middle section in Room 2',
+        description: 'Dry room west divider wall - separates Veg room from Dry 1 in former control area (moved 6\' east)',
         framing: {
           studSize: '2x4',
           studSpacing: 16, // inches on center
-          studCount: Math.ceil(24.5625 * 12 / 16), // calculated stud count
+          studCount: Math.ceil(23.9583 * 12 / 16), // calculated stud count
           hasFraming: true
         }
       }
@@ -481,7 +481,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         y: 124.3542, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 69.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
+      dimensions: { width: 75.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -503,7 +503,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         y: 99.7917, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 69.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
+      dimensions: { width: 75.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -525,7 +525,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         y: 75.2292, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 69.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
+      dimensions: { width: 75.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -547,7 +547,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         y: 48.6667, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 69.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, connects to east longway wall
+      dimensions: { width: 75.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -572,7 +572,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         y: 25, // Extended to south exterior wall
         z: 0 
       },
-      dimensions: { width: 0.375, height: 173.0417, depth: 17 }, // 4.5" thick, full length to room 2's north wall: 198.0417-25 = 173.0417'
+      dimensions: { width: 0.375, height: 197, depth: 17 }, // 4.5" thick, extended to north exterior wall: 222-25 = 197'
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -580,73 +580,80 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         category: 'room-walls', 
         material_type: 'drywall',
         load_bearing: false,
-        description: 'Left longways wall - 12\' high with room openings, extended to south exterior wall for Room 8 expansion',
+        description: 'Left longways wall - 12\' high with room openings, extended to north exterior wall (control room removed)',
         openings: [
           {
-            id: 'room-8-west-opening',
+            id: 'flower-7-west-opening',
             type: 'door',
-            position: { x: 11.83, z: 0 }, // Room 8 centered in its section (29 + 23.6667/2 = 40.83 - 29 = 11.83)
+            position: { x: 11.83, z: 0 }, // Flower 7 room centered in its section (29 + 23.6667/2 = 40.83 - 29 = 11.83)
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 8 west entrance - 15\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Flower 7 room west entrance - 12\' hallway double door' }
           },
           {
-            id: 'room-7-west-opening', 
+            id: 'flower-6-west-opening', 
             type: 'door',
-            position: { x: 36.95, z: 0 }, // Room 7 centered (75.2292 + 48.6667)/2 - 25 = 36.95
+            position: { x: 36.95, z: 0 }, // Flower 6 room centered (75.2292 + 48.6667)/2 - 25 = 36.95
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 7 west entrance - 12\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Flower 6 room west entrance - 12\' hallway double door' }
           },
           {
-            id: 'room-6-west-opening',
+            id: 'flower-5-west-opening',
             type: 'door', 
-            position: { x: 62.51, z: 0 }, // Room 6 centered (75.2292 + 99.7917)/2 - 25 = 62.51
+            position: { x: 62.51, z: 0 }, // Flower 5 room centered (75.2292 + 99.7917)/2 - 25 = 62.51
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 6 west entrance - 12\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Flower 5 room west entrance - 12\' hallway double door' }
           },
           {
-            id: 'room-5-west-opening',
+            id: 'flower-4-west-opening',
             type: 'door',
-            position: { x: 87.07, z: 0 }, // Room 5 centered (99.7917 + 124.3542)/2 - 25 = 87.07
+            position: { x: 87.07, z: 0 }, // Flower 4 room centered (99.7917 + 124.3542)/2 - 25 = 87.07
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 5 west entrance - 12\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Flower 4 room west entrance - 12\' hallway double door' }
           },
           {
-            id: 'room-4-west-opening',
+            id: 'flower-3-west-opening',
             type: 'door',
-            position: { x: 111.64, z: 0 }, // Room 4 centered (124.3542 + 148.9167)/2 - 25 = 111.64
+            position: { x: 111.64, z: 0 }, // Flower 3 room centered (124.3542 + 148.9167)/2 - 25 = 111.64
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 4 west entrance - 12\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Flower 3 room west entrance - 12\' hallway double door' }
           },
           {
-            id: 'room-3-west-opening',
+            id: 'flower-2-west-opening',
             type: 'door',
-            position: { x: 136.20, z: 0 }, // Room 3 centered (148.9167 + 173.4792)/2 - 25 = 136.20
+            position: { x: 136.20, z: 0 }, // Flower 2 room centered (148.9167 + 173.4792)/2 - 25 = 136.20
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 3 west entrance - 12\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Flower 2 room west entrance - 12\' hallway double door' }
           },
           {
-            id: 'room-2-west-opening',
+            id: 'flower-1-west-opening',
             type: 'door',
-            position: { x: 166.00, z: 0 }, // Room 2 centered (173.4792 + 208.5209)/2 - 25 = 166.00
+            position: { x: 160.76, z: 0 }, // Flower 1 room centered (173.4792 + 198.0417)/2 - 25 = 160.76
             dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 2 west entrance - 12\' hallway double door' }
+            metadata: { doorType: 'double', description: 'Flower 1 room west entrance - 12\' hallway double door' }
+          },
+          {
+            id: 'veg-west-opening',
+            type: 'door',
+            position: { x: 185.02, z: 0 }, // Veg room centered (198.0417 + 222)/2 - 25 = 185.02
+            dimensions: { width: 8, height: 8 },
+            metadata: { doorType: 'double', description: 'Veg room west entrance - 12\' hallway double door' }
           }
         ]
       }
     },
     
-          // Right longways wall - runs north-south, recessed 6' from right exterior wall
-      // STARTS at room-wall-7 (room 7's south wall) - Room 8 now extends full width to east exterior wall
-      // Continues north past double tier dry room, creating continuous wall
+      // REMOVED: East longways wall - rooms now extend to east exterior wall
+      // The east hallway has been removed and rooms have been expanded 6' to the east
+      /*
       {
         id: 'longways-wall-right',
         type: 'wall' as const,
         position: { 
-          x: 106.75, // 6' from right exterior wall (112.75 - 6 + wall thickness/2 = 106.75)
+          x: 106.75, // Was 6' from right exterior wall
           y: 25, // Extended to south exterior wall
           z: 0 
         },
-        dimensions: { width: 0.375, height: 173.0417, depth: 17 }, // Full length to control area (198.0417 - 25 = 173.0417')
+        dimensions: { width: 0.375, height: 173.0417, depth: 17 },
         rotation: 0,
         material: 'concrete',
         color: '#ffffff',
@@ -654,45 +661,11 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
           category: 'room-walls', 
           material_type: 'drywall',
           load_bearing: false,
-          description: 'Right longways wall - 12\' high with room openings, shortened to open control area to east hallway, 6\' from east exterior wall',
+          description: 'REMOVED - East hallway wall removed to expand rooms',
           openings: [
+            // All east doors removed - rooms now extend to exterior wall
             {
               id: 'room-7-east-opening',
-              type: 'door',
-              position: { x: 13.10, z: 0 }, // Room 7 centered (49.0417 + 75.2292)/2 - 49.0417 = 13.10
-              dimensions: { width: 3, height: 8 },
-              metadata: { doorType: 'single', description: 'Room 7 east entrance - 3\' hallway single door' }
-            },
-            {
-              id: 'room-6-east-opening',
-              type: 'door',
-              position: { x: 38.47, z: 0 }, // Room 6 centered (75.2292 + 99.7917)/2 - 49.0417 = 38.47
-              dimensions: { width: 3, height: 8 },
-              metadata: { doorType: 'single', description: 'Room 6 east entrance - 3\' hallway single door' }
-            },
-            {
-              id: 'room-5-east-opening',
-              type: 'door',
-              position: { x: 63.03, z: 0 }, // Room 5 centered (99.7917 + 124.3542)/2 - 49.0417 = 63.03
-              dimensions: { width: 3, height: 8 },
-              metadata: { doorType: 'single', description: 'Room 5 east entrance - 3\' hallway single door' }
-            },
-            {
-              id: 'room-4-east-opening',
-              type: 'door',
-              position: { x: 87.60, z: 0 }, // Room 4 centered (124.3542 + 148.9167)/2 - 49.0417 = 87.60
-              dimensions: { width: 3, height: 8 },
-              metadata: { doorType: 'single', description: 'Room 4 east entrance - 3\' hallway single door' }
-            },
-            {
-              id: 'room-3-east-opening',
-              type: 'door',
-              position: { x: 112.16, z: 0 }, // Room 3 centered (148.9167 + 173.4792)/2 - 49.0417 = 112.16
-              dimensions: { width: 3, height: 8 },
-              metadata: { doorType: 'single', description: 'Room 3 east entrance - 3\' hallway single door' }
-            },
-            {
-              id: 'room-2-east-opening',
               type: 'door',
               position: { x: 136.72, z: 0 }, // Room 2 centered (173.4792 + 198.0417)/2 - 49.0417 = 136.72
               dimensions: { width: 3, height: 8 },
@@ -701,6 +674,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
           ]
         }
       },
+      */
 
     // HALLWAY WALLS - North area is now open control area (hallway wall removed)
     
@@ -1331,6 +1305,37 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       }
     },
 
+    // NEW EXTERIOR WALL - North extension, 1' from east wall, extending 20' north
+    {
+      id: 'wall-north-extension',
+      type: 'wall' as const,
+      position: { 
+        x: 111.75, // 1' from east exterior wall (112.75 - 1 = 111.75)
+        y: 222, // Start at north exterior wall
+        z: 0 
+      },
+      dimensions: { 
+        width: 1, // 1' thick wall
+        height: 20, // 20' extending north
+        depth: 12 // 12' tall wall
+      },
+      rotation: 0,
+      material: 'brick',
+      color: '#8B7355',
+      metadata: { 
+        category: 'exterior', 
+        material_type: 'brick',
+        load_bearing: true,
+        description: 'North exterior wall extension - 20\' north from main building, 1\' from east wall',
+        framing: {
+          studSize: '2x4',
+          studSpacing: 16, // inches on center
+          studCount: Math.ceil(20 * 12 / 16), // calculated stud count
+          hasFraming: true
+        }
+      }
+    },
+
     // PHASE 1 INDICATOR - Subtle tag for area north of firewall
     {
       id: 'phase-1-indicator',
@@ -1393,6 +1398,8 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       }
     },
 
+    // REMOVED: IBC TOTES AND WATER TANKS - per user request
+    /*
     // IBC TOTES - DOUBLE STACKED (14 TOTAL) WITH 1" HORIZONTAL SPACING, 2' VERTICAL GAP
     // Bottom row - 7 totes
     {
@@ -1896,6 +1903,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         description: 'Norwesco 40152 - 1000 Gallon Vertical Storage Tank #2'
       }
     },
+    */
 
 
 
@@ -1933,34 +1941,37 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
     },
     
     // East Longway Hallway - Black Gloss Epoxy Floor (6' wide hallway)
+    // REMOVED: East Longway Hallway - rooms now extend to east exterior wall
+    /*
     {
       id: 'east-longway-hallway-black-epoxy-floor',
       type: 'fixture' as const,
       position: { 
-        x: 106.75, // Start at east longway wall
-        y: 25, // EXTENDED to south exterior wall
-        z: -0.125 // Slightly below floor level (-1.5" = -0.125')
+        x: 106.75, // Was at east longway wall
+        y: 25, 
+        z: -0.125 
       },
       dimensions: { 
-        width: 6.0, // 6' hallway width (112.75 - 106.75 = 6.0')
-        height: 173.0417, // FULL LENGTH from south exterior wall to Room 2 north wall (198.0417 - 25 = 173.0417')
-        depth: 0.125 // 1.5" thick epoxy system (0.125')
+        width: 6.0, // Was 6' hallway width
+        height: 173.0417,
+        depth: 0.125
       },
       rotation: 0,
-      material: 'concrete', // Use concrete for solid rendering
-      color: '#0a0a0a', // Deep black gloss epoxy
+      material: 'concrete',
+      color: '#0a0a0a',
       metadata: { 
         category: 'flooring',
         material_type: 'black_gloss_epoxy',
         thickness_inches: 1.5,
-        area: 'east-longway-hallway',
+        area: 'REMOVED-east-longway-hallway',
         finish: 'high-gloss',
         chemical_resistant: true,
-        anti_slip: false, // Gloss finish
+        anti_slip: false,
         seamless: true,
-        description: 'Black gloss epoxy floor - East longway hallway (6\' x 173\')'
+        description: 'REMOVED - East hallway removed to expand rooms'
       }
     },
+    */
     
     // Room 8 - White Epoxy Floor (excludes east hallway)
     {
