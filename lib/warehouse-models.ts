@@ -1980,6 +1980,64 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
     
 
 
+    // North Hallway South Wall - defines south boundary of north hallway
+    {
+      id: 'north-hallway-south-wall',
+      type: 'wall' as const,
+      position: { 
+        x: 38.0625, // Start at east edge of west hallway
+        y: 216, // South boundary of the 6' hallway
+        z: 0 
+      },
+      dimensions: { width: 26.1875, height: 0.375, depth: 12 }, // 4.5" thick, spans to processing room
+      rotation: 0,
+      material: 'concrete',
+      color: '#ffffff',
+      metadata: { 
+        category: 'room-walls', 
+        material_type: 'drywall',
+        load_bearing: false,
+        description: 'North hallway south wall - defines south boundary of north hallway connecting processing to west hallway',
+        framing: {
+          studSize: '2x4',
+          studSpacing: 16, // inches on center
+          studCount: Math.ceil(26.1875 * 12 / 16), // calculated stud count
+          hasFraming: true
+        }
+      }
+    },
+
+    // North Hallway - 6' wide hallway connecting processing to west hallway
+    // Runs along the north wall (y=222) from west hallway to processing room
+    {
+      id: 'north-hallway-black-epoxy-floor',
+      type: 'fixture' as const,
+      position: { 
+        x: 38.0625, // Start at east edge of west hallway
+        y: 216, // Position 6' south of north wall to create 6' wide hallway
+        z: -0.125 // Slightly below floor level (-1.5" = -0.125')
+      },
+      dimensions: { 
+        width: 26.1875, // From west hallway to processing room (64.25 - 38.0625 = 26.1875')
+        height: 6, // 6' wide hallway as requested
+        depth: 0.125 // 1.5" thick epoxy system (0.125')
+      },
+      rotation: 0,
+      material: 'concrete', // Use concrete for solid rendering
+      color: '#0a0a0a', // Deep black gloss epoxy to match west hallway
+      metadata: { 
+        category: 'flooring',
+        material_type: 'black_gloss_epoxy',
+        thickness_inches: 1.5,
+        area: 'north-hallway',
+        finish: 'high-gloss',
+        chemical_resistant: true,
+        anti_slip: false, // Gloss finish
+        seamless: true,
+        description: 'Black gloss epoxy floor - North hallway (26.2\' x 6\') - connects processing to west hallway'
+      }
+    },
+
     // Processing Room - Black Gloss Epoxy Floor (north extension room)
     {
       id: 'processing-room-black-epoxy-floor',
