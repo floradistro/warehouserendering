@@ -2,6 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Simple Blueprint Labels */
+.blueprint-simple-label {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #0066cc;
+  border-radius: 2px;
+  padding: 3px 6px;
+  font-family: 'Arial', sans-serif;
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.label-text {
+  font-size: 11px;
+  font-weight: bold;
+  color: #0066cc;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.1;
+}
+
+.label-dimensions {
+  font-size: 9px;
+  color: #666666;
+  font-weight: normal;
+  line-height: 1.0;
+  margin-top: 1px;
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
 
 :root {

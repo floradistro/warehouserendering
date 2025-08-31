@@ -299,19 +299,19 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
     },
     
     // ROOM WALLS - 7 horizontal walls centered on each I-beam
-    // Building width: 88.75', Room wall width: 78.875' (88.75 - 10 = 78.875)
-    // Creates 5' hallways on both sides (5' + 78.875' + 5' = 88.875')
+    // Building width: 88.75', Room wall width: 74.6875' (extends to east exterior wall)
+    // Creates 13' west hallway and no east hallway (13' + 74.6875' + 1' = 88.6875')
     
     // Room wall 1 - Room 2's north wall (separates Room 2 from area above)
     {
       id: 'room-wall-1',
       type: 'wall' as const,
       position: { 
-        x: 37.0625, // Starts at left longways wall (west hallway boundary)
+        x: 38.0625, // Starts at left longways wall (west hallway boundary)
         y: 198.0417, // Room 2's north boundary
         z: 0 
       },
-      dimensions: { width: 75.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
+      dimensions: { width: 74.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -332,27 +332,28 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
           hasFraming: true
         },
         openings: [
-          {
-            id: 'room-2-west-north-opening',
-            type: 'door',
-            position: { x: 22.85, z: 0 }, // West section center (59.91 - 37.0625 = 22.85)
-            dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 2 west section north entrance - double door' }
-          },
-          {
-            id: 'room-2-middle-north-opening',
-            type: 'door', 
-            position: { x: 51.69, z: 0 }, // Middle section center (88.75 - 37.0625 = 51.69)
-            dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 2 middle section north entrance - double door' }
-          },
-          {
-            id: 'room-2-east-north-opening',
-            type: 'door',
-            position: { x: 63.69, z: 0 }, // East section center (100.75 - 37.0625 = 63.69)
-            dimensions: { width: 8, height: 8 },
-            metadata: { doorType: 'double', description: 'Room 2 east section north entrance - double door' }
-          }
+          // REMOVED: All north doorways from Flower 1 room (Room 2)
+          // {
+          //   id: 'room-2-west-north-opening',
+          //   type: 'door',
+          //   position: { x: 22.85, z: 0 }, // West section center (59.91 - 37.0625 = 22.85)
+          //   dimensions: { width: 8, height: 8 },
+          //   metadata: { doorType: 'double', description: 'Room 2 west section north entrance - double door' }
+          // },
+          // {
+          //   id: 'room-2-middle-north-opening',
+          //   type: 'door', 
+          //   position: { x: 51.69, z: 0 }, // Middle section center (88.75 - 37.0625 = 51.69)
+          //   dimensions: { width: 8, height: 8 },
+          //   metadata: { doorType: 'double', description: 'Room 2 middle section north entrance - double door' }
+          // },
+          // {
+          //   id: 'room-2-east-north-opening',
+          //   type: 'door',
+          //   position: { x: 63.69, z: 0 }, // East section center (100.75 - 37.0625 = 63.69)
+          //   dimensions: { width: 8, height: 8 },
+          //   metadata: { doorType: 'double', description: 'Room 2 east section north entrance - double door' }
+          // }
         ]
       }
     },
@@ -362,11 +363,11 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'room-wall-2',
       type: 'wall' as const,
       position: { 
-        x: 37.0625, // Starts at left longways wall (west hallway boundary)
+        x: 38.0625, // Starts at left longways wall (west hallway boundary)
         y: 173.4792, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 75.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
+      dimensions: { width: 74.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -477,11 +478,11 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'room-wall-4-regular',
       type: 'wall' as const,
       position: { 
-        x: 37.0625, // Starts at left longways wall (west hallway boundary)
+        x: 38.0625, // Starts at left longways wall (west hallway boundary)
         y: 124.3542, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 75.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
+      dimensions: { width: 74.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -499,11 +500,11 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'room-wall-5',
       type: 'wall' as const,
       position: { 
-        x: 37.0625, // Starts at left longways wall (west hallway boundary)
+        x: 38.0625, // Starts at left longways wall (west hallway boundary)
         y: 99.7917, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 75.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
+      dimensions: { width: 74.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -521,11 +522,11 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'room-wall-6',
       type: 'wall' as const,
       position: { 
-        x: 37.0625, // Starts at left longways wall (west hallway boundary)
+        x: 38.0625, // Starts at left longways wall (west hallway boundary)
         y: 75.2292, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 75.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
+      dimensions: { width: 74.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -543,11 +544,11 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'room-wall-7',
       type: 'wall' as const,
       position: { 
-        x: 37.0625, // Starts at left longways wall (west hallway boundary)
+        x: 38.0625, // Starts at left longways wall (west hallway boundary)
         y: 48.6667, // Precisely centered on I-beam Y position minus half wall thickness
         z: 0 
       },
-      dimensions: { width: 75.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
+      dimensions: { width: 74.6875, height: 0.375, depth: 17 }, // 4.5" thick (0.375'), 17' tall interior wall, extends to east exterior wall
       rotation: 0,
       material: 'concrete',
       color: '#ffffff',
@@ -568,7 +569,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       id: 'longways-wall-left',
       type: 'wall' as const,
       position: { 
-        x: 37.0625, // Adjusted for 12' wide west hallway (25 + 12 = 37.0625)
+        x: 38.0625, // Adjusted for 13' wide west hallway (25 + 13 = 38.0625)
         y: 25, // Extended to south exterior wall
         z: 0 
       },
@@ -1336,67 +1337,71 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       }
     },
 
-    // PHASE 1 INDICATOR - Subtle tag for area north of firewall
+    // NEW EXTERIOR WALL - West extension from north wall, ending 39.25' from west exterior wall
     {
-      id: 'phase-1-indicator',
-      type: 'fixture' as const,
+      id: 'wall-west-extension',
+      type: 'wall' as const,
       position: { 
-        x: 111, // Near east wall, unobtrusive location in east hallway
-        y: 173.271, // Centered between firewall (124.3542) and north wall (222): (124.3542 + 222) / 2 = 173.271
-        z: 10 // At 10' height - visible but not intrusive
+        x: 64.25, // End position: 39.25' from west exterior wall (25 + 39.25 = 64.25)
+        y: 242, // At the end of north extension (222 + 20 = 242)
+        z: 0 
       },
       dimensions: { 
-        width: 2, // 24" wide tag for better visibility
-        height: 0.75, // 9" tall
-        depth: 0.1 // Thin sign plate
+        width: 47.5, // Length from north extension to end point (111.75 - 64.25 = 47.5')
+        height: 1, // 1' thick wall
+        depth: 12 // 12' tall wall
       },
       rotation: 0,
-      material: 'metal',
-      color: '#4b5563', // Medium gray color for subtle appearance
+      material: 'brick',
+      color: '#8B7355',
       metadata: { 
-        category: 'signage',
-        sign_type: 'phase_indicator',
-        text: 'PHASE 1',
-        font_size: '6_inch',
-        text_color: '#f3f4f6',
-        phase_boundary: 'firewall_north',
-        firewall_y_position: 124.3542,
-        north_wall_y_position: 222,
-        covers_area: 'north_of_firewall',
-        description: 'Phase 1 indicator - Centered between firewall and north exterior wall'
+        category: 'exterior', 
+        material_type: 'brick',
+        load_bearing: true,
+        description: 'West exterior wall extension - 47.5\' west from north extension, ending 39.25\' from west wall',
+        framing: {
+          studSize: '2x4',
+          studSpacing: 16, // inches on center
+          studCount: Math.ceil(47.5 * 12 / 16), // calculated stud count
+          hasFraming: true
+        }
       }
     },
 
-    // PHASE 2 INDICATOR - Subtle tag for area south of firewall
+    // NEW EXTERIOR WALL - South connecting wall from west extension to main building north wall
     {
-      id: 'phase-2-indicator',
-      type: 'fixture' as const,
+      id: 'wall-south-connector',
+      type: 'wall' as const,
       position: { 
-        x: 27, // Near west wall, unobtrusive location in west hallway
-        y: 74.6771, // Centered between south wall (25) and firewall (124.3542): (25 + 124.3542) / 2 = 74.6771
-        z: 10 // At 10' height - visible but not intrusive, same as Phase 1
+        x: 64.25, // At the end of west extension wall
+        y: 222, // Start at main building north wall
+        z: 0 
       },
       dimensions: { 
-        width: 2, // 24" wide tag for better visibility, same as Phase 1
-        height: 0.75, // 9" tall, same as Phase 1
-        depth: 0.1 // Thin sign plate, same as Phase 1
+        width: 1, // 1' thick wall
+        height: 20, // 20' south to connect to main building (242 - 222 = 20')
+        depth: 12 // 12' tall wall
       },
       rotation: 0,
-      material: 'metal',
-      color: '#4b5563', // Medium gray color for subtle appearance, same as Phase 1
+      material: 'brick',
+      color: '#8B7355',
       metadata: { 
-        category: 'signage',
-        sign_type: 'phase_indicator',
-        text: 'PHASE 2',
-        font_size: '6_inch',
-        text_color: '#f3f4f6',
-        phase_boundary: 'firewall_south',
-        firewall_y_position: 124.3542,
-        south_wall_y_position: 25,
-        covers_area: 'south_of_firewall',
-        description: 'Phase 2 indicator - Centered between south exterior wall and firewall'
+        category: 'exterior', 
+        material_type: 'brick',
+        load_bearing: true,
+        description: 'South connecting wall - 20\' south from west extension to main building north wall',
+        framing: {
+          studSize: '2x4',
+          studSpacing: 16, // inches on center
+          studCount: Math.ceil(20 * 12 / 16), // calculated stud count
+          hasFraming: true
+        }
       }
     },
+
+
+
+
 
     // REMOVED: IBC TOTES AND WATER TANKS - per user request
     /*
@@ -1920,7 +1925,7 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         z: -0.125 // Slightly below floor level (-1.5" = -0.125')
       },
       dimensions: { 
-        width: 12.0625, // 12' hallway width (37.0625 - 25 = 12.0625')
+        width: 13.0625, // 13' hallway width (38.0625 - 25 = 13.0625')
         height: 173.0417, // FULL LENGTH from south exterior wall to Room 2 north wall (198.0417 - 25 = 173.0417')
         depth: 0.125 // 1.5" thick epoxy system (0.125')
       },
@@ -1973,34 +1978,852 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
     },
     */
     
-    // Room 8 - White Epoxy Floor (excludes east hallway)
+
+
+    // Processing Room - Black Gloss Epoxy Floor (north extension room)
     {
-      id: 'room-8-white-epoxy-floor',
+      id: 'processing-room-black-epoxy-floor',
       type: 'fixture' as const,
       position: { 
-        x: 37.0625, // Start at left longways wall (Room 8 west boundary)
-        y: 25, // Start at south exterior wall
+        x: 64.25, // Start at west extension wall (Processing room west boundary)
+        y: 222, // Start at main building north wall (Processing room south boundary)
         z: -0.125 // Slightly below floor level (-1.5" = -0.125')
       },
       dimensions: { 
-        width: 69.6875, // Room 8 width: up to east longways wall (106.75 - 37.0625 = 69.6875')
-        height: 23.6667, // Room 8 depth: south exterior wall to room-wall-7 (48.6667 - 25 = 23.6667')
+        width: 47.5, // Processing room width: from west extension to north extension (111.75 - 64.25 = 47.5')
+        height: 20, // Processing room depth: north extension length (242 - 222 = 20')
         depth: 0.125 // 1.5" thick epoxy system (0.125')
       },
       rotation: 0,
       material: 'concrete', // Use concrete for solid rendering
-      color: '#ffffff', // Pure white epoxy for Room 8
+      color: '#0a0a0a', // Deep black gloss epoxy to match west hallway
       metadata: { 
         category: 'flooring',
-        material_type: 'white_epoxy',
+        material_type: 'black_gloss_epoxy',
         thickness_inches: 1.5,
-        area: 'room-8',
-        room: 'room-8',
-        finish: 'semi-gloss',
+        area: 'processing-room',
+        room: 'processing-room',
+        finish: 'high-gloss',
         chemical_resistant: true,
-        anti_slip: true,
+        anti_slip: false, // Gloss finish
         seamless: true,
-        description: 'White epoxy floor - Room 8 (69.69\' x 23.67\') - excludes east hallway'
+        description: 'Black gloss epoxy floor - Processing room (47.5\' x 20\') - matches west hallway'
+      }
+    },
+
+    // ============================================================================
+    // ROLLING TABLE FLOOR LAYOUT MARKINGS - FLOWER ROOMS 1-7
+    // ============================================================================
+    
+    // ROOM 7 (FLOWER 7) - ROLLING TABLES AND AISLE LAYOUT WITH N/S AISLES
+    // Room bounds: Y: 25 to 48.6667, X: 40.0625 to 112.75 (2' walkway from west longway wall)
+    // Layout: North aisle (2.25') + 5 tables (4' each) + South aisle (2.25') = 24.5625'
+    {
+      id: 'room-7-north-aisle',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 25, z: 0.015 },
+      dimensions: { width: 72.6875, height: 2.25, depth: 0.015 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'harvest-aisle',
+        room: 7,
+        aisle_position: 'north',
+        description: 'Room 7 - North Harvest Aisle (2.25\' x 72.7\') - E-W cart access'
+      }
+    },
+    {
+      id: 'room-7-table-1',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 27.25, z: 0.015 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.015 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 7,
+        table_number: 1,
+        description: 'Room 7 - Rolling Table Row 1 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-7-table-2',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 31.25, z: 0.015 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.015 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 7,
+        table_number: 2,
+        description: 'Room 7 - Rolling Table Row 2 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-7-table-3',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 35.25, z: 0.015 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.015 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 7,
+        table_number: 3,
+        description: 'Room 7 - Rolling Table Row 3 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-7-table-4',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 39.25, z: 0.015 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.015 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 7,
+        table_number: 4,
+        description: 'Room 7 - Rolling Table Row 4 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-7-table-5',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 43.25, z: 0.015 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.015 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 7,
+        table_number: 5,
+        description: 'Room 7 - Rolling Table Row 5 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-7-south-aisle',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 47.25, z: 0.015 },
+      dimensions: { width: 72.6875, height: 1.4167, depth: 0.015 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'harvest-aisle',
+        room: 7,
+        aisle_position: 'south',
+        description: 'Room 7 - South Harvest Aisle (1.42\' x 72.7\') - E-W cart access (adjusted for room boundary)'
+      }
+    },
+
+    // ROOM 6 (FLOWER 6) - ROLLING TABLES AND AISLE LAYOUT WITH N/S AISLES
+    // Room bounds: Y: 48.6667 to 75.2292, X: 40.0625 to 112.75 (2' walkway from west longway wall)
+    // Layout: North aisle (2.25') + 5 tables (4' each) + South aisle (2.25') = 24.5625'
+    {
+      id: 'room-6-north-aisle',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 48.6667, z: 0.01 },
+      dimensions: { width: 72.6875, height: 2.25, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'harvest-aisle',
+        room: 6,
+        aisle_position: 'north',
+        description: 'Room 6 - North Harvest Aisle (2.25\' x 72.7\') - E-W cart access'
+      }
+    },
+    {
+      id: 'room-6-table-1',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 50.9167, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 6,
+        table_number: 1,
+        description: 'Room 6 - Rolling Table Row 1 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-6-table-2',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 54.9167, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 6,
+        table_number: 2,
+        description: 'Room 6 - Rolling Table Row 2 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-6-table-3',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 58.9167, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 6,
+        table_number: 3,
+        description: 'Room 6 - Rolling Table Row 3 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-6-table-4',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 62.9167, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 6,
+        table_number: 4,
+        description: 'Room 6 - Rolling Table Row 4 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-6-table-5',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 66.9167, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 6,
+        table_number: 5,
+        description: 'Room 6 - Rolling Table Row 5 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-6-south-aisle',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 70.9167, z: 0.01 },
+      dimensions: { width: 72.6875, height: 2.25, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'harvest-aisle',
+        room: 6,
+        aisle_position: 'south',
+        description: 'Room 6 - South Harvest Aisle (2.25\' x 72.7\') - E-W cart access'
+      }
+    },
+
+    // ROOM 5 (FLOWER 5) - ROLLING TABLES AND AISLE LAYOUT WITH N/S AISLES
+    // Room bounds: Y: 75.2292 to 99.7917, X: 40.0625 to 112.75 (2' walkway from west longway wall)
+    // Layout: North aisle (2.25') + 5 tables (4' each) + South aisle (2.25') = 24.5625'
+    {
+      id: 'room-5-north-aisle',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 75.2292, z: 0.01 },
+      dimensions: { width: 72.6875, height: 2.25, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'harvest-aisle',
+        room: 5,
+        aisle_position: 'north',
+        description: 'Room 5 - North Harvest Aisle (2.25\' x 72.7\') - E-W cart access'
+      }
+    },
+    {
+      id: 'room-5-table-1',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 77.4792, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 5,
+        table_number: 1,
+        description: 'Room 5 - Rolling Table Row 1 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-5-table-2',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 81.4792, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 5,
+        table_number: 2,
+        description: 'Room 5 - Rolling Table Row 2 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-5-table-3',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 85.4792, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 5,
+        table_number: 3,
+        description: 'Room 5 - Rolling Table Row 3 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-5-table-4',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 89.4792, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 5,
+        table_number: 4,
+        description: 'Room 5 - Rolling Table Row 4 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-5-table-5',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 93.4792, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 5,
+        table_number: 5,
+        description: 'Room 5 - Rolling Table Row 5 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-5-south-aisle',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 97.4792, z: 0.01 },
+      dimensions: { width: 72.6875, height: 2.25, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'harvest-aisle',
+        room: 5,
+        aisle_position: 'south',
+        description: 'Room 5 - South Harvest Aisle (2.25\' x 72.7\') - E-W cart access'
+      }
+    },
+
+    // ROOM 4 (FLOWER 4) - ROLLING TABLES AND AISLE LAYOUT WITH N/S AISLES
+    // Room bounds: Y: 99.7917 to 124.3542, X: 40.0625 to 112.75 (2' walkway from west longway wall)
+    // Layout: North aisle (2.25') + 5 tables (4' each) + South aisle (2.25') = 24.5625'
+    {
+      id: 'room-4-north-aisle',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 99.7917, z: 0.01 },
+      dimensions: { width: 72.6875, height: 2.25, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'harvest-aisle',
+        room: 4,
+        aisle_position: 'north',
+        description: 'Room 4 - North Harvest Aisle (2.25\' x 72.7\') - E-W cart access'
+      }
+    },
+    {
+      id: 'room-4-table-1',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 102.0417, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 4,
+        table_number: 1,
+        description: 'Room 4 - Rolling Table Row 1 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-4-table-2',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 106.0417, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 4,
+        table_number: 2,
+        description: 'Room 4 - Rolling Table Row 2 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-4-table-3',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 110.0417, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 4,
+        table_number: 3,
+        description: 'Room 4 - Rolling Table Row 3 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-4-table-4',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 114.0417, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 4,
+        table_number: 4,
+        description: 'Room 4 - Rolling Table Row 4 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-4-table-5',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 118.0417, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 4,
+        table_number: 5,
+        description: 'Room 4 - Rolling Table Row 5 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-4-south-aisle',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 122.0417, z: 0.01 },
+      dimensions: { width: 72.6875, height: 2.25, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'harvest-aisle',
+        room: 4,
+        aisle_position: 'south',
+        description: 'Room 4 - South Harvest Aisle (2.25\' x 72.7\') - E-W cart access'
+      }
+    },
+
+    // ROOM 3 (FLOWER 3) - ROLLING TABLES AND AISLE LAYOUT WITH N/S AISLES
+    // Room bounds: Y: 124.3542 to 148.9167, X: 40.0625 to 112.75 (2' walkway from west longway wall)
+    // Layout: North aisle (2.25') + 5 tables (4' each) + South aisle (2.25') = 24.5625'
+    {
+      id: 'room-3-north-aisle',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 124.3542, z: 0.01 },
+      dimensions: { width: 72.6875, height: 2.25, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'harvest-aisle',
+        room: 3,
+        aisle_position: 'north',
+        description: 'Room 3 - North Harvest Aisle (2.25\' x 72.7\') - E-W cart access'
+      }
+    },
+    {
+      id: 'room-3-table-1',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 126.6042, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 3,
+        table_number: 1,
+        description: 'Room 3 - Rolling Table Row 1 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-3-table-2',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 130.6042, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 3,
+        table_number: 2,
+        description: 'Room 3 - Rolling Table Row 2 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-3-table-3',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 134.6042, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 3,
+        table_number: 3,
+        description: 'Room 3 - Rolling Table Row 3 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-3-table-4',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 138.6042, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 3,
+        table_number: 4,
+        description: 'Room 3 - Rolling Table Row 4 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-3-table-5',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 142.6042, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 3,
+        table_number: 5,
+        description: 'Room 3 - Rolling Table Row 5 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-3-south-aisle',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 146.6042, z: 0.01 },
+      dimensions: { width: 72.6875, height: 2.25, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'harvest-aisle',
+        room: 3,
+        aisle_position: 'south',
+        description: 'Room 3 - South Harvest Aisle (2.25\' x 72.7\') - E-W cart access'
+      }
+    },
+
+    // ROOM 2 (FLOWER 2) - ROLLING TABLES AND AISLE LAYOUT WITH N/S AISLES
+    // Room bounds: Y: 148.9167 to 173.4792, X: 40.0625 to 112.75 (2' walkway from west longway wall)
+    // Layout: North aisle (2.25') + 5 tables (4' each) + South aisle (2.25') = 24.5625'
+    {
+      id: 'room-2-north-aisle',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 148.9167, z: 0.01 },
+      dimensions: { width: 72.6875, height: 2.25, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'harvest-aisle',
+        room: 2,
+        aisle_position: 'north',
+        description: 'Room 2 - North Harvest Aisle (2.25\' x 72.7\') - E-W cart access'
+      }
+    },
+    {
+      id: 'room-2-table-1',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 151.1667, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 2,
+        table_number: 1,
+        description: 'Room 2 - Rolling Table Row 1 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-2-table-2',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 155.1667, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 2,
+        table_number: 2,
+        description: 'Room 2 - Rolling Table Row 2 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-2-table-3',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 159.1667, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 2,
+        table_number: 3,
+        description: 'Room 2 - Rolling Table Row 3 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-2-table-4',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 163.1667, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 2,
+        table_number: 4,
+        description: 'Room 2 - Rolling Table Row 4 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-2-table-5',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 167.1667, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 2,
+        table_number: 5,
+        description: 'Room 2 - Rolling Table Row 5 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-2-south-aisle',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 171.1667, z: 0.01 },
+      dimensions: { width: 72.6875, height: 2.25, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'harvest-aisle',
+        room: 2,
+        aisle_position: 'south',
+        description: 'Room 2 - South Harvest Aisle (2.25\' x 72.7\') - E-W cart access'
+      }
+    },
+
+    // ROOM 1 (FLOWER 1) - ROLLING TABLES AND AISLE LAYOUT WITH N/S AISLES
+    // Room bounds: Y: 173.4792 to 198.0417, X: 40.0625 to 112.75 (2' walkway from west longway wall)
+    // Layout: North aisle (2.25') + 5 tables (4' each) + South aisle (2.25') = 24.5625'
+    {
+      id: 'room-1-north-aisle',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 173.4792, z: 0.01 },
+      dimensions: { width: 72.6875, height: 2.25, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'harvest-aisle',
+        room: 1,
+        aisle_position: 'north',
+        description: 'Room 1 - North Harvest Aisle (2.25\' x 72.7\') - E-W cart access'
+      }
+    },
+    {
+      id: 'room-1-table-1',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 175.7292, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 1,
+        table_number: 1,
+        description: 'Room 1 - Rolling Table Row 1 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-1-table-2',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 179.7292, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 1,
+        table_number: 2,
+        description: 'Room 1 - Rolling Table Row 2 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-1-table-3',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 183.7292, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 1,
+        table_number: 3,
+        description: 'Room 1 - Rolling Table Row 3 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-1-table-4',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 187.7292, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 1,
+        table_number: 4,
+        description: 'Room 1 - Rolling Table Row 4 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-1-table-5',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 191.7292, z: 0.01 },
+      dimensions: { width: 72.6875, height: 4, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'rolling-table',
+        room: 1,
+        table_number: 5,
+        description: 'Room 1 - Rolling Table Row 5 (4\' x 72.7\') - 29 lights'
+      }
+    },
+    {
+      id: 'room-1-south-aisle',
+      type: 'fixture' as const,
+      position: { x: 40.0625, y: 195.7292, z: 0.01 },
+      dimensions: { width: 72.6875, height: 2.25, depth: 0.01 },
+      rotation: 0,
+      material: 'concrete',
+      color: 'transparent', // Hidden - rendered by BlueprintFloorPlan component
+      metadata: { 
+        category: 'cultivation-layout',
+        type: 'harvest-aisle',
+        room: 1,
+        aisle_position: 'south',
+        description: 'Room 1 - South Harvest Aisle (2.25\' x 72.7\') - E-W cart access'
       }
     },
 

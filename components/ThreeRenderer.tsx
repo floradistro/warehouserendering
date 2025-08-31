@@ -22,6 +22,7 @@ import { CameraController, CameraCapture } from '@/lib/core/CameraController'
 // Professional measurement system imports  
 import SimpleMeasurementDisplay from './SimpleMeasurementDisplay'
 import SelectionIndicators from './SelectionIndicators'
+import BlueprintFloorPlan from './BlueprintFloorPlan'
 
 
 // Temporary formatMeasurement function to avoid breaking existing code
@@ -2574,7 +2575,55 @@ function WallLabels3D({ floorplan }: { floorplan: FloorplanData }) {
   // Find the actual building walls
   const walls = floorplan.elements.filter(el => el.type === 'wall' && el.metadata?.category === 'exterior')
   
-  if (walls.length === 0) return null
+  // Fallback compass positioning using floorplan dimensions if walls not found
+  if (walls.length === 0) {
+    const centerX = floorplan.dimensions.width / 2
+    const centerY = floorplan.dimensions.height / 2
+    
+    return (
+      <>
+        {/* NORTH - Fallback positioning */}
+        <Html position={[centerX, 0.1, floorplan.dimensions.height + 20]}>
+          <div className="text-white text-sm font-bold pointer-events-none select-none bg-blue-900/90 px-3 py-2 rounded-full border-2 border-blue-400/60 backdrop-blur-sm shadow-lg font-mono tracking-wider">
+            <div className="flex items-center gap-1">
+              <span className="text-blue-300">↑</span>
+              <span>N</span>
+            </div>
+          </div>
+        </Html>
+        
+        {/* SOUTH - Fallback positioning */}
+        <Html position={[centerX, 0.1, -20]}>
+          <div className="text-white text-sm font-bold pointer-events-none select-none bg-red-900/90 px-3 py-2 rounded-full border-2 border-red-400/60 backdrop-blur-sm shadow-lg font-mono tracking-wider">
+            <div className="flex items-center gap-1">
+              <span className="text-red-300">↓</span>
+              <span>S</span>
+            </div>
+          </div>
+        </Html>
+        
+        {/* EAST - Fallback positioning */}
+        <Html position={[floorplan.dimensions.width + 20, 0.1, centerY]}>
+          <div className="text-white text-sm font-bold pointer-events-none select-none bg-green-900/90 px-3 py-2 rounded-full border-2 border-green-400/60 backdrop-blur-sm shadow-lg font-mono tracking-wider">
+            <div className="flex items-center gap-1">
+              <span className="text-green-300">→</span>
+              <span>E</span>
+            </div>
+          </div>
+        </Html>
+        
+        {/* WEST - Fallback positioning */}
+        <Html position={[-20, 0.1, centerY]}>
+          <div className="text-white text-sm font-bold pointer-events-none select-none bg-purple-900/90 px-3 py-2 rounded-full border-2 border-purple-400/60 backdrop-blur-sm shadow-lg font-mono tracking-wider">
+            <div className="flex items-center gap-1">
+              <span className="text-purple-300">←</span>
+              <span>W</span>
+            </div>
+          </div>
+        </Html>
+      </>
+    )
+  }
   
   const leftWall = walls.find(w => w.id === 'wall-left')
   const rightWall = walls.find(w => w.id === 'wall-right')
@@ -2585,7 +2634,55 @@ function WallLabels3D({ floorplan }: { floorplan: FloorplanData }) {
   const bottomWallRight = walls.find(w => w.id === 'wall-bottom-right')
   const bottomWall = walls.find(w => w.id === 'wall-bottom') // Fallback for unified bottom wall
   
-  if (!leftWall || !rightWall || !topWall || (!bottomWall && (!bottomWallLeft || !bottomWallRight))) return null
+  if (!leftWall || !rightWall || !topWall || (!bottomWall && (!bottomWallLeft || !bottomWallRight))) {
+    // If specific walls not found, use fallback positioning
+    const centerX = floorplan.dimensions.width / 2
+    const centerY = floorplan.dimensions.height / 2
+    
+    return (
+      <>
+        {/* NORTH - Fallback positioning */}
+        <Html position={[centerX, 0.1, floorplan.dimensions.height + 20]}>
+          <div className="text-white text-sm font-bold pointer-events-none select-none bg-blue-900/90 px-3 py-2 rounded-full border-2 border-blue-400/60 backdrop-blur-sm shadow-lg font-mono tracking-wider">
+            <div className="flex items-center gap-1">
+              <span className="text-blue-300">↑</span>
+              <span>N</span>
+            </div>
+          </div>
+        </Html>
+        
+        {/* SOUTH - Fallback positioning */}
+        <Html position={[centerX, 0.1, -20]}>
+          <div className="text-white text-sm font-bold pointer-events-none select-none bg-red-900/90 px-3 py-2 rounded-full border-2 border-red-400/60 backdrop-blur-sm shadow-lg font-mono tracking-wider">
+            <div className="flex items-center gap-1">
+              <span className="text-red-300">↓</span>
+              <span>S</span>
+            </div>
+          </div>
+        </Html>
+        
+        {/* EAST - Fallback positioning */}
+        <Html position={[floorplan.dimensions.width + 20, 0.1, centerY]}>
+          <div className="text-white text-sm font-bold pointer-events-none select-none bg-green-900/90 px-3 py-2 rounded-full border-2 border-green-400/60 backdrop-blur-sm shadow-lg font-mono tracking-wider">
+            <div className="flex items-center gap-1">
+              <span className="text-green-300">→</span>
+              <span>E</span>
+            </div>
+          </div>
+        </Html>
+        
+        {/* WEST - Fallback positioning */}
+        <Html position={[-20, 0.1, centerY]}>
+          <div className="text-white text-sm font-bold pointer-events-none select-none bg-purple-900/90 px-3 py-2 rounded-full border-2 border-purple-400/60 backdrop-blur-sm shadow-lg font-mono tracking-wider">
+            <div className="flex items-center gap-1">
+              <span className="text-purple-300">←</span>
+              <span>W</span>
+            </div>
+          </div>
+        </Html>
+      </>
+    )
+  }
   
   const buildingWidth = rightWall.position.x - leftWall.position.x + rightWall.dimensions.width
   
@@ -2597,36 +2694,47 @@ function WallLabels3D({ floorplan }: { floorplan: FloorplanData }) {
   const centerX = leftWall.position.x + buildingWidth / 2
   const centerY = effectiveBottomWall.position.y + buildingHeight / 2
   
-  // Subtle directional labels positioned around the building - VS Code theme
+  // Modern compass indicators positioned at ground level on outer edges
   // Building is now rotated: 88' 7/8" wide (East-West) x 198' long (North-South)
-  // NORTH side of the warehouse
   return (
     <>
-      {/* NORTH - On the long side (198' long) - top end */}
-      <Html position={[centerX, 5, topWall.position.y + 25]}>
-        <div className="text-gray-400 text-sm font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
-          NORTH
+      {/* NORTH - At ground level, outer edge of building */}
+      <Html position={[centerX, 0.1, topWall.position.y + 35]}>
+        <div className="text-white text-sm font-bold pointer-events-none select-none bg-blue-900/90 px-3 py-2 rounded-full border-2 border-blue-400/60 backdrop-blur-sm shadow-lg font-mono tracking-wider">
+          <div className="flex items-center gap-1">
+            <span className="text-blue-300">↑</span>
+            <span>N</span>
+          </div>
         </div>
       </Html>
       
-      {/* SOUTH - On the long side (198' long) - bottom end */}
-      <Html position={[centerX, 5, effectiveBottomWall.position.y - 25]}>
-        <div className="text-gray-400 text-sm font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
-          SOUTH
+      {/* SOUTH - At ground level, outer edge of building */}
+      <Html position={[centerX, 0.1, effectiveBottomWall.position.y - 35]}>
+        <div className="text-white text-sm font-bold pointer-events-none select-none bg-red-900/90 px-3 py-2 rounded-full border-2 border-red-400/60 backdrop-blur-sm shadow-lg font-mono tracking-wider">
+          <div className="flex items-center gap-1">
+            <span className="text-red-300">↓</span>
+            <span>S</span>
+          </div>
         </div>
       </Html>
       
-      {/* EAST - On the short side (88' 7/8" wide) - right side */}
-      <Html position={[rightWall.position.x + 25, 5, centerY]}>
-        <div className="text-gray-400 text-sm font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
-          EAST
+      {/* EAST - At ground level, outer edge of building */}
+      <Html position={[rightWall.position.x + 35, 0.1, centerY]}>
+        <div className="text-white text-sm font-bold pointer-events-none select-none bg-green-900/90 px-3 py-2 rounded-full border-2 border-green-400/60 backdrop-blur-sm shadow-lg font-mono tracking-wider">
+          <div className="flex items-center gap-1">
+            <span className="text-green-300">→</span>
+            <span>E</span>
+          </div>
         </div>
       </Html>
       
-      {/* WEST - On the short side (88' 7/8" wide) - left side */}
-      <Html position={[leftWall.position.x - 25, 5, centerY]}>
-        <div className="text-gray-400 text-sm font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
-          WEST
+      {/* WEST - At ground level, outer edge of building */}
+      <Html position={[leftWall.position.x - 35, 0.1, centerY]}>
+        <div className="text-white text-sm font-bold pointer-events-none select-none bg-purple-900/90 px-3 py-2 rounded-full border-2 border-purple-400/60 backdrop-blur-sm shadow-lg font-mono tracking-wider">
+          <div className="flex items-center gap-1">
+            <span className="text-purple-300">←</span>
+            <span>W</span>
+          </div>
         </div>
       </Html>
     </>
@@ -2707,12 +2815,12 @@ function RoomLabels({ floorplan }: { floorplan: FloorplanData }) {
   if (allSeparatorWalls.length > 1) {
     const flower1CenterY = (allSeparatorWalls[0].position.y + allSeparatorWalls[1].position.y) / 2
     // Position Flower 1 label across full width (no more internal divisions in Room 2)
-    const flower1CenterX = (37.0625 + 112.75) / 2 // Center between west longway wall and east exterior wall
+    const flower1CenterX = (38.0625 + 112.75) / 2 // Center between west longway wall and east exterior wall
     roomPositions.push({ roomNumber: 'Flower 1', centerY: flower1CenterY, centerX: flower1CenterX })
     
     // Add Veg label in the NEW northern area (west of Dry 1)
     const northAreaCenterY = (198.0417 + 222) / 2 // Center between Room 2 north wall and north exterior wall
-    const vegCenterX = (37.0625 + 88.75) / 2 // Center between west longway wall and Dry 1 west wall
+    const vegCenterX = (38.0625 + 88.75) / 2 // Center between west longway wall and Dry 1 west wall
     roomPositions.push({ roomNumber: 'Veg', centerY: northAreaCenterY, centerX: vegCenterX })
     
     // Add Dry 1 label in the NEW northern area (former control room, moved 6' east)
@@ -2722,6 +2830,11 @@ function RoomLabels({ floorplan }: { floorplan: FloorplanData }) {
     // Add Dry 2 label in the NEW northern area (former control room, now exactly 12' wide)
     const dry2CenterX = (100.75 + 112.75) / 2 // Center between east divider wall and east exterior wall (12' wide)
     roomPositions.push({ roomNumber: 'Dry 2', centerY: northAreaCenterY, centerX: dry2CenterX })
+    
+    // Add Processing label in the north extension room
+    const processingCenterY = (222 + 242) / 2 // Center between main building north wall and extension end (222 + 20/2 = 232)
+    const processingCenterX = (64.25 + 111.75) / 2 // Center between extension walls (64.25 + 47.5/2 = 87.875)
+    roomPositions.push({ roomNumber: 'Processing', centerY: processingCenterY, centerX: processingCenterX })
   }
   
   // Room 3 = "Flower 2" - between second and third separator walls
@@ -2783,7 +2896,7 @@ function FirewallLabels({ floorplan }: { floorplan: FloorplanData }) {
         
         return (
           <Html key={`firewall-${firewall.id}`} position={[centerX, centerZ, centerY]}>
-            <div className="text-red-400 text-xs font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-red-600/50 backdrop-blur-sm tracking-wider">
+            <div className="text-gray-300 text-xs font-medium pointer-events-none select-none bg-gray-800/95 px-2 py-1 rounded border border-gray-600/40 backdrop-blur-sm shadow-sm font-mono tracking-wide">
               FIREWALL
             </div>
           </Html>
@@ -3276,16 +3389,16 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
       {/* White epoxy floors for rooms 2-6 */}
       {/* Room 2 (Flower 1): y = 173.4792 to y = 198.0417 - EXPANDED to full width, no internal divisions */}
       <RoomFloor
-        position={[74.90625, -0.05, 185.76045]} // Center: x=(37.0625+112.75)/2=74.90625
-        width={75.6875} // Full width to east exterior wall (112.75 - 37.0625 = 75.6875)
+        position={[75.40625, -0.05, 185.76045]} // Center: x=(38.0625+112.75)/2=75.40625
+        width={74.6875} // Full width to east exterior wall (112.75 - 38.0625 = 74.6875)
         height={24.5625} // Room 2 height: 198.0417 - 173.4792
         material="white-epoxy"
       />
 
-      {/* Veg Room: y = 198.0417 to y = 222, x = 37.0625 to x = 88.75 - NEW vegetative room west of Dry 1 */}
+      {/* Veg Room: y = 198.0417 to y = 222, x = 38.0625 to x = 88.75 - NEW vegetative room west of Dry 1 */}
       <RoomFloor
-        position={[62.90625, -0.05, 210.02085]} // Center: x=(37.0625+88.75)/2=62.90625, y=(198.0417+222)/2=210.02085
-        width={51.6875} // Width from west longway wall to Dry 1 west wall (88.75 - 37.0625 = 51.6875)
+        position={[63.40625, -0.05, 210.02085]} // Center: x=(38.0625+88.75)/2=63.40625, y=(198.0417+222)/2=210.02085
+        width={50.6875} // Width from west longway wall to Dry 1 west wall (88.75 - 38.0625 = 50.6875)
         height={23.9583} // Height: 222 - 198.0417 = 23.9583
         material="white-epoxy"
       />
@@ -3308,58 +3421,58 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
       
       {/* Room 3 (Flower 2): y = 148.9167 to y = 173.4792 - EXPANDED to east exterior wall */}
       <RoomFloor
-        position={[74.90625, -0.05, 161.19795]} // Center: x=(37.0625+112.75)/2=74.90625
-        width={75.6875} // Full width to east exterior wall
+        position={[75.40625, -0.05, 161.19795]} // Center: x=(38.0625+112.75)/2=75.40625
+        width={74.6875} // Full width to east exterior wall
         height={24.5625} // Room 3 height: 173.4792 - 148.9167
         material="white-epoxy"
       />
       
       {/* Room 4 (Flower 3): y = 124.3542 to y = 148.9167 - EXPANDED to east exterior wall */}
       <RoomFloor
-        position={[74.90625, -0.05, 136.63545]} // Center: x=(37.0625+112.75)/2=74.90625
-        width={75.6875} // Full width to east exterior wall
+        position={[75.40625, -0.05, 136.63545]} // Center: x=(38.0625+112.75)/2=75.40625
+        width={74.6875} // Full width to east exterior wall
         height={24.5625} // Room 4 height: 148.9167 - 124.3542
         material="white-epoxy"
       />
       
       {/* Room 5 (Flower 4): y = 99.7917 to y = 124.3542 - EXPANDED to east exterior wall */}
       <RoomFloor
-        position={[74.90625, -0.05, 112.07295]} // Center: x=(37.0625+112.75)/2=74.90625
-        width={75.6875} // Full width to east exterior wall
+        position={[75.40625, -0.05, 112.07295]} // Center: x=(38.0625+112.75)/2=75.40625
+        width={74.6875} // Full width to east exterior wall
         height={24.5625} // Room 5 height: 124.3542 - 99.7917
         material="white-epoxy"
       />
       
       {/* Room 6 (Flower 5): y = 75.2292 to y = 99.7917 - EXPANDED to east exterior wall */}
       <RoomFloor
-        position={[74.90625, -0.05, 87.51045]} // Center: x=(37.0625+112.75)/2=74.90625
-        width={75.6875} // Full width to east exterior wall
+        position={[75.40625, -0.05, 87.51045]} // Center: x=(38.0625+112.75)/2=75.40625
+        width={74.6875} // Full width to east exterior wall
         height={24.5625} // Room 6 height: 99.7917 - 75.2292
         material="white-epoxy"
       />
       
       {/* Room 7 (Flower 6): y = 48.6667 to y = 75.2292 - EXPANDED to east exterior wall */}
       <RoomFloor
-        position={[74.90625, -0.05, 61.94795]} // Center: x=(37.0625+112.75)/2=74.90625
-        width={75.6875} // Full width to east exterior wall
+        position={[75.40625, -0.05, 61.94795]} // Center: x=(38.0625+112.75)/2=75.40625
+        width={74.6875} // Full width to east exterior wall
         height={26.5625} // Room 7 height: 75.2292 - 48.6667
         material="white-epoxy"
       />
       
       {/* Room 8 (Flower 7): y = 25 to y = 48.6667 - EXPANDED to full width from west longway wall to east exterior wall */}
       <RoomFloor
-        position={[74.90625, -0.05, 36.83335]} // Center position: x=(37.0625+112.75)/2=74.90625, y=(25+48.6667)/2=36.83335
-        width={75.6875} // Full width from west longway wall to east exterior wall (112.75 - 37.0625 = 75.6875)
+        position={[75.40625, -0.05, 36.83335]} // Center position: x=(38.0625+112.75)/2=75.40625, y=(25+48.6667)/2=36.83335
+        width={74.6875} // Full width from west longway wall to east exterior wall (112.75 - 38.0625 = 74.6875)
         height={23.6667} // Room 8 height: 48.6667 - 25
         material="white-epoxy"
       />
 
       {/* Black gloss epoxy floors for hallways and control area */}
       
-      {/* West Longway Hallway: x = 25 to x = 37.0625, y = 25 to y = 222 - EXTENDED to north exterior wall */}
+      {/* West Longway Hallway: x = 25 to x = 38.0625, y = 25 to y = 222 - EXTENDED to north exterior wall */}
       <RoomFloor
-        position={[31.03125, -0.05, 123.5]} // Center position: x=(25+37.0625)/2=31.03125, y=(25+222)/2=123.5
-        width={12.0625} // 12' hallway width
+        position={[31.53125, -0.05, 123.5]} // Center position: x=(25+38.0625)/2=31.53125, y=(25+222)/2=123.5
+        width={13.0625} // 13' hallway width
         height={197} // From south exterior wall to north exterior wall (222 - 25 = 197)
         material="black-gloss-epoxy"
       />
@@ -3505,52 +3618,9 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
       {/* 3D Wall Labels - Always visible */}
       <WallLabels3D floorplan={floorplan} />
       
-      {/* Backup directional indicators using 3D text */}
-      <group>
-        {/* North indicator */}
-        <mesh position={[69.375, 8, 247]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[20, 5]} />
-          <meshBasicMaterial color="#1f2937" transparent opacity={0.8} />
-        </mesh>
-        <Html position={[69.375, 8, 247]}>
-          <div className="text-gray-400 text-xs font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
-            ↑ NORTH
-          </div>
-        </Html>
-        
-        {/* South indicator */}
-        <mesh position={[69.375, 8, 1]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[20, 5]} />
-          <meshBasicMaterial color="#1f2937" transparent opacity={0.8} />
-        </mesh>
-        <Html position={[69.375, 8, 1]}>
-          <div className="text-gray-400 text-xs font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
-            ↓ SOUTH
-          </div>
-        </Html>
-        
-        {/* East indicator */}
-        <mesh position={[137.75, 8, 124]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[15, 5]} />
-          <meshBasicMaterial color="#1f2937" transparent opacity={0.8} />
-        </mesh>
-        <Html position={[137.75, 8, 124]}>
-          <div className="text-gray-400 text-xs font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
-            → EAST
-          </div>
-        </Html>
-        
-        {/* West indicator */}
-        <mesh position={[1, 8, 124]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[15, 5]} />
-          <meshBasicMaterial color="#1f2937" transparent opacity={0.8} />
-        </mesh>
-        <Html position={[1, 8, 124]}>
-          <div className="text-gray-400 text-xs font-medium pointer-events-none select-none opacity-60 bg-gray-800/80 px-2 py-1 rounded border border-gray-600/50 backdrop-blur-sm">
-            ← WEST
-          </div>
-        </Html>
-      </group>
+      {/* Blueprint Floor Plan - 2D architectural style floor markings */}
+      <BlueprintFloorPlan floorplan={floorplan} />
+
       
       {/* Framing Status Indicator */}
       {showFraming && (
