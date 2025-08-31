@@ -27,7 +27,7 @@ export default function BlueprintFloorPlan({ floorplan }: BlueprintFloorPlanProp
           elements.push({
             id: el.id,
             type: 'table',
-            position: el.position,
+            position: { x: el.position.x, y: el.position.y, z: el.position.z || 0 },
             dimensions: { width: el.dimensions.width, height: el.dimensions.height },
             room: el.metadata.room || 0,
             label: `TABLES`
@@ -36,7 +36,7 @@ export default function BlueprintFloorPlan({ floorplan }: BlueprintFloorPlanProp
           elements.push({
             id: el.id,
             type: 'walkway',
-            position: el.position,
+            position: { x: el.position.x, y: el.position.y, z: el.position.z || 0 },
             dimensions: { width: el.dimensions.width, height: el.dimensions.height },
             room: el.metadata.room || 0,
             label: el.metadata.aisle_position === 'north' ? 'WALKWAY (N)' : 'WALKWAY (S)'
