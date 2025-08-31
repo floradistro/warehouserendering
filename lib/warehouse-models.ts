@@ -86,7 +86,19 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       rotation: 0,
       material: 'brick',
       color: '#8B7355',
-      metadata: { category: 'exterior', material_type: 'brick' }
+      metadata: { 
+        category: 'exterior', 
+        material_type: 'brick',
+        openings: [
+          {
+            id: 'access-corridor-entrance',
+            type: 'door',
+            position: { x: 6.53, z: 0 }, // Centered in west hallway area: (38.0625 - 25)/2 = 6.53
+            dimensions: { width: 2.67, height: 8 }, // 32" = 2.67' wide, 8' tall
+            metadata: { doorType: 'double', description: 'Access corridor entrance - 32" double door from west hallway' }
+          }
+        ]
+      }
     },
     // West wall - NORTH SEGMENT (from north exterior wall to opening)
     // Opening starts at 6' 5 1/8" from north wall: 222 - 6.427 = 215.573
