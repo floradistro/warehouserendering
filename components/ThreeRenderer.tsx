@@ -2795,7 +2795,13 @@ function FirewallLabels({ floorplan }: { floorplan: FloorplanData }) {
 
 function AreaLabels({ floorplan }: { floorplan: FloorplanData }) {
   // Define area labels for different zones in the warehouse
-  const areas = [
+  const areas: Array<{
+    id: string;
+    name: string;
+    centerX: number;
+    centerY: number;
+    centerZ: number;
+  }> = [
     // REMOVED: Control room - now part of extended west hallway
     // {
     //   id: 'control-room',
