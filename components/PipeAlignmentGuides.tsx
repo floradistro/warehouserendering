@@ -44,7 +44,7 @@ export const PipeAlignmentGuides: React.FC<PipeAlignmentGuidesProps> = ({
   tolerance = 0.25 // Quarter foot tolerance for alignment
 }) => {
 
-  // Calculate alignment guides based on current state with stability
+  // Calculate alignment guides based on current state
   const alignmentGuides = useMemo(() => {
     if (!visible || !hoverPoint || currentPath.length === 0) return []
 
@@ -52,24 +52,20 @@ export const PipeAlignmentGuides: React.FC<PipeAlignmentGuidesProps> = ({
     const lastPoint = currentPath[currentPath.length - 1]
 
     // 1. HORIZONTAL ALIGNMENT GUIDES (Level pipes)
-    // Check if hover point is level with last point with smoother tolerance
+    // Check if hover point is level with last point
     const heightDiff = Math.abs(hoverPoint.y - lastPoint.y)
     if (heightDiff <= tolerance) {
-      // Create horizontal guide line with stable positioning
-      const extendDistance = Math.max(5, Math.abs(hoverPoint.x - lastPoint.x) + 2)
+      // Create horizontal guide line
       const start = new THREE.Vector3(
-        Math.min(lastPoint.x, hoverPoint.x) - extendDistance,
+        Math.min(lastPoint.x, hoverPoint.x) - 5,
         lastPoint.y,
         lastPoint.z
       )
       const end = new THREE.Vector3(
-        Math.max(lastPoint.x, hoverPoint.x) + extendDistance,
+        Math.max(lastPoint.x, hoverPoint.x) + 5,
         lastPoint.y,
         lastPoint.z
       )
-      
-      // Calculate confidence with smoother curve
-      const confidence = Math.pow(1.0 - (heightDiff / tolerance), 2)
       
       guides.push({
         type: 'horizontal',
@@ -77,72 +73,65 @@ export const PipeAlignmentGuides: React.FC<PipeAlignmentGuidesProps> = ({
         direction: new THREE.Vector3().subVectors(end, start).normalize(),
         length: start.distanceTo(end),
         color: '#00FF88', // Bright green for level
-        opacity: 0.6 + (confidence * 0.4), // Variable opacity based on confidence
+        opacity: 0.8,
         description: `Level at ${lastPoint.y.toFixed(1)}' height`,
-        confidence: confidence
+        confidence: 1.0 - (heightDiff / tolerance)
       })
     }
 
     // 2. VERTICAL ALIGNMENT GUIDES (Plumb pipes)
-    // Check if hover point is plumb with last point (same X or Z) with better stability
+    // Check if hover point is plumb with last point (same X or Z)
     const xDiff = Math.abs(hoverPoint.x - lastPoint.x)
     const zDiff = Math.abs(hoverPoint.z - lastPoint.z)
     
-    // Only show the strongest vertical alignment to avoid competing guides
-    const strongestVertical = xDiff < zDiff ? 'x' : 'z'
-    const strongestDiff = Math.min(xDiff, zDiff)
-    
-    if (strongestDiff <= tolerance) {
-      const confidence = Math.pow(1.0 - (strongestDiff / tolerance), 2)
-      const extendDistance = Math.max(3, Math.abs(hoverPoint.y - lastPoint.y) + 1)
+    if (xDiff <= tolerance) {
+      // Vertical guide along X axis
+      const start = new THREE.Vector3(
+        lastPoint.x,
+        Math.min(lastPoint.y, hoverPoint.y) - 2,
+        lastPoint.z
+      )
+      const end = new THREE.Vector3(
+        lastPoint.x,
+        Math.max(lastPoint.y, hoverPoint.y) + 2,
+        lastPoint.z
+      )
       
-      if (strongestVertical === 'x' && xDiff <= tolerance) {
-        // Vertical guide along X axis
-        const start = new THREE.Vector3(
-          lastPoint.x,
-          Math.min(lastPoint.y, hoverPoint.y) - extendDistance,
-          lastPoint.z
-        )
-        const end = new THREE.Vector3(
-          lastPoint.x,
-          Math.max(lastPoint.y, hoverPoint.y) + extendDistance,
-          lastPoint.z
-        )
-        
-        guides.push({
-          type: 'vertical',
-          position: start,
-          direction: new THREE.Vector3().subVectors(end, start).normalize(),
-          length: start.distanceTo(end),
-          color: '#FF6600', // Orange for vertical
-          opacity: 0.5 + (confidence * 0.4), // Variable opacity
-          description: `Plumb at X=${lastPoint.x.toFixed(1)}'`,
-          confidence: confidence
-        })
-      } else if (strongestVertical === 'z' && zDiff <= tolerance) {
-        // Vertical guide along Z axis
-        const start = new THREE.Vector3(
-          lastPoint.x,
-          Math.min(lastPoint.y, hoverPoint.y) - extendDistance,
-          lastPoint.z
-        )
-        const end = new THREE.Vector3(
-          lastPoint.x,
-          Math.max(lastPoint.y, hoverPoint.y) + extendDistance,
-          lastPoint.z
-        )
-        
-        guides.push({
-          type: 'vertical',
-          position: start,
-          direction: new THREE.Vector3().subVectors(end, start).normalize(),
-          length: start.distanceTo(end),
-          color: '#FF6600', // Orange for vertical
-          opacity: 0.5 + (confidence * 0.4), // Variable opacity
-          description: `Plumb at Z=${lastPoint.z.toFixed(1)}'`,
-          confidence: confidence
-        })
-      }
+      guides.push({
+        type: 'vertical',
+        position: start,
+        direction: new THREE.Vector3().subVectors(end, start).normalize(),
+        length: start.distanceTo(end),
+        color: '#FF6600', // Orange for vertical
+        opacity: 0.7,
+        description: `Plumb at X=${lastPoint.x.toFixed(1)}'`,
+        confidence: 1.0 - (xDiff / tolerance)
+      })
+    }
+
+    if (zDiff <= tolerance) {
+      // Vertical guide along Z axis
+      const start = new THREE.Vector3(
+        lastPoint.x,
+        Math.min(lastPoint.y, hoverPoint.y) - 2,
+        lastPoint.z
+      )
+      const end = new THREE.Vector3(
+        lastPoint.x,
+        Math.max(lastPoint.y, hoverPoint.y) + 2,
+        lastPoint.z
+      )
+      
+      guides.push({
+        type: 'vertical',
+        position: start,
+        direction: new THREE.Vector3().subVectors(end, start).normalize(),
+        length: start.distanceTo(end),
+        color: '#FF6600', // Orange for vertical
+        opacity: 0.7,
+        description: `Plumb at Z=${lastPoint.z.toFixed(1)}'`,
+        confidence: 1.0 - (zDiff / tolerance)
+      })
     }
 
     // 3. SNAP POINT HEIGHT ALIGNMENT

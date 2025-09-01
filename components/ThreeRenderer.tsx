@@ -4911,14 +4911,19 @@ export default function ThreeRenderer() {
         shadows
         className="w-full h-full bg-gray-700"
         style={{ width: '100%', height: '100%', display: 'block' }}
-        onCreated={({ scene, gl, camera }) => {
+        onCreated={({ scene: threeScene, gl, camera }) => {
           // Expose scene to window for debugging
           if (typeof window !== 'undefined') {
-            (window as any).__threeScene = scene
+            (window as any).__threeScene = threeScene
             (window as any).__threeCamera = camera
             (window as any).__threeRenderer = gl
           }
           console.log('🎬 Three.js scene initialized')
+          
+          // Store canvas reference for screenshots
+          if (gl.domElement) {
+            canvasRef.current = gl.domElement
+          }
         }}
         gl={{ 
           antialias: true,
@@ -4931,12 +4936,6 @@ export default function ThreeRenderer() {
         performance={{ min: 0.5 }}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        onCreated={({ gl }) => {
-          // Store canvas reference for screenshots
-          if (gl.domElement) {
-            canvasRef.current = gl.domElement
-          }
-        }}
 
         onPointerMissed={(event) => {
           // Measurement now handled by direct object clicks - no ground clicking needed

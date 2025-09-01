@@ -271,11 +271,9 @@ export const PipeRoutingTool = React.forwardRef<any, PipeRoutingToolProps>(({
     }
   }, [plumbingManager, onSystemDeleted])
 
-  // Handle mouse movement for preview - with enhanced stability
+  // Handle mouse movement for preview - with throttling to reduce sensitivity
   const lastMouseMoveRef = useRef(0)
   const mouseMoveThrottleRef = useRef(16) // ~60fps throttling
-  const stableHoverPointRef = useRef<THREE.Vector3 | null>(null)
-  const alignmentStabilityRef = useRef({ type: '', count: 0, threshold: 3 })
 
   const handleMouseMove = useCallback((event: MouseEvent) => {
     if (!enabled || !routingState.isActive) return
@@ -295,96 +293,54 @@ export const PipeRoutingTool = React.forwardRef<any, PipeRoutingToolProps>(({
       const point = intersects[0].point
       
       // Grid snapping with better precision
-      let candidatePoint = new THREE.Vector3(
+      let snappedPoint = new THREE.Vector3(
         Math.round(point.x * 4) / 4, // Snap to quarter-foot increments for better precision
         Math.round(point.y * 4) / 4, // Snap to quarter-foot increments for height
         Math.round(point.z * 4) / 4  // Snap to quarter-foot increments
       )
       
-      // Apply alignment detection for smooth snapping
-      let finalPoint = candidatePoint.clone()
+      // Quick snap point check - simplified for performance
       let activeSnapPoint = null
-      let alignmentType = 'none'
-      
-      if (routingState.currentPath.length > 0) {
-        // Use alignment detector for professional snapping
-        const alignment = alignmentDetectorRef.current.detectAlignment(
-          candidatePoint,
-          routingState.currentPath,
-          [], // existingPipes - can be added later
-          snapPointGeneratorRef.current?.getSnapPoints() || []
-        )
+      if (snapPointGeneratorRef.current && routingState.currentPath.length > 0) {
+        const snapPoints = snapPointGeneratorRef.current.getSnapPoints()
+        const snapRadius = 0.75 // Even smaller radius for better performance
         
-        if (alignment.isAligned && alignment.confidence > 0.7) {
-          alignmentType = alignment.alignmentType
+        // Only check a few snap points near the current position
+        for (let i = 0; i < Math.min(snapPoints.length, 5); i++) {
+          const snapPoint = snapPoints[i]
+          const snapPos = new THREE.Vector3(snapPoint.position.x, snapPoint.position.y, snapPoint.position.z)
+          const distance = point.distanceTo(snapPos)
           
-          // Stability check - only snap if we've been hovering over this alignment for a few frames
-          if (alignmentStabilityRef.current.type === alignmentType) {
-            alignmentStabilityRef.current.count++
-          } else {
-            alignmentStabilityRef.current.type = alignmentType
-            alignmentStabilityRef.current.count = 1
-          }
-          
-          // Only apply snap if we've been stable for threshold frames
-          if (alignmentStabilityRef.current.count >= alignmentStabilityRef.current.threshold) {
-            finalPoint.copy(alignment.snapPosition)
-            
-            // Store current alignment for smooth transitions
-            setCurrentAlignment(alignment)
-          }
-        } else {
-          // Reset stability counter if no alignment
-          alignmentStabilityRef.current.type = 'none'
-          alignmentStabilityRef.current.count = 0
-          setCurrentAlignment(null)
-        }
-        
-        // Quick snap point check for fixtures/equipment
-        if (snapPointGeneratorRef.current) {
-          const snapPoints = snapPointGeneratorRef.current.getSnapPoints()
-          const snapRadius = 0.75
-          
-          // Only check nearby snap points for performance
-          for (const snapPoint of snapPoints) {
-            const snapPos = new THREE.Vector3(snapPoint.position.x, snapPoint.position.y, snapPoint.position.z)
-            const distance = candidatePoint.distanceTo(snapPos)
-            
-            if (distance < snapRadius) {
-              finalPoint.copy(snapPos)
-              activeSnapPoint = snapPoint
-              break
-            }
+          if (distance < snapRadius) {
+            snappedPoint.copy(snapPos)
+            activeSnapPoint = snapPoint
+            break
           }
         }
       }
       
-      // Only update if position actually changed significantly (reduce jitter)
-      const positionChanged = !stableHoverPointRef.current || 
-        stableHoverPointRef.current.distanceTo(finalPoint) > 0.01
-      
-      if (positionChanged) {
-        stableHoverPointRef.current = finalPoint.clone()
-        setHoverPoint(finalPoint)
+      // Only update if position actually changed (reduce unnecessary updates)
+      if (!hoverPoint || !hoverPoint.equals(snappedPoint)) {
+        setHoverPoint(snappedPoint)
         
         // Update active snap point
         if (onActiveSnapPointChange) {
           onActiveSnapPointChange(activeSnapPoint)
         }
         
-        // Update preview path with stable point
+        // Update preview path
         if (routingState.currentPath.length > 0) {
           const previewPath = [...routingState.currentPath, {
-            x: finalPoint.x,
-            y: finalPoint.y,
-            z: finalPoint.z
+            x: snappedPoint.x,
+            y: snappedPoint.y,
+            z: snappedPoint.z
           }]
           setPreviewPath(previewPath)
           updatePreviewLine(previewPath)
         }
       }
     }
-  }, [enabled, routingState, raycaster, pointer, camera, scene, onActiveSnapPointChange])
+  }, [enabled, routingState, raycaster, pointer, camera, scene, onActiveSnapPointChange, hoverPoint])
 
   // Handle keyboard shortcuts
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
@@ -447,22 +403,15 @@ export const PipeRoutingTool = React.forwardRef<any, PipeRoutingToolProps>(({
     
     const pathToUse = path || routingState.currentPath
     
-    // Don't clear and recreate if we're just updating the last segment
-    // This prevents flickering during mouse movement
-    const expectedSegments = Math.max(0, pathToUse.length - 1)
-    const currentSegments = previewLineRef.current.children.length
-    const shouldFullRebuild = currentSegments !== expectedSegments
-    
-    if (shouldFullRebuild) {
-      previewLineRef.current.clear()
-    }
+    // Clear existing preview pipes
+    previewLineRef.current.clear()
     
     if (pathToUse.length < 2) {
       previewLineRef.current.visible = false
       return
     }
 
-    // Create pipe segments for ENTIRE path - with smart updating to reduce flickering
+    // Create pipe segments for ENTIRE path - not just the last segment
     for (let i = 0; i < pathToUse.length - 1; i++) {
       const start = pathToUse[i]
       const end = pathToUse[i + 1]
@@ -475,30 +424,17 @@ export const PipeRoutingTool = React.forwardRef<any, PipeRoutingToolProps>(({
       if (distance < 0.1) continue // Skip very short segments
       
       // Calculate pipe angle for feedback
-      const isLevel = Math.abs(direction.y) < 0.05 // Slightly relaxed for smoother transitions
-      const isVertical = Math.abs(direction.y) > 0.95 // Slightly relaxed for smoother transitions
+      const angleFromHorizontal = Math.acos(Math.abs(direction.y)) * (180 / Math.PI)
+      const isLevel = Math.abs(direction.y) < 0.01 // Much stricter level detection (less than 1 degree)
+      const isVertical = Math.abs(direction.y) > 0.99 // Much stricter vertical detection
       
       // Choose pipe color - make existing segments more solid, current segment brighter
       const isCurrentSegment = i === pathToUse.length - 2
       let pipeColor = getMaterialColor(routingState.selectedMaterial, routingState.selectedSystemType)
       let opacity = isCurrentSegment ? 0.9 : 0.7 // Current segment more opaque
       
-      // Use alignment-aware coloring for smooth feedback
-      if (isCurrentSegment && currentAlignment) {
-        switch (currentAlignment.alignmentType) {
-          case 'horizontal':
-            pipeColor = 0x00FF88 // Bright green for horizontal alignment
-            break
-          case 'vertical':
-            pipeColor = 0xFF6600 // Orange for vertical alignment
-            break
-          case 'height':
-            pipeColor = 0xFFFF00 // Yellow for height alignment
-            break
-          default:
-            // Keep material color
-        }
-      } else if (isLevel) {
+      // Only override color for truly level or vertical pipes
+      if (isLevel) {
         pipeColor = 0x00AA00 // Darker green for level (less bright)
       } else if (isVertical) {
         pipeColor = 0x0066CC // Darker blue for vertical
@@ -508,53 +444,49 @@ export const PipeRoutingTool = React.forwardRef<any, PipeRoutingToolProps>(({
       const radius = Math.max(routingState.selectedDiameter * 0.15, 0.12)
       const geometry = new THREE.CylinderGeometry(radius, radius, distance, 8) // Reduced from 16 to 8 segments
       
-      // Update existing pipe or create new one to reduce object creation/destruction
-      let pipe: THREE.Mesh
-      if (!shouldFullRebuild && i < previewLineRef.current.children.length) {
-        // Update existing pipe instead of creating new one
-        pipe = previewLineRef.current.children[i] as THREE.Mesh
-        
-        // Only update geometry if distance changed significantly
-        const currentGeometry = pipe.geometry as THREE.CylinderGeometry
-        if (Math.abs(currentGeometry.parameters.height - distance) > 0.01) {
-          pipe.geometry.dispose()
-          pipe.geometry = geometry
-        }
-        
-        // Update material color smoothly
-        const material = pipe.material as THREE.MeshBasicMaterial
-        material.color.setHex(pipeColor)
-        material.opacity = opacity
-      } else {
-        // Create new pipe
-        const material = new THREE.MeshBasicMaterial({
-          color: pipeColor,
-          transparent: true,
-          opacity: opacity
-        })
-        
-        pipe = new THREE.Mesh(geometry, material)
-        previewLineRef.current.add(pipe)
-      }
+      const material = new THREE.MeshBasicMaterial({
+        color: pipeColor,
+        transparent: true,
+        opacity: opacity
+      })
       
-      // Position and orient pipe smoothly
+      const pipe = new THREE.Mesh(geometry, material)
+      
+      // Position and orient pipe
       const midPoint = new THREE.Vector3().addVectors(startVec, endVec).multiplyScalar(0.5)
       pipe.position.copy(midPoint)
       
-      // Smooth orientation with better math
+      // Simple orientation
       const up = new THREE.Vector3(0, 1, 0)
       if (Math.abs(direction.dot(up)) > 0.99) {
         pipe.lookAt(endVec)
       } else {
         const axis = new THREE.Vector3().crossVectors(up, direction).normalize()
-        const angle = Math.acos(Math.max(-1, Math.min(1, up.dot(direction))))
-        pipe.setRotationFromAxisAngle(axis, angle)
+        const angle = Math.acos(up.dot(direction))
+        pipe.rotateOnAxis(axis, angle)
+      }
+      
+      previewLineRef.current.add(pipe)
+      
+      // Add angle indicator only for current segment
+      if (isCurrentSegment && !isLevel && !isVertical) {
+        const angleIndicator = new THREE.Mesh(
+          new THREE.SphereGeometry(0.08, 8, 6),
+          new THREE.MeshBasicMaterial({ 
+            color: 0xFFFF00, 
+            transparent: true, 
+            opacity: 0.8 
+          })
+        )
+        angleIndicator.position.copy(midPoint)
+        angleIndicator.position.y += 0.5
+        previewLineRef.current.add(angleIndicator)
       }
     }
     
     previewLineRef.current.visible = true
     
-  }, [routingState, currentAlignment])
+  }, [routingState])
 
   const updatePreviewPoints = useCallback(() => {
     if (!previewPointsRef.current) return
