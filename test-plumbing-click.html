@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Plumbing Click</title>
+</head>
+<body>
+    <h1>Testing Plumbing System</h1>
+    <button onclick="testClick()">Test Create Mode</button>
+    <button onclick="testAddPipe()">Test Add Pipe</button>
+    
+    <script>
+        function testClick() {
+            console.log('Testing plumbing mode change...');
+            window.dispatchEvent(new CustomEvent('plumbingModeChange', {
+                detail: { mode: 'create' }
+            }));
+        }
+        
+        function testAddPipe() {
+            console.log('Testing add pipe...');
+            window.dispatchEvent(new CustomEvent('addPipeSystem', {
+                detail: { 
+                    material: 'pex',
+                    systemType: 'cold_water'
+                }
+            }));
+        }
+    </script>
+</body>
+</html>

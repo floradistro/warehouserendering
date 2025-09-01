@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Plumbing Event System Test</title>
+</head>
+<body>
+    <h1>Plumbing Event System Test</h1>
+    <div id="log"></div>
+    
+    <script>
+        // Test the event system
+        function log(message) {
+            const logDiv = document.getElementById('log')
+            logDiv.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + message + '</div>'
+        }
+        
+        // Listen for plumbing events
+        window.addEventListener('plumbingModeChange', (event) => {
+            log('🎯 Mode changed: ' + JSON.stringify(event.detail))
+        })
+        
+        window.addEventListener('plumbingMaterialChange', (event) => {
+            log('🔧 Material changed: ' + JSON.stringify(event.detail))
+        })
+        
+        window.addEventListener('createExamplePEXSystem', (event) => {
+            log('🚰 Create example PEX system requested')
+        })
+        
+        // Test buttons
+        setTimeout(() => {
+            log('Testing event system...')
+            
+            // Simulate mode change
+            const modeEvent = new CustomEvent('plumbingModeChange', {
+                detail: { mode: 'create', material: 'pex', diameter: 0.5, systemType: 'cold_water' }
+            })
+            window.dispatchEvent(modeEvent)
+            
+            // Simulate material change
+            const materialEvent = new CustomEvent('plumbingMaterialChange', {
+                detail: { material: 'copper', diameter: 0.75, systemType: 'hot_water' }
+            })
+            window.dispatchEvent(materialEvent)
+            
+        }, 1000)
+    </script>
+</body>
+</html>

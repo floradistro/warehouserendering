@@ -3,7 +3,7 @@
 import React from 'react'
 import { Canvas, useLoader, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Html } from '@react-three/drei'
-import { Suspense, useMemo, useRef, useEffect, useCallback, memo } from 'react'
+import { Suspense, useMemo, useRef, useEffect, useCallback, memo, useState } from 'react'
 import * as THREE from 'three'
 import { FloorplanData, FloorplanElement, useAppStore } from '@/lib/store'
 import { useMeasurementStore } from '@/lib/measurement/MeasurementStore'
@@ -14,7 +14,7 @@ import { createDetailedSpiralFeederTank, createSimpleSpiralFeederTank } from '@/
 import { createDetailedNorwescoTank, createSimpleNorwescoTank } from '@/lib/norwesco-tank-model'
 import { createDetailedEatonPanel, createSimpleElectricalPanel, createDetailed200APanel } from '@/lib/electrical-panel-model'
 import { createWarehouseTJIJoist, createIJoist_11_7_8 } from '@/lib/tji-beam-model'
-import { createFramedWallGroup, shouldShowFraming, shouldShowDrywall, updateFramingLOD, updateDrywallLOD, STANDARD_FRAMING_CONFIG, STANDARD_DRYWALL_CONFIG } from '@/lib/wall-framing-system'
+import { createFramedWallGroup, shouldShowFraming, shouldShowDrywall, shouldShowInsulation, updateFramingLOD, updateDrywallLOD, updateInsulationLOD, STANDARD_FRAMING_CONFIG, STANDARD_DRYWALL_CONFIG, STANDARD_INSULATION_CONFIG } from '@/lib/wall-framing-system'
 import FirstPersonControls from './FirstPersonControls'
 import SnapIndicators from './SnapIndicators'
 import EnhancedLighting from './EnhancedLighting'
@@ -62,6 +62,7 @@ function formatMeasurement(decimalFeet: number): string {
 import { SelectionBox } from '@/lib/core/SelectionManager'
 import { initializeWarehouseCAD } from '@/lib/integration/WarehouseCADIntegration'
 import { Background3DGrid } from '@/lib/core/RenderingUtils'
+import SimplePipeSystem from './SimplePipeSystem'
 
 // WASD-enabled Orbit Controls - DEPRECATED: Use CameraController instead
 function WASDOrbitControls({ target, ...props }: any) {
@@ -245,9 +246,11 @@ const FloorplanElementMesh = memo(({
   isDragging,
   showFraming = false,
   showDrywall = false,
+  showInsulation = false,
+  showPEX = false,
   lockedTarget,
   measurementToolActive
-}: FloorplanElementProps & { showFraming?: boolean, showDrywall?: boolean, lockedTarget: string | null }) => {
+}: FloorplanElementProps & { showFraming?: boolean, showDrywall?: boolean, showInsulation?: boolean, showPEX?: boolean, lockedTarget: string | null }) => {
   // Load brick texture for walls
   const brickTexture = useLoader(THREE.TextureLoader, '/textures/materials/concrete/Brick/bricktexture.jpg')
   const concreteTexture = useLoader(THREE.TextureLoader, '/textures/materials/concrete/Textured Dark Concrete Surface.png')
@@ -314,8 +317,8 @@ const FloorplanElementMesh = memo(({
       }
     }
     
-    // Show framing/drywall for walls when toggles are enabled
-    if (element.type === 'wall' && (showFraming || showDrywall) && lockedTarget !== element.id) {
+    // Show framing/drywall/insulation for walls when toggles are enabled
+    if (element.type === 'wall' && (showFraming || showDrywall || showInsulation) && lockedTarget !== element.id) {
       const isWallSelected = isSelected
       
       // Check if this is an exterior brick wall
@@ -344,7 +347,14 @@ const FloorplanElementMesh = memo(({
         minLOD: 1000 // Show at all distances for debugging
       } : undefined
       
-      const framedWall = createFramedWallGroup(element, framingConfig, isWallSelected, drywallConfig)
+      // Create insulation config if insulation toggle is enabled
+      const insulationConfig = showInsulation ? {
+        ...STANDARD_INSULATION_CONFIG,
+        showInsulation: true,
+        minLOD: 1000 // Show at all distances for debugging
+      } : undefined
+      
+      const framedWall = createFramedWallGroup(element, framingConfig, isWallSelected, drywallConfig, insulationConfig)
       
       return {
         geometry: null,
@@ -950,6 +960,12 @@ const FloorplanElementMesh = memo(({
       return [x + element.dimensions.width / 2, z, y + element.dimensions.height / 2] as [number, number, number]
     }
     
+    // Special positioning for PEX plumbing lines
+    if (element.metadata?.equipment_type === 'pex_branch' || element.metadata?.equipment_type === 'pex_trunk_system') {
+      // PEX lines: x=start position, z=height, y=start position  
+      // Height is the long dimension (197'), width and depth are small (6")
+      return [x + element.dimensions.width / 2, z, y + element.dimensions.height / 2] as [number, number, number]
+    }
 
     
     // Standard positioning for other elements (walls, etc.)
@@ -1015,6 +1031,177 @@ const FloorplanElementMesh = memo(({
         z: intersectionPoint.y
       })
     }
+  }
+
+  // Handle pipe systems - Phase 1 Implementation
+  if (element.type === 'pipe_system' && element.pipeData) {
+    console.log('🚰 Rendering pipe system:', element.id, element.pipeData)
+    console.log('🚰 Full element data:', element)
+    
+    const { path, systemType, diameter } = element.pipeData
+    const pipeRadius = (diameter / 12) / 2 // Convert inches to feet, then to radius
+    
+    // Realistic material colors and properties
+    let pipeColor = '#0047AB' // Default blue
+    let roughness = 0.8
+    let metalness = 0.0
+    
+    if (element.material === 'pex') {
+      // PEX colors: Red for hot water, Blue for cold water
+      pipeColor = systemType === 'hot_water' ? '#DC143C' : '#0066CC' // Brighter blue for visibility
+      roughness = 0.7 // Semi-matte plastic finish
+      metalness = 0.0
+    } else if (element.material === 'copper') {
+      // Realistic copper color with metallic finish
+      pipeColor = '#CD7F32' // True copper bronze
+      roughness = 0.2 // Shiny metal
+      metalness = 0.9
+    } else if (element.material === 'pvc') {
+      // PVC colors: White for waste/drain, White for water
+      pipeColor = systemType === 'waste' ? '#F8F8FF' : '#FFFFFF' // White for all PVC
+      roughness = 0.9 // Matte plastic finish
+      metalness = 0.0
+    } else if (element.material === 'cpvc') {
+      // CPVC - Beige/cream color for hot water applications
+      pipeColor = '#F5DEB3' // Wheat/beige
+      roughness = 0.8
+      metalness = 0.0
+    } else if (element.material === 'steel') {
+      // Galvanized steel - Gray metallic
+      pipeColor = '#708090' // Slate gray
+      roughness = 0.3
+      metalness = 0.8
+    }
+    
+    return (
+      <group 
+        position={[0, 0, 0]}
+        userData={{ id: element.id, type: 'pipe_system', ...element.metadata }}
+        onDoubleClick={handleDoubleClick}
+        onPointerDown={handlePointerDown}
+        onPointerOver={(e: any) => {
+          e.stopPropagation()
+          document.body.style.cursor = 'pointer'
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = 'default'
+        }}
+      >
+        {/* Render pipe segments */}
+        {path.map((point, index) => {
+          if (index === path.length - 1) return null // Skip last point
+          
+          const startPoint = path[index]
+          const endPoint = path[index + 1]
+          const distance = Math.sqrt(
+            Math.pow(endPoint.x - startPoint.x, 2) +
+            Math.pow(endPoint.y - startPoint.y, 2) +
+            Math.pow(endPoint.z - startPoint.z, 2)
+          )
+          
+          const midX = (startPoint.x + endPoint.x) / 2
+          const midY = (startPoint.y + endPoint.y) / 2
+          const midZ = (startPoint.z + endPoint.z) / 2
+          
+          // Calculate rotation to align pipe with direction
+          const direction = new THREE.Vector3(
+            endPoint.x - startPoint.x,
+            endPoint.y - startPoint.y,
+            endPoint.z - startPoint.z
+          ).normalize()
+          
+          let rotationY = 0
+          let rotationZ = 0
+          
+          if (Math.abs(direction.x) > 0.1 || Math.abs(direction.z) > 0.1) {
+            rotationY = Math.atan2(direction.x, direction.z)
+          }
+          if (Math.abs(direction.y) > 0.1) {
+            rotationZ = Math.atan2(direction.y, Math.sqrt(direction.x * direction.x + direction.z * direction.z))
+          }
+          
+          return (
+            <mesh 
+              key={`pipe-segment-${index}`}
+              position={[midX, midZ, midY]}
+              rotation={[0, rotationY, rotationZ]}
+              castShadow 
+              receiveShadow
+            >
+              <cylinderGeometry args={[pipeRadius, pipeRadius, distance, 16]} />
+              <meshStandardMaterial 
+                color={pipeColor} 
+                roughness={roughness}
+                metalness={metalness}
+                transparent={false}
+                opacity={1.0}
+                // Add realistic material properties
+                envMapIntensity={metalness > 0.5 ? 1.0 : 0.3}
+              />
+            </mesh>
+          )
+        })}
+        
+        {/* Render fittings at bend points */}
+        {path.map((point, index) => {
+          // Fittings are typically slightly darker than the pipe
+          const fittingColor = new THREE.Color(pipeColor).multiplyScalar(0.8).getHexString()
+          
+          if (index === 0 || index === path.length - 1) {
+            // End caps - realistic size and shape
+            return (
+              <mesh 
+                key={`pipe-cap-${index}`}
+                position={[point.x, point.z, point.y]}
+                castShadow 
+                receiveShadow
+              >
+                <sphereGeometry args={[pipeRadius * 1.2, 12, 8]} />
+                <meshStandardMaterial 
+                  color={fittingColor}
+                  roughness={roughness * 1.1} // Slightly rougher than pipe
+                  metalness={metalness}
+                  envMapIntensity={metalness > 0.5 ? 1.0 : 0.3}
+                />
+              </mesh>
+            )
+          } else {
+            // Elbow fittings at bend points - realistic proportions
+            const elbowRadius = pipeRadius * 1.5 // Standard elbow bend radius
+            
+            return (
+              <mesh 
+                key={`pipe-elbow-${index}`}
+                position={[point.x, point.z, point.y]}
+                castShadow 
+                receiveShadow
+              >
+                <torusGeometry args={[elbowRadius, pipeRadius * 1.1, 8, 16, Math.PI / 2]} />
+                <meshStandardMaterial 
+                  color={fittingColor}
+                  roughness={roughness * 1.1}
+                  metalness={metalness}
+                  envMapIntensity={metalness > 0.5 ? 1.0 : 0.3}
+                />
+              </mesh>
+            )
+          }
+        })}
+        
+        {/* Selection indicator */}
+        {(isSelected || false) && (
+          <mesh position={[element.position.x + element.dimensions.width / 2, element.position.z || 0, element.position.y + element.dimensions.height / 2]}>
+            <boxGeometry args={[element.dimensions.width + 1, element.dimensions.depth! + 1, element.dimensions.height + 1]} />
+            <meshBasicMaterial
+              color="#22c55e"
+              transparent={true}
+              opacity={0.2}
+              wireframe={true}
+            />
+          </mesh>
+        )}
+      </group>
+    )
   }
 
   // Handle signage fixtures with text rendering
@@ -1589,7 +1776,91 @@ const FloorplanElementMesh = memo(({
     )
   }
 
-
+  // Handle PEX Plumbing rendering
+  // DISABLED: Legacy PEX rendering - using PlumbingSystemIntegration instead
+  if (element.metadata?.equipment_type === 'pex_trunk_system' || 
+      element.metadata?.equipment_type === 'pex_branch') {
+    
+    // Skip rendering old PEX fixtures to avoid conflicts with new plumbing system
+    return null
+    
+    console.log(`🔧 Rendering PEX element: ${element.id}`)
+    console.log(`🔧 Element type: ${element.metadata?.equipment_type}`)
+    console.log(`🔧 Position:`, element.position)
+    console.log(`🔧 Dimensions:`, element.dimensions)
+    console.log(`🔧 Element color:`, element.color)
+    
+    // Create cylindrical PEX pipe geometry
+    const pexGeometry = useMemo(() => {
+      console.log(`🔧 Creating cylindrical geometry for ${element.id}`)
+      const { width, height, depth } = element.dimensions
+      
+      // Create PEX line geometry with correct colors and cylindrical shape
+      // For PEX: width=diameter, height=length (runs north-south), depth=diameter
+      // CylinderGeometry(radiusTop, radiusBottom, height, radialSegments)
+      const radius = width / 2 // Convert diameter to radius
+      const pipeLength = height // The length of the pipe (runs north-south)
+      
+      const geometry = new THREE.CylinderGeometry(radius, radius, pipeLength, 16)
+      
+      // Rotate cylinder to run horizontally (north-south) instead of vertically
+      // CylinderGeometry creates vertical cylinders by default, we need horizontal
+      geometry.rotateX(Math.PI / 2) // Rotate 90 degrees to make it horizontal
+      
+      const pexColor = element.metadata?.pex_type === 'cold_water' ? '#0047AB' : '#DC143C' // Blue for cold, red for hot
+      const material = new THREE.MeshLambertMaterial({
+        color: element.color || pexColor,
+        transparent: false
+      })
+      
+      const mesh = new THREE.Mesh(geometry, material)
+      mesh.castShadow = true
+      mesh.receiveShadow = true
+      
+      console.log(`🔧 Created cylindrical mesh for ${element.id}:`, mesh)
+      console.log(`🔧 Pipe dimensions - radius: ${radius}, length: ${pipeLength}`)
+      console.log(`🔧 Material color:`, material.color)
+      
+      return mesh
+    }, [element, isSelected])
+    
+    console.log(`🔧 Rendering PEX group at position:`, position)
+    
+    return (
+      <group
+        position={position}
+        rotation={[0, element.rotation || 0, 0]}
+        userData={{ id: element.id, dimensions: element.dimensions, ...element.metadata }}
+        onDoubleClick={handleDoubleClick}
+        onPointerDown={handlePointerDown}
+        onPointerOver={(e: any) => {
+          e.stopPropagation()
+          if (isEditing || selectedElements.includes(element.id)) {
+            document.body.style.cursor = 'move'
+          } else {
+            document.body.style.cursor = 'pointer'
+          }
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = 'auto'
+        }}
+      >
+        <primitive object={pexGeometry} />
+        
+        {/* Always show selection box for debugging */}
+        <mesh position={[0, 0, 0]}>
+          <boxGeometry args={[element.dimensions.width, element.dimensions.height, element.dimensions.depth]} />
+          <meshBasicMaterial
+            color="#00FF00" // Bright green wireframe
+            transparent
+            opacity={0.8}
+            depthTest={false}
+            wireframe
+          />
+        </mesh>
+      </group>
+    )
+  }
 
   // Handle framed walls
   if (framedWallGroup) {
@@ -3298,11 +3569,13 @@ function RoofPanel({
 // Legacy sample floorplan (kept for fallback compatibility)
 const sampleFloorplan = MAIN_WAREHOUSE_MODEL
 
-function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, cameraTarget, lockedTarget, measurementToolActive }: { 
+function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, showInsulation, showPEX, cameraTarget, lockedTarget, measurementToolActive }: { 
   onCameraReady: (camera: THREE.Camera) => void, 
   snapPointsCache: any[], 
   showFraming: boolean,
   showDrywall: boolean,
+  showInsulation: boolean,
+  showPEX: boolean,
   cameraTarget: [number, number, number],
   lockedTarget: string | null,
   measurementToolActive: boolean
@@ -3523,6 +3796,16 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
             return visible
           }
           
+          // Check if PEX plumbing should be shown
+          if (element.metadata?.equipment_type === 'pex_trunk_system' || 
+              element.metadata?.equipment_type === 'pex_branch') {
+            const visible = showPEX
+            console.log(`🔧 PEX ${element.id} visibility check (plumbing): ${visible}`)
+            console.log(`🔧 PEX element position:`, element.position)
+            console.log(`🔧 PEX element dimensions:`, element.dimensions)
+            return visible
+          }
+          
           // Check if Roof Panels layer is hidden
           if (element.metadata?.category === 'roof') {
             const visible = isLayerVisible('roof-panels')
@@ -3582,6 +3865,8 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
           isDragging={isDragging}
           showFraming={showFraming}
           showDrywall={showDrywall}
+          showInsulation={showInsulation}
+          showPEX={showPEX}
           lockedTarget={lockedTarget}
           measurementToolActive={toolActive}
         />
@@ -3633,6 +3918,24 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
         <Html position={[25, 12, 25]}>
           <div className="text-blue-400 text-xs font-medium pointer-events-none select-none opacity-70 bg-gray-800/80 px-2 py-1 rounded border border-blue-600/50 backdrop-blur-sm whitespace-nowrap">
             🏠 DRYWALL ON - Interior walls only (Press G to toggle)
+          </div>
+        </Html>
+      )}
+      
+      {/* Insulation Status Indicator */}
+      {showInsulation && (
+        <Html position={[25, 9, 25]}>
+          <div className="text-pink-400 text-xs font-medium pointer-events-none select-none opacity-70 bg-gray-800/80 px-2 py-1 rounded border border-pink-600/50 backdrop-blur-sm whitespace-nowrap">
+            🧴 INSULATION ON - Pink spray foam (Press I to toggle)
+          </div>
+        </Html>
+      )}
+      
+      {/* PEX Plumbing Status Indicator */}
+      {showPEX && (
+        <Html position={[25, 6, 25]}>
+          <div className="text-blue-400 text-xs font-medium pointer-events-none select-none opacity-70 bg-gray-800/80 px-2 py-1 rounded border border-blue-600/50 backdrop-blur-sm whitespace-nowrap">
+            🔧 PEX PLUMBING ON - Blue lines & branches (Press P to toggle)
           </div>
         </Html>
       )}
@@ -3857,6 +4160,12 @@ export default function ThreeRenderer() {
   
   // Local state for drywall visibility
   const [showDrywall, setShowDrywall] = React.useState(false)
+  
+  // Local state for insulation visibility
+  const [showInsulation, setShowInsulation] = React.useState(false)
+  
+  // Local state for PEX plumbing visibility
+  const [showPEX, setShowPEX] = React.useState(false)
 
   // Refs for saving functionality
   const canvasRef = React.useRef<HTMLCanvasElement>()
@@ -4128,6 +4437,28 @@ export default function ThreeRenderer() {
           setShowDrywall(prev => {
             const newValue = !prev
             console.log(`🏠 Drywall mode: ${newValue ? 'ON - Interior walls only (LOD optimized)' : 'OFF'}`)
+            return newValue
+          })
+        }
+        
+        // Handle insulation toggle (I key for Insulation)
+        if (event.key.toLowerCase() === 'i' && !event.ctrlKey && !event.altKey && !event.shiftKey) {
+          event.preventDefault()
+          event.stopPropagation()
+          setShowInsulation(prev => {
+            const newValue = !prev
+            console.log(`🧴 Insulation mode: ${newValue ? 'ON - Pink spray foam between studs' : 'OFF'}`)
+            return newValue
+          })
+        }
+        
+        // Handle PEX plumbing toggle (P key for Plumbing)
+        if (event.key.toLowerCase() === 'p' && !event.ctrlKey && !event.altKey && !event.shiftKey) {
+          event.preventDefault()
+          event.stopPropagation()
+          setShowPEX(prev => {
+            const newValue = !prev
+            console.log(`🔧 PEX plumbing mode: ${newValue ? 'ON - Blue PEX lines and branches' : 'OFF'}`)
             return newValue
           })
         }
@@ -4580,6 +4911,15 @@ export default function ThreeRenderer() {
         shadows
         className="w-full h-full bg-gray-700"
         style={{ width: '100%', height: '100%', display: 'block' }}
+        onCreated={({ scene, gl, camera }) => {
+          // Expose scene to window for debugging
+          if (typeof window !== 'undefined') {
+            (window as any).__threeScene = scene
+            (window as any).__threeCamera = camera
+            (window as any).__threeRenderer = gl
+          }
+          console.log('🎬 Three.js scene initialized')
+        }}
         gl={{ 
           antialias: true,
           alpha: false,
@@ -4612,10 +4952,15 @@ export default function ThreeRenderer() {
             snapPointsCache={snapPointsCache} 
             showFraming={showFraming}
             showDrywall={showDrywall}
+            showInsulation={showInsulation}
+            showPEX={showPEX}
             cameraTarget={cameraTarget}
             lockedTarget={lockedTarget}
             measurementToolActive={measurementToolActive}
           />
+          
+          {/* Simple Pipe System */}
+          <SimplePipeSystem enabled={true} />
         </Suspense>
       </Canvas>
     </div>

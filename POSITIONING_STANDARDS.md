@@ -37,10 +37,11 @@
 
 ### Longways Walls
 - **West longway wall**: x = 37.0625
-- **East longway wall**: x = 106.75
-- **Room interior width**: 70.6875' (between longways walls)
+- **East longway wall (removed)**: x = 106.75 (removed to expand rooms)
+- **New East interior wall**: x = 112.375 (against east exterior wall)
+- **Room interior width**: 75.3125' (from west longway wall to new east interior wall)
 - **West hallway width**: 12' (from exterior wall to west longway wall)
-- **East hallway width**: 6' (from east longway wall to exterior wall)
+- **East space**: 0.375' (interior wall thickness against east exterior wall)
 
 ## 🏗️ Element Positioning Rules
 

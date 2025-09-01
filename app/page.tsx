@@ -6,8 +6,10 @@ import { X, Move3D, Square, Eye, EyeOff, User, Layers, ChevronDown } from 'lucid
 import ClientOnly from '@/components/ClientOnly'
 import ModelToolbar from '@/components/ModelToolbar'
 import PhotoshopMeasurementTools from '@/components/PhotoshopMeasurementTools'
+import SimplePlumbingToolbar from '@/components/SimplePlumbingToolbar'
 import GeometryCalculatorPanel from '@/components/GeometryCalculatorPanel'
 import MeasurementStatusBar from '@/components/MeasurementStatusBar'
+// Removed broken debug import
 import { SelectionInfoSystem } from '@/components/SelectionInfoSystem'
 import { useAppStore } from '@/lib/store'
 
@@ -44,6 +46,15 @@ export default function Home() {
     isLayerVisible
   } = useAppStore()
   
+  // Initialize simple debugging
+  useEffect(() => {
+    // Expose store to window for debugging
+    if (typeof window !== 'undefined') {
+      (window as any).__appStore = useAppStore
+      console.log('🏗️ App store exposed to window.__appStore')
+    }
+  }, [])
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -443,9 +454,10 @@ export default function Home() {
         {/* Content Area */}
         <div className="flex flex-1 min-h-0">
           {/* Monochrome Measurement Toolbar - Continuation of Header */}
-          <ClientOnly fallback={null}>
-            <PhotoshopMeasurementTools className="flex-shrink-0" />
-          </ClientOnly>
+          <PhotoshopMeasurementTools className="flex-shrink-0" />
+          
+          {/* Simple Pipe Toolbar */}
+          <SimplePlumbingToolbar />
           
           {/* Geometry Calculator Panel */}
           <ClientOnly fallback={null}>

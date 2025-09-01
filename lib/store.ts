@@ -5,13 +5,20 @@ import { createElement } from './element-tools'
 
 export interface FloorplanElement {
   id: string
-  type: 'wall' | 'door' | 'window' | 'room' | 'fixture'
+  type: 'wall' | 'door' | 'window' | 'room' | 'fixture' | 'pipe_system'
   position: { x: number; y: number; z?: number }
   dimensions: { width: number; height: number; depth?: number }
   rotation?: number
   color?: string
-  material?: 'steel' | 'concrete' | 'wood' | 'fabric' | string
+  material?: 'steel' | 'concrete' | 'wood' | 'fabric' | 'pex' | 'copper' | 'pvc' | string
   metadata?: Record<string, any>
+  // Pipe-specific properties
+  pipeData?: {
+    systemType: 'hot_water' | 'cold_water' | 'waste' | 'vent' | 'gas' | 'compressed_air'
+    diameter: number
+    path: Array<{ x: number; y: number; z: number }>
+    fittings?: Array<{ position: { x: number; y: number; z: number }, type: string }>
+  }
 }
 
 export interface FloorplanData {

@@ -1,5 +1,6 @@
 import { FloorplanData } from './store'
 import { CoveBaseTrimConfig, createCoveBaseTrim, defaultCoveBaseTrimConfig, coveBaseTrimPresets } from './cove-base-trim-model'
+import { PEX_LINE_MODELS } from './pex-line-models'
 import * as THREE from 'three'
 
 
@@ -654,40 +655,178 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         ]
       }
     },
+
+    // ============================================================================
+    // REDUCING TRUNK PEX SYSTEM WITH BRASS FITTINGS - REWRITTEN FROM SCRATCH
+    // ============================================================================
+    // CORRECT LOGIC: Each line bends into its room and STOPS there (realistic plumbing)
+    // Start: 16 lines at Veg → End: 2 lines at Flower 7
+    // Lines 1&1 serve Veg, Lines 2&2 serve Flower 1, etc. → Only Lines 8&8 reach Flower 7
     
-      // REMOVED: East longways wall - rooms now extend to east exterior wall
-      // The east hallway has been removed and rooms have been expanded 6' to the east
-      /*
-      {
-        id: 'longways-wall-right',
-        type: 'wall' as const,
-        position: { 
-          x: 106.75, // Was 6' from right exterior wall
-          y: 25, // Extended to south exterior wall
-          z: 0 
-        },
-        dimensions: { width: 0.375, height: 173.0417, depth: 17 },
-        rotation: 0,
-        material: 'concrete',
-        color: '#ffffff',
-        metadata: { 
-          category: 'room-walls', 
-          material_type: 'drywall',
-          load_bearing: false,
-          description: 'REMOVED - East hallway wall removed to expand rooms',
-          openings: [
-            // All east doors removed - rooms now extend to exterior wall
-            {
-              id: 'room-7-east-opening',
-              type: 'door',
-              position: { x: 136.72, z: 0 }, // Room 2 centered (173.4792 + 198.0417)/2 - 49.0417 = 136.72
-              dimensions: { width: 3, height: 8 },
-              metadata: { doorType: 'single', description: 'Room 2 east entrance - 3\' hallway single door' }
-            }
-          ]
-        }
+    // === LEGACY PEX FIXTURES - DISABLED ===
+    // These old fixtures conflict with the new PlumbingSystemIntegration
+    // Commented out to prevent conflicts with the new path-based plumbing system
+    /*
+    // TRUNK LINE 1 (BLUE) - Serves VEG only, stops at Veg
+    { id: 'blue-line-1', type: 'fixture' as const, position: { x: 37.5, y: 210, z: 9.0 }, dimensions: { width: 0.5/12, height: 12, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_trunk_system', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Blue line 1 - Veg only' } },
+    { id: 'veg-blue-elbow', type: 'fixture' as const, position: { x: 37.5, y: 210, z: 9.0 }, dimensions: { width: 1/12, height: 1/12, depth: 1/12 }, rotation: 0, material: 'brass', color: '#B5A642', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_fitting', fitting_type: '90_degree_elbow', diameter: '1/2_inch', description: 'Veg blue brass elbow' } },
+    { id: 'veg-blue-branch', type: 'fixture' as const, position: { x: 57.2, y: 210, z: 9.0 }, dimensions: { width: 0.5/12, height: 38.9, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Veg blue branch - TERMINATES' } },
+
+    // TRUNK LINE 1 (RED) - Serves VEG only, stops at Veg
+    { id: 'red-line-1', type: 'fixture' as const, position: { x: 37.5, y: 210, z: 11.0 }, dimensions: { width: 0.5/12, height: 12, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_trunk_system', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Red line 1 - Veg only' } },
+    { id: 'veg-red-elbow', type: 'fixture' as const, position: { x: 37.5, y: 210, z: 11.0 }, dimensions: { width: 1/12, height: 1/12, depth: 1/12 }, rotation: 0, material: 'brass', color: '#B5A642', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_fitting', fitting_type: '90_degree_elbow', diameter: '1/2_inch', description: 'Veg red brass elbow' } },
+    { id: 'veg-red-branch', type: 'fixture' as const, position: { x: 57.2, y: 210, z: 11.0 }, dimensions: { width: 0.5/12, height: 38.9, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Veg red branch - TERMINATES' } },
+
+    // TRUNK LINE 2 (BLUE) - Serves Flower 1, stops at Flower 1
+    { id: 'blue-line-2', type: 'fixture' as const, position: { x: 37.5, y: 185.8, z: 9.25 }, dimensions: { width: 0.5/12, height: 36.2, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_trunk_system', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Blue line 2 - Flower 1 only' } },
+    { id: 'flower1-blue-elbow', type: 'fixture' as const, position: { x: 37.5, y: 185.8, z: 9.25 }, dimensions: { width: 1/12, height: 1/12, depth: 1/12 }, rotation: 0, material: 'brass', color: '#B5A642', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_fitting', fitting_type: '90_degree_elbow', diameter: '1/2_inch', description: 'Flower 1 blue brass elbow' } },
+    { id: 'flower1-blue-branch', type: 'fixture' as const, position: { x: 57.2, y: 185.8, z: 9.25 }, dimensions: { width: 0.5/12, height: 38.9, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 1 blue branch - TERMINATES' } },
+
+    // TRUNK LINE 2 (RED) - Serves Flower 1, stops at Flower 1  
+    { id: 'red-line-2', type: 'fixture' as const, position: { x: 37.5, y: 185.8, z: 11.25 }, dimensions: { width: 0.5/12, height: 36.2, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_trunk_system', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Red line 2 - Flower 1 only' } },
+    { id: 'flower1-red-elbow', type: 'fixture' as const, position: { x: 37.5, y: 185.8, z: 11.25 }, dimensions: { width: 1/12, height: 1/12, depth: 1/12 }, rotation: 0, material: 'brass', color: '#B5A642', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_fitting', fitting_type: '90_degree_elbow', diameter: '1/2_inch', description: 'Flower 1 red brass elbow' } },
+    { id: 'flower1-red-branch', type: 'fixture' as const, position: { x: 57.2, y: 185.8, z: 11.25 }, dimensions: { width: 0.5/12, height: 38.9, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 1 red branch - TERMINATES' } },
+
+    // Continue this pattern for all rooms... (Lines 8&8 will be the only ones reaching Flower 7)
+    // TRUNK LINES 8 (BLUE & RED) - Travel all the way to Flower 7 (FINAL 2 LINES)
+    { id: 'blue-line-8', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 10.75 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_trunk_system', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Blue line 8 - FINAL line to Flower 7' } },
+    { id: 'red-line-8', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 12.75 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_trunk_system', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Red line 8 - FINAL line to Flower 7' } },
+    
+    // FLOWER 7 - FINAL BRASS ELBOW FITTINGS & BRANCHES (Only 2 lines cross this room)
+    { id: 'flower7-blue-elbow', type: 'fixture' as const, position: { x: 37.5, y: 36.8, z: 10.75 }, dimensions: { width: 1/12, height: 1/12, depth: 1/12 }, rotation: 0, material: 'brass', color: '#B5A642', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_fitting', fitting_type: '90_degree_elbow', diameter: '1/2_inch', description: 'Flower 7 blue brass elbow - FINAL' } },
+    { id: 'flower7-red-elbow', type: 'fixture' as const, position: { x: 37.5, y: 36.8, z: 12.75 }, dimensions: { width: 1/12, height: 1/12, depth: 1/12 }, rotation: 0, material: 'brass', color: '#B5A642', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_fitting', fitting_type: '90_degree_elbow', diameter: '1/2_inch', description: 'Flower 7 red brass elbow - FINAL' } },
+    { id: 'flower7-blue-branch', type: 'fixture' as const, position: { x: 57.2, y: 36.8, z: 10.75 }, dimensions: { width: 0.5/12, height: 38.9, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 7 blue branch - FINAL TERMINATION' } },
+    { id: 'flower7-red-branch', type: 'fixture' as const, position: { x: 57.2, y: 36.8, z: 12.75 }, dimensions: { width: 0.5/12, height: 38.9, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 7 red branch - FINAL TERMINATION' } },
+    */ // END OF LEGACY PEX FIXTURES
+    
+    // VEG ELBOW FITTINGS (90-degree turn from trunk into room)
+    { id: 'veg-blue-elbow', type: 'fixture' as const, position: { x: 37.5, y: 210, z: 9.0 }, dimensions: { width: 1/12, height: 1/12, depth: 1/12 }, rotation: 0, material: 'metal', color: '#888888', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_fitting', fitting_type: '90_degree_elbow', diameter: '1/2_inch', description: 'Veg cold water 90° elbow fitting' } },
+    { id: 'veg-red-elbow', type: 'fixture' as const, position: { x: 37.5, y: 210, z: 11.0 }, dimensions: { width: 1/12, height: 1/12, depth: 1/12 }, rotation: 0, material: 'metal', color: '#888888', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_fitting', fitting_type: '90_degree_elbow', diameter: '1/2_inch', description: 'Veg hot water 90° elbow fitting' } },
+    
+    // VEG BRANCHES (from elbow to room center)
+    { id: 'veg-blue-branch', type: 'fixture' as const, position: { x: 57.2, y: 210, z: 9.0 }, dimensions: { width: 0.5/12, height: 38.9, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Veg cold branch to room center' } },
+    { id: 'veg-red-branch', type: 'fixture' as const, position: { x: 57.2, y: 210, z: 11.0 }, dimensions: { width: 0.5/12, height: 38.9, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Veg hot branch to room center' } },
+
+    // FLOWER 1 PAIR (stacked on top - z=9.25 blue, z=11.25 red)
+    { id: 'flower1-blue-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 9.25 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 1 cold water line - full building length' } },
+    { id: 'flower1-red-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 11.25 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 1 hot water line - full building length' } },
+    
+    // FLOWER 1 ELBOW FITTINGS
+    { id: 'flower1-blue-elbow', type: 'fixture' as const, position: { x: 37.5, y: 185.8, z: 9.25 }, dimensions: { width: 1/12, height: 1/12, depth: 1/12 }, rotation: 0, material: 'metal', color: '#888888', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_fitting', fitting_type: '90_degree_elbow', diameter: '1/2_inch', description: 'Flower 1 cold water 90° elbow fitting' } },
+    { id: 'flower1-red-elbow', type: 'fixture' as const, position: { x: 37.5, y: 185.8, z: 11.25 }, dimensions: { width: 1/12, height: 1/12, depth: 1/12 }, rotation: 0, material: 'metal', color: '#888888', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_fitting', fitting_type: '90_degree_elbow', diameter: '1/2_inch', description: 'Flower 1 hot water 90° elbow fitting' } },
+    
+    // FLOWER 1 BRANCHES (from elbow to room center)
+    { id: 'flower1-blue-branch', type: 'fixture' as const, position: { x: 57.2, y: 185.8, z: 9.25 }, dimensions: { width: 0.5/12, height: 38.9, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 1 cold branch to room center' } },
+    { id: 'flower1-red-branch', type: 'fixture' as const, position: { x: 57.2, y: 185.8, z: 11.25 }, dimensions: { width: 0.5/12, height: 38.9, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 1 hot branch to room center' } },
+
+    // FLOWER 2 PAIR (stacked higher - z=9.5 blue, z=11.5 red)
+    { id: 'flower2-blue-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 9.5 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 2 cold water line - full building length' } },
+    { id: 'flower2-red-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 11.5 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 2 hot water line - full building length' } },
+    
+    // FLOWER 2 ELBOW FITTINGS
+    { id: 'flower2-blue-elbow', type: 'fixture' as const, position: { x: 37.5, y: 161.2, z: 9.5 }, dimensions: { width: 1/12, height: 1/12, depth: 1/12 }, rotation: 0, material: 'metal', color: '#888888', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_fitting', fitting_type: '90_degree_elbow', diameter: '1/2_inch', description: 'Flower 2 cold water 90° elbow fitting' } },
+    { id: 'flower2-red-elbow', type: 'fixture' as const, position: { x: 37.5, y: 161.2, z: 11.5 }, dimensions: { width: 1/12, height: 1/12, depth: 1/12 }, rotation: 0, material: 'metal', color: '#888888', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_fitting', fitting_type: '90_degree_elbow', diameter: '1/2_inch', description: 'Flower 2 hot water 90° elbow fitting' } },
+    
+    // FLOWER 2 BRANCHES (from elbow to room center)
+    { id: 'flower2-blue-branch', type: 'fixture' as const, position: { x: 57.2, y: 161.2, z: 9.5 }, dimensions: { width: 0.5/12, height: 38.9, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 2 cold branch to room center' } },
+    { id: 'flower2-red-branch', type: 'fixture' as const, position: { x: 57.2, y: 161.2, z: 11.5 }, dimensions: { width: 0.5/12, height: 38.9, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 2 hot branch to room center' } },
+
+    // FLOWER 3 PAIR (stacked higher - z=9.75 blue, z=11.75 red)
+    { id: 'flower3-blue-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 9.75 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 3 cold water line - full building length' } },
+    { id: 'flower3-red-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 11.75 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 3 hot water line - full building length' } },
+    
+    // FLOWER 3 ELBOW FITTINGS
+    { id: 'flower3-blue-elbow', type: 'fixture' as const, position: { x: 37.5, y: 136.6, z: 9.75 }, dimensions: { width: 1/12, height: 1/12, depth: 1/12 }, rotation: 0, material: 'metal', color: '#888888', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_fitting', fitting_type: '90_degree_elbow', diameter: '1/2_inch', description: 'Flower 3 cold water 90° elbow fitting' } },
+    { id: 'flower3-red-elbow', type: 'fixture' as const, position: { x: 37.5, y: 136.6, z: 11.75 }, dimensions: { width: 1/12, height: 1/12, depth: 1/12 }, rotation: 0, material: 'metal', color: '#888888', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_fitting', fitting_type: '90_degree_elbow', diameter: '1/2_inch', description: 'Flower 3 hot water 90° elbow fitting' } },
+    
+    // FLOWER 3 BRANCHES (from elbow to room center)
+    { id: 'flower3-blue-branch', type: 'fixture' as const, position: { x: 57.2, y: 136.6, z: 9.75 }, dimensions: { width: 0.5/12, height: 38.9, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 3 cold branch to room center' } },
+    { id: 'flower3-red-branch', type: 'fixture' as const, position: { x: 57.2, y: 136.6, z: 11.75 }, dimensions: { width: 0.5/12, height: 38.9, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 3 hot branch to room center' } },
+
+    // FLOWER 4 PAIR (stacked higher - z=10.0 blue, z=12.0 red)
+    { id: 'flower4-blue-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 10.0 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 4 cold water line - full building length' } },
+    { id: 'flower4-red-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 12.0 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 4 hot water line - full building length' } },
+    
+    // FLOWER 4 BRANCHES
+    { id: 'flower4-blue-branch', type: 'fixture' as const, position: { x: 50, y: 112, z: 10.0 }, dimensions: { width: 0.5/12, height: 30, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 4 cold branch into room' } },
+    { id: 'flower4-red-branch', type: 'fixture' as const, position: { x: 50, y: 112, z: 12.0 }, dimensions: { width: 0.5/12, height: 30, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 4 hot branch into room' } },
+
+    // FLOWER 5 PAIR (stacked higher - z=10.25 blue, z=12.25 red)
+    { id: 'flower5-blue-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 10.25 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 5 cold water line - full building length' } },
+    { id: 'flower5-red-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 12.25 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 5 hot water line - full building length' } },
+    
+    // FLOWER 5 BRANCHES
+    { id: 'flower5-blue-branch', type: 'fixture' as const, position: { x: 50, y: 87, z: 10.25 }, dimensions: { width: 0.5/12, height: 30, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 5 cold branch into room' } },
+    { id: 'flower5-red-branch', type: 'fixture' as const, position: { x: 50, y: 87, z: 12.25 }, dimensions: { width: 0.5/12, height: 30, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 5 hot branch into room' } },
+
+    // FLOWER 6 PAIR (stacked higher - z=10.5 blue, z=12.5 red)
+    { id: 'flower6-blue-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 10.5 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 6 cold water line - full building length' } },
+    { id: 'flower6-red-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 12.5 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 6 hot water line - full building length' } },
+    
+    // FLOWER 6 BRANCHES
+    { id: 'flower6-blue-branch', type: 'fixture' as const, position: { x: 50, y: 62, z: 10.5 }, dimensions: { width: 0.5/12, height: 30, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 6 cold branch into room' } },
+    { id: 'flower6-red-branch', type: 'fixture' as const, position: { x: 50, y: 62, z: 12.5 }, dimensions: { width: 0.5/12, height: 30, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 6 hot branch into room' } },
+
+    // FLOWER 4 PAIR (continue stacking - z=10.0 blue, z=12.0 red)
+    { id: 'flower4-blue-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 10.0 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 4 cold water line - full building length' } },
+    { id: 'flower4-red-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 12.0 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 4 hot water line - full building length' } },
+    
+    // FLOWER 4 BRANCHES
+    { id: 'flower4-blue-branch', type: 'fixture' as const, position: { x: 50, y: 112, z: 10.0 }, dimensions: { width: 0.5/12, height: 30, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 4 cold branch into room' } },
+    { id: 'flower4-red-branch', type: 'fixture' as const, position: { x: 50, y: 112, z: 12.0 }, dimensions: { width: 0.5/12, height: 30, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 4 hot branch into room' } },
+
+    // FLOWER 5 PAIR (continue stacking - z=10.25 blue, z=12.25 red)
+    { id: 'flower5-blue-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 10.25 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 5 cold water line - full building length' } },
+    { id: 'flower5-red-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 12.25 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 5 hot water line - full building length' } },
+    
+    // FLOWER 5 BRANCHES
+    { id: 'flower5-blue-branch', type: 'fixture' as const, position: { x: 50, y: 87, z: 10.25 }, dimensions: { width: 0.5/12, height: 30, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 5 cold branch into room' } },
+    { id: 'flower5-red-branch', type: 'fixture' as const, position: { x: 50, y: 87, z: 12.25 }, dimensions: { width: 0.5/12, height: 30, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 5 hot branch into room' } },
+
+    // FLOWER 6 PAIR (continue stacking - z=10.5 blue, z=12.5 red)
+    { id: 'flower6-blue-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 10.5 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 6 cold water line - full building length' } },
+    { id: 'flower6-red-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 12.5 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 6 hot water line - full building length' } },
+    
+    // FLOWER 6 BRANCHES
+    { id: 'flower6-blue-branch', type: 'fixture' as const, position: { x: 50, y: 62, z: 10.5 }, dimensions: { width: 0.5/12, height: 30, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 6 cold branch into room' } },
+    { id: 'flower6-red-branch', type: 'fixture' as const, position: { x: 50, y: 62, z: 12.5 }, dimensions: { width: 0.5/12, height: 30, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 6 hot branch into room' } },
+
+    // FLOWER 7 PAIR (stacked highest - z=10.75 blue, z=12.75 red)
+    { id: 'flower7-blue-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 10.75 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 7 cold water line - full building length' } },
+    { id: 'flower7-red-line', type: 'fixture' as const, position: { x: 37.5, y: 25, z: 12.75 }, dimensions: { width: 0.5/12, height: 197, depth: 0.5/12 }, rotation: 0, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 7 hot water line - full building length' } },
+    
+    // FLOWER 7 BRANCHES
+    { id: 'flower7-blue-branch', type: 'fixture' as const, position: { x: 50, y: 36, z: 10.75 }, dimensions: { width: 0.5/12, height: 30, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#0047AB', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'cold_water', diameter: '1/2_inch', pressure_rating: 160, description: 'Flower 7 cold branch into room' } },
+    { id: 'flower7-red-branch', type: 'fixture' as const, position: { x: 50, y: 36, z: 12.75 }, dimensions: { width: 0.5/12, height: 30, depth: 0.5/12 }, rotation: Math.PI/2, material: 'plastic', color: '#DC143C', metadata: { category: 'utility', subcategory: 'plumbing', equipment_type: 'pex_branch', pex_type: 'hot_water', diameter: '1/2_inch', pressure_rating: 80, description: 'Flower 7 hot branch into room' } },
+
+
+    
+    // NEW EAST LONGWAYS WALL - Interior wall against east exterior wall, full building length
+    {
+      id: 'longways-wall-east-interior',
+      type: 'wall' as const,
+      position: { 
+        x: 112.375, // 0.375' (4.5") inside from east exterior wall interior face (112.75 - 0.375 = 112.375)
+        y: 25, // Start at south exterior wall
+        z: 0 
       },
-      */
+      dimensions: { width: 0.375, height: 197, depth: 12 }, // 4.5" thick, full building length: 222-25 = 197', 12' tall
+      rotation: 0,
+      material: 'concrete',
+      color: '#ffffff',
+      metadata: { 
+        category: 'interior', 
+        material_type: 'drywall',
+        load_bearing: false,
+        description: 'East longways interior wall - runs full building length against east exterior wall',
+        framing: {
+          studSize: '2x4',
+          studSpacing: 16, // inches on center
+          studCount: Math.ceil(197 * 12 / 16), // calculated stud count
+          hasFraming: true
+        }
+      }
+    },
 
     // HALLWAY WALLS - North area is now open control area (hallway wall removed)
     
@@ -2935,6 +3074,69 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       }
     },
 
+    // ============================================================================
+    // FLOWER 7 INTERIOR WALL - Against South Wall
+    // ============================================================================
+    
+    // Interior wall against Flower 7 south wall - positioned inside the room
+    {
+      id: 'flower-7-south-interior-wall',
+      type: 'wall' as const,
+              position: { 
+          x: 38.0625, // Start at west longway wall position (no gap)
+          y: 25.6875, // Interior side of south exterior wall (25 + 0.5 for exterior wall thickness + 0.1875 for interior wall center)
+          z: 0 
+        },
+      dimensions: { width: 74.3125, height: 0.375, depth: 17 }, // Full width: 112.375 - 38.0625 = 74.3125', 4.5" thick, 17' tall
+      rotation: 0,
+      material: 'concrete',
+      color: '#ffffff',
+      metadata: { 
+        category: 'interior-walls', 
+        material_type: 'drywall',
+        load_bearing: false,
+        room: 'flower-7',
+        description: 'Flower 7 interior wall against south wall - 74.3\' wide, 17\' tall, positioned on interior side of south exterior wall, connects to west longway wall',
+        framing: {
+          studSize: '2x4',
+          studSpacing: 16,
+          studCount: Math.ceil(74.3125 * 12 / 16),
+          hasFraming: true
+        }
+      }
+    },
+
+    // ============================================================================
+    // VEG/DRY INTERIOR WALL - Against North Wall
+    // ============================================================================
+    
+    // Interior wall against veg/dry area north wall - positioned inside the room
+    {
+      id: 'veg-dry-north-interior-wall',
+      type: 'wall' as const,
+      position: { 
+        x: 38.0625, // Start at west longway wall position (no gap)
+        y: 221.3125, // Interior side of north exterior wall (222 - 0.5 for exterior wall thickness - 0.1875 for interior wall center)
+        z: 0 
+      },
+      dimensions: { width: 74.3125, height: 0.375, depth: 17 }, // Full width: 112.375 - 38.0625 = 74.3125', 4.5" thick, 17' tall
+      rotation: 0,
+      material: 'concrete',
+      color: '#ffffff',
+      metadata: { 
+        category: 'interior-walls', 
+        material_type: 'drywall',
+        load_bearing: false,
+        room: 'veg-dry',
+        description: 'Veg/Dry interior wall against north wall - 74.3\' wide, 17\' tall, positioned on interior side of north exterior wall, connects to west longway wall',
+        framing: {
+          studSize: '2x4',
+          studSpacing: 16,
+          studCount: Math.ceil(74.3125 * 12 / 16),
+          hasFraming: true
+        }
+      }
+    }
 
   ],
   scale: 1,

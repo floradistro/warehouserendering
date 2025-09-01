@@ -7,13 +7,11 @@ import { CameraCapture } from './CameraController'
 import { Background3DGrid, GroundPlane, RoomFloor } from './RenderingUtils'
 import EnhancedLighting from '@/components/EnhancedLighting'
 
+// Import the actual warehouse model as fallback
+import { MAIN_WAREHOUSE_MODEL } from '@/lib/warehouse-models'
+
 // Sample floorplan fallback (should be moved to a constants file)
-const sampleFloorplan = {
-  id: 'sample',
-  name: 'Sample Warehouse',
-  dimensions: { width: 200, height: 200 },
-  elements: []
-}
+const sampleFloorplan = MAIN_WAREHOUSE_MODEL
 
 interface SceneProps {
   onCameraReady: (camera: THREE.Camera) => void
@@ -79,6 +77,9 @@ export function Scene({
 
   // Use sample data if no floorplan exists (fallback)
   const floorplan = currentFloorplan || sampleFloorplan
+  
+  console.log('🏗️ Current floorplan:', currentFloorplan ? 'LOADED' : 'USING FALLBACK')
+  console.log('🏗️ Floorplan elements:', floorplan.elements.length)
   
   // Combine real elements with preview element
   const allElements = React.useMemo(() => {

@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { SemanticMetadata, ConnectionPoint, PlacementRule } from './SemanticModel'
+import { PEX_LINE_MODELS } from '../pex-line-models'
 
 // Predefined semantic models for warehouse objects
 export class ModelLibrary {
@@ -493,6 +494,16 @@ export class ModelLibrary {
       },
       visual: { color: '#4a4a4a', material: 'metal' },
       lifecycle: { cost: 2500, lifespan: 15, maintenanceInterval: 6 }
+    })
+
+    // Register PEX plumbing line models
+    this.registerPexModels()
+  }
+
+  private static registerPexModels() {
+    // Add all PEX line models to the library
+    Object.values(PEX_LINE_MODELS).forEach(model => {
+      this.models.set(model.id, model)
     })
   }
 

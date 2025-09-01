@@ -12,6 +12,7 @@ export interface StudFraming {
   plates: THREE.Mesh[]
   headers: THREE.Mesh[]
   kingStuds: THREE.Mesh[]
+  insulation?: THREE.Mesh[]
 }
 
 export interface FramingConfig {
@@ -21,6 +22,16 @@ export interface FramingConfig {
   headerDepth: number // Header beam depth for openings
   showFraming: boolean // Toggle framing visibility
   minLOD: number // Minimum camera distance to show framing
+}
+
+// Configuration for spray foam insulation
+export interface InsulationConfig {
+  showInsulation: boolean // Toggle insulation visibility
+  foamType: 'closed-cell' | 'open-cell' // Type of spray foam
+  thickness: number // Insulation thickness in feet (e.g., 3.5" = 0.292')
+  color: string // Foam color (pink for fiberglass appearance)
+  density: number // Foam density affects appearance
+  minLOD: number // Minimum camera distance to show insulation
 }
 
 // Types for the drywall finishing system
@@ -62,13 +73,24 @@ export const STANDARD_DRYWALL_CONFIG: DrywallConfig = {
   minLOD: 1000 // Show drywall at all distances when enabled (debug)
 }
 
+// Standard spray foam insulation configuration
+export const STANDARD_INSULATION_CONFIG: InsulationConfig = {
+  showInsulation: false, // Toggled manually with I key
+  foamType: 'closed-cell', // Closed-cell spray foam (more dense)
+  thickness: 0.292, // 3.5" thick (fills 2x4 stud cavity)
+  color: '#FF69B4', // Hot pink color for realistic spray foam appearance
+  density: 2.0, // Closed-cell foam density (affects texture)
+  minLOD: 150 // Show insulation when camera is close
+}
+
 /**
  * Creates 2x4 stud framing for a wall element
  */
 export function createWallFraming(
   wallElement: FloorplanElement, 
   config: FramingConfig = STANDARD_FRAMING_CONFIG,
-  isSelected: boolean = false
+  isSelected: boolean = false,
+  insulationConfig?: InsulationConfig
 ): StudFraming {
   
   // Detect wall orientation based on dimensions
@@ -92,7 +114,8 @@ export function createWallFraming(
     studs: [],
     plates: [],
     headers: [],
-    kingStuds: []
+    kingStuds: [],
+    insulation: []
   }
   
   // Create material for framing based on wall material and selection state
@@ -228,9 +251,243 @@ export function createWallFraming(
     }
   })
   
-  console.log(`✅ Created framing: ${studGroup.studs.length} studs, ${studGroup.kingStuds.length} king studs, ${studGroup.headers.length} headers`)
+  // 5. CREATE SPRAY FOAM INSULATION BETWEEN STUDS
+  if (insulationConfig && insulationConfig.showInsulation) {
+    const insulation = createSprayFoamInsulation(
+      wallElement, 
+      studPositions, 
+      wallLength, 
+      wallThickness, 
+      wallHeight, 
+      isNorthSouthWall, 
+      config, 
+      insulationConfig,
+      wallOpenings,
+      isSelected
+    )
+    studGroup.insulation = insulation
+    console.log(`🧴 Created ${insulation.length} spray foam insulation pieces`)
+  }
+  
+  console.log(`✅ Created framing: ${studGroup.studs.length} studs, ${studGroup.kingStuds.length} king studs, ${studGroup.headers.length} headers, ${studGroup.insulation?.length || 0} insulation pieces`)
   
   return studGroup
+}
+
+/**
+ * Creates realistic spray foam insulation between wall studs
+ */
+function createSprayFoamInsulation(
+  wallElement: FloorplanElement,
+  studPositions: Array<{ x: number; isKingStud: boolean }>,
+  wallLength: number,
+  wallThickness: number,
+  wallHeight: number,
+  isNorthSouthWall: boolean,
+  framingConfig: FramingConfig,
+  insulationConfig: InsulationConfig,
+  wallOpenings: WallOpening[],
+  isSelected: boolean = false
+): THREE.Mesh[] {
+  
+  const insulationPieces: THREE.Mesh[] = []
+  
+  // Create spray foam material with realistic pink color and texture
+  const foamMaterial = createSprayFoamMaterial(insulationConfig, isSelected)
+  
+  // Calculate insulation dimensions
+  const studHeight = wallHeight - framingConfig.plateHeight.top - framingConfig.plateHeight.bottom
+  const studWidth = framingConfig.studSize.height // 3.5" wide face of stud
+  const studThickness = framingConfig.studSize.width // 1.5" thickness
+  
+  // Create insulation between each pair of adjacent studs
+  for (let i = 0; i < studPositions.length - 1; i++) {
+    const currentStud = studPositions[i]
+    const nextStud = studPositions[i + 1]
+    
+    // Calculate cavity dimensions between studs
+    const cavityStart = currentStud.x + studThickness / 2
+    const cavityEnd = nextStud.x - studThickness / 2
+    const cavityWidth = cavityEnd - cavityStart
+    
+    // Skip if cavity is too small (less than 2")
+    if (cavityWidth < 0.17) continue
+    
+    const cavityCenter = (cavityStart + cavityEnd) / 2
+    
+    // Check if this cavity intersects with any wall openings
+    let skipInsulation = false
+    for (const opening of wallOpenings) {
+      const openingLeft = opening.position.x - opening.dimensions.width / 2
+      const openingRight = opening.position.x + opening.dimensions.width / 2
+      const openingBottom = opening.position.z
+      const openingTop = opening.position.z + opening.dimensions.height
+      
+      // Convert cavity position to wall-relative coordinates
+      const cavityCenterWallPos = cavityCenter
+      
+      // Check if cavity intersects with opening horizontally and vertically
+      if (cavityCenterWallPos >= openingLeft && cavityCenterWallPos <= openingRight) {
+        // This cavity intersects with an opening - create insulation above and below
+        const insulationAboveHeight = wallHeight - openingTop - framingConfig.plateHeight.top
+        const insulationBelowHeight = openingBottom - framingConfig.plateHeight.bottom
+        
+        // Create insulation above opening if there's space
+        if (insulationAboveHeight > 0.25) { // At least 3" high
+          const insulationAbove = createFoamPiece(
+            cavityWidth,
+            insulationAboveHeight,
+            insulationConfig.thickness,
+            foamMaterial,
+            isNorthSouthWall
+          )
+          
+          // Position above opening
+          if (isNorthSouthWall) {
+            insulationAbove.position.set(
+              0,
+              wallHeight/2 - framingConfig.plateHeight.top - insulationAboveHeight/2,
+              cavityCenter - wallLength / 2
+            )
+          } else {
+            insulationAbove.position.set(
+              cavityCenter - wallLength / 2,
+              wallHeight/2 - framingConfig.plateHeight.top - insulationAboveHeight/2,
+              0
+            )
+          }
+          
+          insulationAbove.userData = { 
+            type: 'spray-foam-insulation', 
+            position: 'above-opening',
+            cavityIndex: i 
+          }
+          insulationPieces.push(insulationAbove)
+        }
+        
+        // Create insulation below opening if there's space
+        if (insulationBelowHeight > 0.25) { // At least 3" high
+          const insulationBelow = createFoamPiece(
+            cavityWidth,
+            insulationBelowHeight,
+            insulationConfig.thickness,
+            foamMaterial,
+            isNorthSouthWall
+          )
+          
+          // Position below opening
+          if (isNorthSouthWall) {
+            insulationBelow.position.set(
+              0,
+              -wallHeight/2 + framingConfig.plateHeight.bottom + insulationBelowHeight/2,
+              cavityCenter - wallLength / 2
+            )
+          } else {
+            insulationBelow.position.set(
+              cavityCenter - wallLength / 2,
+              -wallHeight/2 + framingConfig.plateHeight.bottom + insulationBelowHeight/2,
+              0
+            )
+          }
+          
+          insulationBelow.userData = { 
+            type: 'spray-foam-insulation', 
+            position: 'below-opening',
+            cavityIndex: i 
+          }
+          insulationPieces.push(insulationBelow)
+        }
+        
+        skipInsulation = true
+        break
+      }
+    }
+    
+    // Create full-height insulation if no opening interference
+    if (!skipInsulation) {
+      const fullInsulation = createFoamPiece(
+        cavityWidth,
+        studHeight,
+        insulationConfig.thickness,
+        foamMaterial,
+        isNorthSouthWall
+      )
+      
+      // Position in cavity center
+      if (isNorthSouthWall) {
+        fullInsulation.position.set(
+          0,
+          0, // Centered vertically between plates
+          cavityCenter - wallLength / 2
+        )
+      } else {
+        fullInsulation.position.set(
+          cavityCenter - wallLength / 2,
+          0, // Centered vertically between plates
+          0
+        )
+      }
+      
+      fullInsulation.userData = { 
+        type: 'spray-foam-insulation', 
+        position: 'full-cavity',
+        cavityIndex: i 
+      }
+      insulationPieces.push(fullInsulation)
+    }
+  }
+  
+  return insulationPieces
+}
+
+/**
+ * Creates spray foam material with realistic pink color and texture
+ */
+function createSprayFoamMaterial(
+  insulationConfig: InsulationConfig, 
+  isSelected: boolean = false
+): THREE.MeshLambertMaterial {
+  
+  // Use bright yellow when selected, otherwise use configured foam color
+  const baseColor = isSelected ? '#FFFF00' : insulationConfig.color
+  
+  // Create material with high opacity for complete coverage appearance
+  const material = new THREE.MeshLambertMaterial({
+    color: baseColor,
+    transparent: false, // Solid foam that completely fills the space
+    opacity: 1.0, // Full opacity - spray foam should be opaque
+  })
+  
+  return material
+}
+
+/**
+ * Creates a single piece of spray foam insulation geometry
+ */
+function createFoamPiece(
+  width: number,
+  height: number,
+  depth: number,
+  material: THREE.Material,
+  isNorthSouthWall: boolean
+): THREE.Mesh {
+  
+  // Fill the entire cavity space - spray foam should completely fill between studs
+  // Only leave minimal gaps to show the stud edges (1/8" = 0.01')
+  const foamWidth = width - 0.02 // Leave 1/8" gap on each side to show stud edges
+  const foamHeight = height - 0.02 // Leave 1/8" gap top/bottom to show plates
+  const foamDepth = depth * 0.95 // 95% of stud depth to not touch wall surfaces
+  
+  const geometry = isNorthSouthWall
+    ? new THREE.BoxGeometry(foamDepth, foamHeight, foamWidth)
+    : new THREE.BoxGeometry(foamWidth, foamHeight, foamDepth)
+  
+  // Create mesh without random displacement - spray foam should fill uniformly
+  const mesh = new THREE.Mesh(geometry, material)
+  mesh.castShadow = true
+  mesh.receiveShadow = true
+  
+  return mesh
 }
 
 /**
@@ -365,7 +622,8 @@ export function createFramedWallGroup(
   wallElement: FloorplanElement,
   config: FramingConfig = STANDARD_FRAMING_CONFIG,
   isSelected: boolean = false,
-  drywallConfig?: DrywallConfig
+  drywallConfig?: DrywallConfig,
+  insulationConfig?: InsulationConfig
 ): THREE.Group {
   
   const wallGroup = new THREE.Group()
@@ -394,13 +652,18 @@ export function createFramedWallGroup(
   
   // Add framing if enabled
   if (config.showFraming) {
-    const framing = createWallFraming(wallElement, config, isSelected)
+    const framing = createWallFraming(wallElement, config, isSelected, insulationConfig)
     
     // Add all framing components to group
     framing.studs.forEach(stud => wallGroup.add(stud))
     framing.plates.forEach(plate => wallGroup.add(plate))
     framing.headers.forEach(header => wallGroup.add(header))
     framing.kingStuds.forEach(kingStud => wallGroup.add(kingStud))
+    
+    // Add insulation if enabled
+    if (framing.insulation) {
+      framing.insulation.forEach(foam => wallGroup.add(foam))
+    }
   }
   
   // Add drywall if enabled
@@ -674,6 +937,15 @@ export function shouldShowDrywall(cameraPosition: THREE.Vector3, wallPosition: T
 }
 
 /**
+ * Check if camera is close enough to show insulation detail
+ */
+export function shouldShowInsulation(cameraPosition: THREE.Vector3, wallPosition: THREE.Vector3, config: InsulationConfig): boolean {
+  if (!config.showInsulation) return false
+  const distance = cameraPosition.distanceTo(wallPosition)
+  return distance <= config.minLOD
+}
+
+/**
  * Creates individual brick skeleton framing for brick walls
  */
 function createBrickSkeletonFraming(
@@ -858,6 +1130,25 @@ export function updateDrywallLOD(
   framingGroup.children.forEach(child => {
     if (child.userData?.type && 
         ['drywall-sheet', 'drywall-sheet-outline'].includes(child.userData.type)) {
+      child.visible = shouldShow
+    }
+  })
+}
+
+/**
+ * Update insulation visibility based on camera distance for performance
+ */
+export function updateInsulationLOD(
+  framingGroup: THREE.Group,
+  cameraPosition: THREE.Vector3, 
+  wallPosition: THREE.Vector3,
+  config: InsulationConfig
+): void {
+  
+  const shouldShow = shouldShowInsulation(cameraPosition, wallPosition, config)
+  
+  framingGroup.children.forEach(child => {
+    if (child.userData?.type === 'spray-foam-insulation') {
       child.visible = shouldShow
     }
   })

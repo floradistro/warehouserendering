@@ -1,0 +1,278 @@
+'use client'
+
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import * as THREE from 'three'
+import { useThree } from '@react-three/fiber'
+import { PlumbingSystem, PlumbingSystemConfig, PipePoint, PlumbingSystemManager } from './PlumbingSystem'
+import { PlumbingSnapPointGenerator, PlumbingSnapPoint } from './PlumbingSnapPoints'
+
+/**
+ * PIPE ROUTING TOOL - CLEAN VERSION
+ * 
+ * Simplified version that focuses on core functionality without complex dependencies
+ */
+
+export interface PipeRoutingState {
+  isActive: boolean
+  currentPath: PipePoint[]
+  currentSystemId: string | null
+  selectedMaterial: PlumbingSystemConfig['material']
+  selectedDiameter: PlumbingSystemConfig['diameter']
+  selectedSystemType: PlumbingSystemConfig['systemType']
+  mode: 'create' | 'edit' | 'delete' | 'view'
+  editingSystemId: string | null
+  editingPointIndex: number | null
+}
+
+interface PipeRoutingToolProps {
+  plumbingManager: PlumbingSystemManager
+  onSystemCreated?: (system: PlumbingSystem) => void
+  onSystemUpdated?: (system: PlumbingSystem) => void
+  onSystemDeleted?: (systemId: string) => void
+  enabled?: boolean
+  floorplan?: any
+  onActiveSnapPointChange?: (snapPoint: PlumbingSnapPoint | null) => void
+  showAlignmentGuides?: boolean
+}
+
+export const PipeRoutingTool = React.forwardRef<any, PipeRoutingToolProps>(({
+  plumbingManager,
+  onSystemCreated,
+  onSystemUpdated,
+  onSystemDeleted,
+  enabled = true,
+  floorplan,
+  onActiveSnapPointChange,
+  showAlignmentGuides = true
+}, ref) => {
+  const { scene, camera, raycaster, pointer } = useThree()
+  
+  const [routingState, setRoutingState] = useState<PipeRoutingState>({
+    isActive: false,
+    currentPath: [],
+    currentSystemId: null,
+    selectedMaterial: 'pex',
+    selectedDiameter: 0.5,
+    selectedSystemType: 'cold_water',
+    mode: 'view',
+    editingSystemId: null,
+    editingPointIndex: null
+  })
+
+  const previewLineRef = useRef<THREE.Group | null>(null)
+  const snapPointGeneratorRef = useRef<PlumbingSnapPointGenerator | null>(null)
+
+  // Initialize preview objects
+  useEffect(() => {
+    if (!enabled) return
+
+    // Create preview line group
+    previewLineRef.current = new THREE.Group()
+    previewLineRef.current.name = 'PipePreviewGroup'
+    scene.add(previewLineRef.current)
+
+    // Initialize snap point generator
+    if (floorplan && !snapPointGeneratorRef.current) {
+      snapPointGeneratorRef.current = new PlumbingSnapPointGenerator(floorplan)
+      console.log('🔧 Generated plumbing snap points:', snapPointGeneratorRef.current.getSnapPoints().length)
+    }
+
+    return () => {
+      if (previewLineRef.current) {
+        previewLineRef.current.children.forEach(child => {
+          if (child instanceof THREE.Mesh) {
+            child.geometry.dispose()
+            if (Array.isArray(child.material)) {
+              child.material.forEach(mat => mat.dispose())
+            } else {
+              child.material.dispose()
+            }
+          }
+        })
+        scene.remove(previewLineRef.current)
+      }
+    }
+  }, [scene, enabled, floorplan])
+
+  // Simple click handler
+  const handleClick = useCallback((event: MouseEvent) => {
+    if (!enabled || !routingState.isActive || routingState.mode !== 'create') return
+
+    console.log('✅ Processing click for pipe routing')
+
+    // Raycasting
+    raycaster.setFromCamera(pointer, camera)
+    const intersects = raycaster.intersectObjects(scene.children, true)
+    
+    if (intersects.length > 0) {
+      const intersection = intersects[0]
+      
+      // Apply grid snapping
+      const snappedPoint = new THREE.Vector3(
+        Math.round(intersection.point.x * 4) / 4,
+        Math.round(intersection.point.y * 4) / 4,
+        Math.round(intersection.point.z * 4) / 4
+      )
+
+      const point: PipePoint = {
+        x: snappedPoint.x,
+        y: snappedPoint.y,
+        z: snappedPoint.z
+      }
+
+      console.log(`✅ Adding pipe point at (${point.x.toFixed(1)}, ${point.y.toFixed(1)}, ${point.z.toFixed(1)})`)
+
+      // Add point to current path
+      setRoutingState(prev => ({
+        ...prev,
+        currentPath: [...prev.currentPath, point]
+      }))
+
+      // Update preview
+      updatePreviewLine([...routingState.currentPath, point])
+    }
+  }, [enabled, routingState, raycaster, pointer, camera, scene])
+
+  // Update preview line
+  const updatePreviewLine = useCallback((path: PipePoint[]) => {
+    if (!previewLineRef.current) return
+    
+    // Clear existing preview
+    previewLineRef.current.clear()
+    
+    if (path.length > 1) {
+      const points = path.map(p => new THREE.Vector3(p.x, p.y, p.z))
+      const geometry = new THREE.BufferGeometry().setFromPoints(points)
+      const material = new THREE.LineBasicMaterial({ 
+        color: 0x00ff00, 
+        opacity: 0.6, 
+        transparent: true 
+      })
+      const line = new THREE.Line(geometry, material)
+      previewLineRef.current.add(line)
+    }
+  }, [])
+
+  // Event listeners setup
+  useEffect(() => {
+    if (!enabled) return
+
+    const canvas = document.querySelector('canvas')
+    if (!canvas) return
+
+    canvas.addEventListener('click', handleClick)
+
+    return () => {
+      canvas.removeEventListener('click', handleClick)
+    }
+  }, [enabled, handleClick])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!enabled || !routingState.isActive) return
+
+      switch (event.key) {
+        case 'Enter':
+          // Finish current pipe run
+          if (routingState.currentPath.length >= 2) {
+            const config: PlumbingSystemConfig = {
+              id: `pipe_${Date.now()}`,
+              name: `${routingState.selectedMaterial.toUpperCase()} ${routingState.selectedSystemType.replace('_', ' ')}`,
+              systemType: routingState.selectedSystemType,
+              material: routingState.selectedMaterial,
+              diameter: routingState.selectedDiameter,
+              path: routingState.currentPath,
+              pressure: routingState.selectedSystemType === 'hot_water' ? 80 : 160,
+              insulated: routingState.selectedSystemType === 'hot_water'
+            }
+
+            try {
+              const system = plumbingManager.createSystem(config)
+              onSystemCreated?.(system)
+              console.log('✅ Created pipe system:', config.name)
+              
+              // Reset for next pipe
+              setRoutingState(prev => ({
+                ...prev,
+                currentPath: []
+              }))
+              updatePreviewLine([])
+            } catch (error) {
+              console.error('❌ Failed to create pipe system:', error)
+            }
+          }
+          break
+
+        case 'Escape':
+          // Cancel current pipe run
+          setRoutingState(prev => ({
+            ...prev,
+            currentPath: []
+          }))
+          updatePreviewLine([])
+          console.log('❌ Cancelled pipe routing')
+          break
+
+        case 'Backspace':
+          // Remove last point
+          setRoutingState(prev => {
+            const newPath = prev.currentPath.slice(0, -1)
+            updatePreviewLine(newPath)
+            return {
+              ...prev,
+              currentPath: newPath
+            }
+          })
+          console.log('⬅️ Removed last pipe point')
+          break
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [enabled, routingState, plumbingManager, onSystemCreated, updatePreviewLine])
+
+  // Expose methods via ref
+  React.useImperativeHandle(ref, () => ({
+    startRouting: (mode: 'create' | 'edit' | 'delete') => {
+      console.log('🚰 Starting pipe routing in mode:', mode)
+      setRoutingState(prev => ({
+        ...prev,
+        isActive: true,
+        mode
+      }))
+    },
+    stopRouting: () => {
+      console.log('🚰 Stopping pipe routing')
+      setRoutingState(prev => ({
+        ...prev,
+        isActive: false,
+        currentPath: []
+      }))
+      updatePreviewLine([])
+    },
+    setMaterial: (material: PlumbingSystemConfig['material']) => {
+      setRoutingState(prev => ({
+        ...prev,
+        selectedMaterial: material
+      }))
+    },
+    setDiameter: (diameter: PlumbingSystemConfig['diameter']) => {
+      setRoutingState(prev => ({
+        ...prev,
+        selectedDiameter: diameter
+      }))
+    },
+    setSystemType: (systemType: PlumbingSystemConfig['systemType']) => {
+      setRoutingState(prev => ({
+        ...prev,
+        selectedSystemType: systemType
+      }))
+    }
+  }))
+
+  return null
+})
+
+export default PipeRoutingTool

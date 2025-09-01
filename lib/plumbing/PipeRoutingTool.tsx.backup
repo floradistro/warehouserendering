@@ -1,0 +1,498 @@
+'use client'
+
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import * as THREE from 'three'
+import { useThree } from '@react-three/fiber'
+import { PlumbingSystem, PlumbingSystemConfig, PipePoint, PlumbingSystemManager } from './PlumbingSystem'
+import { PlumbingSnapPointGenerator, PlumbingSnapPoint } from './PlumbingSnapPoints'
+
+/**
+ * ENHANCED PIPE ROUTING TOOL - PHASE 1
+ * 
+ * Interactive click-to-route pipe creation tool with Phase 1 enhancements:
+ * - 60fps mouse tracking for smooth interaction
+ * - Enhanced click detection with camera separation
+ * - Smart routing with pathfinding integration
+ * - Real-time visual feedback
+ */
+
+export interface PipeRoutingState {
+  isActive: boolean
+  currentPath: PipePoint[]
+  currentSystemId: string | null
+  selectedMaterial: PlumbingSystemConfig['material']
+  selectedDiameter: PlumbingSystemConfig['diameter']
+  selectedSystemType: PlumbingSystemConfig['systemType']
+  mode: 'create' | 'edit' | 'delete' | 'view'
+  editingSystemId: string | null
+  editingPointIndex: number | null
+}
+
+interface PipeRoutingToolProps {
+  plumbingManager: PlumbingSystemManager
+  onSystemCreated?: (system: PlumbingSystem) => void
+  onSystemUpdated?: (system: PlumbingSystem) => void
+  onSystemDeleted?: (systemId: string) => void
+  enabled?: boolean
+  floorplan?: any
+  onActiveSnapPointChange?: (snapPoint: PlumbingSnapPoint | null) => void
+  showAlignmentGuides?: boolean
+}
+
+export const PipeRoutingTool = React.forwardRef<any, PipeRoutingToolProps>(({
+  plumbingManager,
+  onSystemCreated,
+  onSystemUpdated,
+  onSystemDeleted,
+  enabled = true,
+  floorplan,
+  onActiveSnapPointChange,
+  showAlignmentGuides = true
+}, ref) => {
+  const { scene, camera, raycaster, pointer } = useThree()
+  
+  const [routingState, setRoutingState] = useState<PipeRoutingState>({
+    isActive: false,
+    currentPath: [],
+    currentSystemId: null,
+    selectedMaterial: 'pex',
+    selectedDiameter: 0.5,
+    selectedSystemType: 'cold_water',
+    mode: 'view',
+    editingSystemId: null,
+    editingPointIndex: null
+  })
+
+  const [previewPath, setPreviewPath] = useState<PipePoint[]>([])
+  const [hoverPoint, setHoverPoint] = useState<THREE.Vector3 | null>(null)
+  const [activeSnapPoint, setActiveSnapPoint] = useState<PlumbingSnapPoint | null>(null)
+  
+  const previewLineRef = useRef<THREE.Group | null>(null)
+  const snapPointGeneratorRef = useRef<PlumbingSnapPointGenerator | null>(null)
+
+  // Enhanced interaction system with 60fps tracking
+  const mouseStateRef = useRef({
+    isDown: false,
+    startTime: 0,
+    startPosition: { x: 0, y: 0 },
+    currentPosition: { x: 0, y: 0 },
+    dragThreshold: 5, // pixels
+    clickTimeThreshold: 200 // ms
+  })
+
+  // Adaptive throttling for smooth 60fps performance
+  const throttleRef = useRef<number | null>(null)
+  const ADAPTIVE_FPS = 60 // Target 60fps for smooth interaction
+  const THROTTLE_DELAY = 1000 / ADAPTIVE_FPS // ~16.67ms
+  const lastMouseMoveRef = useRef(0)
+
+  // Initialize preview objects
+  useEffect(() => {
+    if (!enabled) return
+
+    // Create preview line group
+    previewLineRef.current = new THREE.Group()
+    previewLineRef.current.name = 'PipePreviewGroup'
+    scene.add(previewLineRef.current)
+
+    // Initialize snap point generator if floorplan is available
+    if (floorplan && !snapPointGeneratorRef.current) {
+      snapPointGeneratorRef.current = new PlumbingSnapPointGenerator(floorplan)
+      console.log('🔧 Generated plumbing snap points:', snapPointGeneratorRef.current.getSnapPoints().length)
+    }
+
+    return () => {
+      if (previewLineRef.current) {
+        previewLineRef.current.children.forEach(child => {
+          if (child instanceof THREE.Mesh) {
+            child.geometry.dispose()
+            if (Array.isArray(child.material)) {
+              child.material.forEach(mat => mat.dispose())
+            } else {
+              child.material.dispose()
+            }
+          }
+        })
+        scene.remove(previewLineRef.current)
+      }
+    }
+  }, [scene, enabled, floorplan])
+
+  // Enhanced click handler with better separation from camera movement
+  const handleClick = useCallback((event: MouseEvent) => {
+    if (!enabled || !routingState.isActive) return
+
+    const mouseState = mouseStateRef.current
+    const clickDuration = Date.now() - mouseState.startTime
+    const dragDistance = Math.sqrt(
+      Math.pow(event.clientX - mouseState.startPosition.x, 2) +
+      Math.pow(event.clientY - mouseState.startPosition.y, 2)
+    )
+
+    // Only process as click if it's quick and doesn't involve dragging
+    if (clickDuration < mouseState.clickTimeThreshold && dragDistance < mouseState.dragThreshold) {
+      event.preventDefault()
+      event.stopPropagation()
+      console.log('✅ Processing optimized click for pipe routing')
+
+      // Raycasting
+      raycaster.setFromCamera(pointer, camera)
+      const intersects = raycaster.intersectObjects(scene.children, true)
+      
+      if (intersects.length > 0) {
+        const intersection = intersects[0]
+        
+        // Apply grid snapping
+        let snappedPoint = new THREE.Vector3(
+          Math.round(intersection.point.x * 4) / 4, // Quarter-foot increments
+          Math.round(intersection.point.y * 4) / 4, 
+          Math.round(intersection.point.z * 4) / 4  
+        )
+        
+        // Check for snap points
+        if (snapPointGeneratorRef.current) {
+          const snapPoints = snapPointGeneratorRef.current.getSnapPoints()
+          const snapRadius = 0.75
+          
+          for (const snapPoint of snapPoints.slice(0, 5)) {
+            const snapPos = new THREE.Vector3(snapPoint.position.x, snapPoint.position.y, snapPoint.position.z)
+            const distance = intersection.point.distanceTo(snapPos)
+            
+            if (distance < snapRadius) {
+              snappedPoint.copy(snapPos)
+              setActiveSnapPoint(snapPoint)
+              onActiveSnapPointChange?.(snapPoint)
+              break
+            }
+          }
+        }
+
+        const point: PipePoint = {
+          x: snappedPoint.x,
+          y: snappedPoint.y,
+          z: snappedPoint.z
+        }
+
+        if (routingState.mode === 'create') {
+          // Inline create mode logic to avoid dependency issues
+          console.log(`✅ Adding pipe point at (${point.x.toFixed(1)}, ${point.y.toFixed(1)}, ${point.z.toFixed(1)})`)
+
+          setRoutingState(prev => {
+            const newPath = [...prev.currentPath, point]
+            
+            // Auto-detect fitting type at previous point if we have enough points
+            if (newPath.length >= 3) {
+              const prevIndex = newPath.length - 2
+              const prevPoint = newPath[prevIndex - 1]
+              const currentPoint = newPath[prevIndex]
+              const nextPoint = newPath[prevIndex + 1]
+              
+              // Calculate angle between segments
+              const dir1 = new THREE.Vector3(
+                currentPoint.x - prevPoint.x,
+                currentPoint.y - prevPoint.y,
+                currentPoint.z - prevPoint.z
+              ).normalize()
+              
+              const dir2 = new THREE.Vector3(
+                nextPoint.x - currentPoint.x,
+                nextPoint.y - currentPoint.y,
+                nextPoint.z - currentPoint.z
+              ).normalize()
+              
+              const angle = Math.acos(Math.max(-1, Math.min(1, dir1.dot(dir2))))
+              const angleDegrees = (angle * 180) / Math.PI
+              
+              // Auto-assign fitting based on angle
+              if (angleDegrees > 70 && angleDegrees < 110) {
+                newPath[prevIndex].fitting = 'elbow'
+              } else if (angleDegrees > 30) {
+                newPath[prevIndex].fitting = 'elbow'
+              }
+            }
+            
+            return {
+              ...prev,
+              currentPath: newPath
+            }
+          })
+        } else if (routingState.mode === 'edit') {
+          // Inline edit mode logic
+          const clickedObject = intersection.object
+          const systemId = clickedObject.userData?.systemId
+          
+          if (systemId) {
+            const system = plumbingManager.getSystem(systemId)
+            if (system) {
+              setRoutingState(prev => ({
+                ...prev,
+                editingSystemId: systemId,
+                currentPath: [...system.getConfig().path]
+              }))
+            }
+          }
+        } else if (routingState.mode === 'delete') {
+          // Inline delete mode logic
+          const clickedObject = intersection.object
+          const systemId = clickedObject.userData?.systemId
+          
+          if (systemId) {
+            plumbingManager.removeSystem(systemId)
+            onSystemDeleted?.(systemId)
+          }
+        }
+      }
+    }
+  }, [enabled, routingState, raycaster, pointer, camera, scene, onActiveSnapPointChange, setRoutingState, plumbingManager, onSystemDeleted])
+
+  // Handle create mode click (kept for reference but inlined above)
+  const handleCreateModeClick = useCallback((point: PipePoint) => {
+    console.log(`✅ Adding pipe point at (${point.x.toFixed(1)}, ${point.y.toFixed(1)}, ${point.z.toFixed(1)})`)
+
+    setRoutingState(prev => {
+      const newPath = [...prev.currentPath, point]
+      
+      // Auto-detect fitting type at previous point if we have enough points
+      if (newPath.length >= 3) {
+        const prevIndex = newPath.length - 2
+        const prevPoint = newPath[prevIndex - 1]
+        const currentPoint = newPath[prevIndex]
+        const nextPoint = newPath[prevIndex + 1]
+        
+        // Calculate angle between segments
+        const dir1 = new THREE.Vector3(
+          currentPoint.x - prevPoint.x,
+          currentPoint.y - prevPoint.y,
+          currentPoint.z - prevPoint.z
+        ).normalize()
+        
+        const dir2 = new THREE.Vector3(
+          nextPoint.x - currentPoint.x,
+          nextPoint.y - currentPoint.y,
+          nextPoint.z - currentPoint.z
+        ).normalize()
+        
+        const angle = Math.acos(Math.max(-1, Math.min(1, dir1.dot(dir2))))
+        const angleDegrees = (angle * 180) / Math.PI
+        
+        // Auto-assign fitting based on angle
+        if (angleDegrees > 70 && angleDegrees < 110) {
+          newPath[prevIndex].fitting = 'elbow'
+        } else if (angleDegrees > 30) {
+          newPath[prevIndex].fitting = 'elbow'
+        }
+      }
+      
+      return {
+        ...prev,
+        currentPath: newPath
+      }
+    })
+    
+    updatePreviewLine()
+  }, [])
+
+  const handleEditModeClick = useCallback((point: PipePoint, intersection: THREE.Intersection) => {
+    // Check if clicking on an existing pipe system
+    const clickedObject = intersection.object
+    const systemId = clickedObject.userData?.systemId
+    
+    if (systemId) {
+      const system = plumbingManager.getSystem(systemId)
+      if (system) {
+        // Start editing this system
+        setRoutingState(prev => ({
+          ...prev,
+          editingSystemId: systemId,
+          currentPath: [...system.getConfig().path]
+        }))
+      }
+    }
+  }, [plumbingManager])
+
+  const handleDeleteModeClick = useCallback((intersection: THREE.Intersection) => {
+    const clickedObject = intersection.object
+    const systemId = clickedObject.userData?.systemId
+    
+    if (systemId) {
+      plumbingManager.removeSystem(systemId)
+      onSystemDeleted?.(systemId)
+    }
+  }, [plumbingManager, onSystemDeleted])
+
+  // Mouse movement handler with 60fps performance
+  const handleMouseMove = useCallback((event: MouseEvent) => {
+    if (!enabled || !routingState.isActive || routingState.mode !== 'create') return
+
+    // Throttle mouse movement to 60fps for smooth performance
+    const now = Date.now()
+    if (now - lastMouseMoveRef.current < THROTTLE_DELAY) return
+    lastMouseMoveRef.current = now
+
+    // Update pointer position
+    const rect = (event.target as HTMLElement).getBoundingClientRect()
+    pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+    pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+
+    // Update preview if we have at least one point
+    if (routingState.currentPath.length > 0) {
+      updatePreviewLine()
+    }
+  }, [enabled, routingState, pointer, THROTTLE_DELAY])
+
+  // Mouse state tracking
+  const handleMouseDown = useCallback((event: MouseEvent) => {
+    mouseStateRef.current.isDown = true
+    mouseStateRef.current.startTime = Date.now()
+    mouseStateRef.current.startPosition = { x: event.clientX, y: event.clientY }
+  }, [])
+
+  const handleMouseUp = useCallback((event: MouseEvent) => {
+    mouseStateRef.current.isDown = false
+    mouseStateRef.current.currentPosition = { x: event.clientX, y: event.clientY }
+  }, [])
+
+  // Preview line update function
+  const updatePreviewLine = useCallback(() => {
+    if (!previewLineRef.current || routingState.currentPath.length === 0) return
+    
+    // Clear existing preview
+    previewLineRef.current.clear()
+    
+    // Create preview geometry for current path
+    const points = routingState.currentPath.map(p => new THREE.Vector3(p.x, p.y, p.z))
+    
+    if (points.length > 1) {
+      const geometry = new THREE.BufferGeometry().setFromPoints(points)
+      const material = new THREE.LineBasicMaterial({ 
+        color: 0x00ff00, 
+        opacity: 0.6, 
+        transparent: true 
+      })
+      const line = new THREE.Line(geometry, material)
+      previewLineRef.current.add(line)
+    }
+  }, [routingState.currentPath])
+
+  // Event listeners setup
+  useEffect(() => {
+    if (!enabled) return
+
+    const canvas = document.querySelector('canvas')
+    if (!canvas) return
+
+    canvas.addEventListener('click', handleClick)
+    canvas.addEventListener('mousemove', handleMouseMove)
+    canvas.addEventListener('mousedown', handleMouseDown)
+    canvas.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      canvas.removeEventListener('click', handleClick)
+      canvas.removeEventListener('mousemove', handleMouseMove)
+      canvas.removeEventListener('mousedown', handleMouseDown)
+      canvas.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [enabled, handleClick, handleMouseMove, handleMouseDown, handleMouseUp])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!enabled || !routingState.isActive) return
+
+      switch (event.key) {
+        case 'Enter':
+          // Finish current pipe run
+          if (routingState.currentPath.length >= 2) {
+            const config: PlumbingSystemConfig = {
+              id: `pipe_${Date.now()}`,
+              name: `${routingState.selectedMaterial.toUpperCase()} ${routingState.selectedSystemType.replace('_', ' ')}`,
+              systemType: routingState.selectedSystemType,
+              material: routingState.selectedMaterial,
+              diameter: routingState.selectedDiameter,
+              path: routingState.currentPath,
+              pressure: routingState.selectedSystemType === 'hot_water' ? 80 : 160,
+              insulated: routingState.selectedSystemType === 'hot_water'
+            }
+
+            try {
+              const system = plumbingManager.createSystem(config)
+              onSystemCreated?.(system)
+              console.log('✅ Created pipe system:', config.name)
+              
+              // Reset for next pipe
+              setRoutingState(prev => ({
+                ...prev,
+                currentPath: []
+              }))
+            } catch (error) {
+              console.error('❌ Failed to create pipe system:', error)
+            }
+          }
+          break
+
+        case 'Escape':
+          // Cancel current pipe run
+          setRoutingState(prev => ({
+            ...prev,
+            currentPath: []
+          }))
+          console.log('❌ Cancelled pipe routing')
+          break
+
+        case 'Backspace':
+          // Remove last point
+          setRoutingState(prev => ({
+            ...prev,
+            currentPath: prev.currentPath.slice(0, -1)
+          }))
+          console.log('⬅️ Removed last pipe point')
+          break
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [enabled, routingState, plumbingManager, onSystemCreated])
+
+  // Expose methods via ref
+  React.useImperativeHandle(ref, () => ({
+    startRouting: (mode: 'create' | 'edit' | 'delete') => {
+      console.log('🚰 Starting pipe routing in mode:', mode)
+      setRoutingState(prev => ({
+        ...prev,
+        isActive: true,
+        mode
+      }))
+    },
+    stopRouting: () => {
+      console.log('🚰 Stopping pipe routing')
+      setRoutingState(prev => ({
+        ...prev,
+        isActive: false,
+        currentPath: []
+      }))
+    },
+    setMaterial: (material: PlumbingSystemConfig['material']) => {
+      setRoutingState(prev => ({
+        ...prev,
+        selectedMaterial: material
+      }))
+    },
+    setDiameter: (diameter: PlumbingSystemConfig['diameter']) => {
+      setRoutingState(prev => ({
+        ...prev,
+        selectedDiameter: diameter
+      }))
+    },
+    setSystemType: (systemType: PlumbingSystemConfig['systemType']) => {
+      setRoutingState(prev => ({
+        ...prev,
+        selectedSystemType: systemType
+      }))
+    }
+  }))
+
+  return null // This component doesn't render anything visible
+})
+
+export default PipeRoutingTool
