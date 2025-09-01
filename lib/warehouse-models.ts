@@ -393,38 +393,38 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
       }
     },
 
-    // Dry Room East Divider Wall - Extended north to create Dry 2 room in former control area (moved 6' east)
-    {
-      id: 'dry-room-east-divider-wall',
-      type: 'wall' as const,
-      position: { 
-        x: 100.75, // Moved 6' east from 94.75 to 100.75 to make Dry 2 exactly 12' wide (112.75 - 12 = 100.75)
-        y: 198.0417, // Start at Room 2 north wall, extend north
-        z: 0 
-      },
-      dimensions: { width: 0.375, height: 23.9583, depth: 17 }, // 4.5" thick, spans to north wall (222 - 198.0417 = 23.9583'), 17' tall interior wall
-      rotation: 0,
-      material: 'concrete',
-      color: '#ffffff',
-      metadata: { 
-        category: 'room-walls', 
-        material_type: 'drywall',
-        load_bearing: false,
-        room_west: 'dry-1',
-        room_east: 'dry-2',
-        curved_top: true,
-        follows_roof_profile: true,
-        center_height: 16.8906,
-        exterior_height: 16.8438,
-        description: 'Dry room east divider wall - separates Dry 1 and Dry 2 in former control area (moved 6\' east, Dry 2 now 12\' wide)',
-        framing: {
-          studSize: '2x4',
-          studSpacing: 16, // inches on center
-          studCount: Math.ceil(23.9583 * 12 / 16), // calculated stud count
-          hasFraming: true
-        }
-      }
-    },
+    // REMOVED: Dry Room East Divider Wall - Wall removed to create one large dry room
+    // {
+    //   id: 'dry-room-east-divider-wall',
+    //   type: 'wall' as const,
+    //   position: { 
+    //     x: 100.75, // Moved 6' east from 94.75 to 100.75 to make Dry 2 exactly 12' wide (112.75 - 12 = 100.75)
+    //     y: 198.0417, // Start at Room 2 north wall, extend north
+    //     z: 0 
+    //   },
+    //   dimensions: { width: 0.375, height: 23.9583, depth: 17 }, // 4.5" thick, spans to north wall (222 - 198.0417 = 23.9583'), 17' tall interior wall
+    //   rotation: 0,
+    //   material: 'concrete',
+    //   color: '#ffffff',
+    //   metadata: { 
+    //     category: 'room-walls', 
+    //     material_type: 'drywall',
+    //     load_bearing: false,
+    //     room_west: 'dry-1',
+    //     room_east: 'dry-2',
+    //     curved_top: true,
+    //     follows_roof_profile: true,
+    //     center_height: 16.8906,
+    //     exterior_height: 16.8438,
+    //     description: 'REMOVED - Dry room east divider wall - wall removed to create one large dry room',
+    //     framing: {
+    //       studSize: '2x4',
+    //       studSpacing: 16, // inches on center
+    //       studCount: Math.ceil(23.9583 * 12 / 16), // calculated stud count
+    //       hasFraming: true
+    //     }
+    //   }
+    // },
 
     // Dry Room West Divider Wall - Extended north to create Dry 1 room in former control area (moved 6' east)
     {
@@ -444,12 +444,12 @@ export const MAIN_WAREHOUSE_MODEL: FloorplanData = {
         material_type: 'drywall',
         load_bearing: false,
         room_west: 'veg',
-        room_east: 'dry-1',
+        room_east: 'dry-room', // Now references the merged large dry room
         curved_top: true,
         follows_roof_profile: true,
         center_height: 16.8906,
         exterior_height: 16.8438,
-        description: 'Dry room west divider wall - separates Veg room from Dry 1 in former control area (moved 6\' east)',
+        description: 'Dry room west divider wall - separates Veg room from large Dry room (former Dry 1 + Dry 2 merged)',
         framing: {
           studSize: '2x4',
           studSpacing: 16, // inches on center
