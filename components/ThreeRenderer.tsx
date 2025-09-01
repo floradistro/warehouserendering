@@ -4297,8 +4297,8 @@ export default function ThreeRenderer() {
       console.log('🚀 Initializing Advanced Warehouse Engine...')
       try {
         // Get the scene from the canvas context - this is a simplified approach
-        const scene = new THREE.Scene() // In a real implementation, you'd get the actual scene
-        const integration = initializeWarehouseCAD(scene, camera)
+        const localScene = new THREE.Scene() // In a real implementation, you'd get the actual scene
+        const integration = initializeWarehouseCAD(localScene, camera)
         console.log('✅ Advanced Warehouse Engine initialized successfully!')
         console.log('🤖 AI commands now available via window.warehouseCAD')
         console.log('🎮 Demo commands available via window.warehouseDemo')
@@ -4911,18 +4911,12 @@ export default function ThreeRenderer() {
         shadows
         className="w-full h-full bg-gray-700"
         style={{ width: '100%', height: '100%', display: 'block' }}
-        onCreated={({ scene: canvasScene, gl, camera }) => {
-          // Expose scene to window for debugging
-          if (typeof window !== 'undefined') {
-            (window as any).__threeScene = canvasScene
-            (window as any).__threeCamera = camera
-            (window as any).__threeRenderer = gl
-          }
+        onCreated={(state) => {
           console.log('🎬 Three.js scene initialized')
           
           // Store canvas reference for screenshots
-          if (gl.domElement) {
-            canvasRef.current = gl.domElement
+          if (state.gl.domElement) {
+            canvasRef.current = state.gl.domElement
           }
         }}
         gl={{ 
