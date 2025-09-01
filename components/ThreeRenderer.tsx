@@ -2818,18 +2818,14 @@ function RoomLabels({ floorplan }: { floorplan: FloorplanData }) {
     const flower1CenterX = (38.0625 + 112.75) / 2 // Center between west longway wall and east exterior wall
     roomPositions.push({ roomNumber: 'Flower 1', centerY: flower1CenterY, centerX: flower1CenterX })
     
-    // Add Veg label in the NEW northern area (west of Dry 1)
+    // Add Veg label in the NEW northern area (west of Dry Room)
     const northAreaCenterY = (198.0417 + 222) / 2 // Center between Room 2 north wall and north exterior wall
-    const vegCenterX = (38.0625 + 88.75) / 2 // Center between west longway wall and Dry 1 west wall
+    const vegCenterX = (38.0625 + 88.75) / 2 // Center between west longway wall and Dry Room west wall
     roomPositions.push({ roomNumber: 'Veg', centerY: northAreaCenterY, centerX: vegCenterX })
     
-    // Add Dry 1 label in the NEW northern area (former control room, moved 6' east)
-    const dry1CenterX = (88.75 + 100.75) / 2 // Center between the two divider walls (moved 6' east)
-    roomPositions.push({ roomNumber: 'Dry 1', centerY: northAreaCenterY, centerX: dry1CenterX })
-    
-    // Add Dry 2 label in the NEW northern area (former control room, now exactly 12' wide)
-    const dry2CenterX = (100.75 + 112.75) / 2 // Center between east divider wall and east exterior wall (12' wide)
-    roomPositions.push({ roomNumber: 'Dry 2', centerY: northAreaCenterY, centerX: dry2CenterX })
+    // Add Dry Room label in the NEW northern area (merged Dry 1 + Dry 2 into one large room)
+    const dryRoomCenterX = (88.75 + 112.75) / 2 // Center of merged dry room (from west divider to east exterior wall)
+    roomPositions.push({ roomNumber: 'Dry Room', centerY: northAreaCenterY, centerX: dryRoomCenterX })
     
     // Add Processing label in the north extension room
     const processingCenterY = (222 + 242) / 2 // Center between main building north wall and extension end (222 + 20/2 = 232)
@@ -3404,26 +3400,18 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, camer
         material="white-epoxy"
       />
 
-      {/* Veg Room: y = 198.0417 to y = 222, x = 38.0625 to x = 88.75 - NEW vegetative room west of Dry 1 */}
+      {/* Veg Room: y = 198.0417 to y = 222, x = 38.0625 to x = 88.75 - NEW vegetative room west of Dry Room */}
       <RoomFloor
         position={[63.40625, -0.05, 210.02085]} // Center: x=(38.0625+88.75)/2=63.40625, y=(198.0417+222)/2=210.02085
-        width={50.6875} // Width from west longway wall to Dry 1 west wall (88.75 - 38.0625 = 50.6875)
+        width={50.6875} // Width from west longway wall to Dry Room west wall (88.75 - 38.0625 = 50.6875)
         height={23.9583} // Height: 222 - 198.0417 = 23.9583
         material="white-epoxy"
       />
 
-      {/* Dry 1 Room: y = 198.0417 to y = 222, x = 88.75 to x = 100.75 - MOVED 6' east, now 12' wide */}
+      {/* Dry Room: y = 198.0417 to y = 222, x = 88.75 to x = 112.75 - MERGED large dry room (24' wide) */}
       <RoomFloor
-        position={[94.75, -0.05, 210.02085]} // Center: x=(88.75+100.75)/2=94.75, y=(198.0417+222)/2=210.02085
-        width={12} // Width between divider walls (100.75 - 88.75 = 12)
-        height={23.9583} // Height: 222 - 198.0417 = 23.9583
-        material="white-epoxy"
-      />
-
-      {/* Dry 2 Room: y = 198.0417 to y = 222, x = 100.75 to x = 112.75 - NOW exactly 12' wide */}
-      <RoomFloor
-        position={[106.75, -0.05, 210.02085]} // Center: x=(100.75+112.75)/2=106.75, y=(198.0417+222)/2=210.02085
-        width={12} // Width from divider wall to exterior wall (112.75 - 100.75 = 12)
+        position={[100.75, -0.05, 210.02085]} // Center: x=(88.75+112.75)/2=100.75, y=(198.0417+222)/2=210.02085
+        width={24} // Width from west divider wall to east exterior wall (112.75 - 88.75 = 24)
         height={23.9583} // Height: 222 - 198.0417 = 23.9583
         material="white-epoxy"
       />
