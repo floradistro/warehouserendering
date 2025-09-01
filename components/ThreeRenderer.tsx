@@ -4911,10 +4911,10 @@ export default function ThreeRenderer() {
         shadows
         className="w-full h-full bg-gray-700"
         style={{ width: '100%', height: '100%', display: 'block' }}
-        onCreated={({ scene, gl, camera }) => {
+        onCreated={({ scene: canvasScene, gl, camera }) => {
           // Expose scene to window for debugging
           if (typeof window !== 'undefined') {
-            (window as any).__threeScene = scene
+            (window as any).__threeScene = canvasScene
             (window as any).__threeCamera = camera
             (window as any).__threeRenderer = gl
           }
