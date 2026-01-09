@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
@@ -10,12 +10,31 @@ interface CameraControllerProps {
   [key: string]: any
 }
 
-// WASD-enabled Orbit Controls
+// Detect mobile device
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+      const isSmallScreen = window.innerWidth < 768
+      setIsMobile(isTouchDevice || isSmallScreen)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  return isMobile
+}
+
+// WASD-enabled Orbit Controls with mobile touch optimization
 export function CameraController({ target, ...props }: CameraControllerProps) {
   const orbitRef = useRef<any>()
   const { camera } = useThree()
   const keysPressed = useRef<Set<string>>(new Set())
   const panSpeed = 2.0
+  const isMobile = useIsMobile()
   
   // Animation state for smooth target transitions
   const isAnimating = useRef(false)
@@ -128,17 +147,31 @@ export function CameraController({ target, ...props }: CameraControllerProps) {
       enableZoom={true}
       enableRotate={true}
       maxPolarAngle={Math.PI / 2.2}
-      minDistance={10}
-      maxDistance={400}
+      minDistance={isMobile ? 20 : 10} // Farther minimum on mobile for better overview
+      maxDistance={isMobile ? 500 : 400} // Allow zooming out more on mobile
       target={target}
       makeDefault
-      // Zoom settings for smoother, more precise control
-      zoomSpeed={0.5} // Reduced from default 1.0 for less sensitivity
-      zoomToCursor={true} // Zoom towards cursor/touch point
-      screenSpacePanning={false} // Keep panning in world space
-      // Smooth zoom dampening
+      // Zoom settings - more sensitive on mobile for pinch gesture
+      zoomSpeed={isMobile ? 1.0 : 0.5}
+      zoomToCursor={true}
+      screenSpacePanning={false}
+      // Smoother damping on mobile to prevent jitter
       enableDamping={true}
-      dampingFactor={0.05}
+      dampingFactor={isMobile ? 0.1 : 0.05}
+      // Mobile touch settings
+      rotateSpeed={isMobile ? 0.5 : 1.0} // Slower rotation on touch for precision
+      panSpeed={isMobile ? 0.8 : 1.0} // Slightly slower pan on mobile
+      // Touch configuration - enable two-finger controls
+      touches={{
+        ONE: THREE.TOUCH.ROTATE,
+        TWO: THREE.TOUCH.DOLLY_PAN
+      }}
+      // Mouse buttons (desktop)
+      mouseButtons={{
+        LEFT: THREE.MOUSE.ROTATE,
+        MIDDLE: THREE.MOUSE.DOLLY,
+        RIGHT: THREE.MOUSE.PAN
+      }}
       {...props}
     />
   )

@@ -6,6 +6,7 @@ import { OrbitControls, Html } from '@react-three/drei'
 import { Suspense, useMemo, useRef, useEffect, useCallback, memo, useState } from 'react'
 import * as THREE from 'three'
 import { FloorplanData, FloorplanElement, useAppStore } from '@/lib/store'
+import { useMobile, useLowPowerMode } from '@/lib/useMobile'
 import { useMeasurementStore } from '@/lib/measurement/MeasurementStore'
 import { IntelligentWallSystem } from '@/lib/intelligent-wall-system'
 import { MAIN_WAREHOUSE_MODEL } from '@/lib/warehouse-models'
@@ -4150,7 +4151,11 @@ export default function ThreeRenderer() {
     updateLayerGroups,
     selectElementGroup
   } = useAppStore()
-  
+
+  // Mobile detection for performance optimizations
+  const isMobile = useMobile()
+  const isLowPower = useLowPowerMode()
+
   // Get measurement tool state
   const { activeTool } = useMeasurementStore()
   const measurementToolActive = !!activeTool
@@ -4901,36 +4906,82 @@ export default function ThreeRenderer() {
     }
   }, [isPlacing, activeSnapPoint, finalizePlacement])
 
+  // Mobile-optimized rendering settings
+  const mobileConfig = {
+    // Lower pixel ratio on mobile to prevent GPU overload (max 1.5 vs 2)
+    dpr: isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2),
+    // Disable antialiasing on mobile for performance
+    antialias: !isMobile,
+    // Use continuous rendering on mobile to prevent touch freezing
+    frameloop: isMobile ? 'always' as const : 'demand' as const,
+    // Lower performance threshold on mobile
+    performanceMin: isMobile ? 0.3 : 0.5,
+    // Disable shadows on low-power devices
+    shadows: !isLowPower,
+  }
+
   return (
-    <div className="w-full h-full bg-gray-700 relative">
+    <div className={`w-full h-full bg-gray-700 relative ${isMobile ? 'touch-none' : ''}`}>
       <Canvas
         camera={{
           position: [150, 100, 200], // View rotated building from Southeast corner
-          fov: 60,
+          fov: isMobile ? 70 : 60, // Wider FOV on mobile for better overview
         }}
-        shadows
+        shadows={mobileConfig.shadows}
         className="w-full h-full bg-gray-700"
-        style={{ width: '100%', height: '100%', display: 'block' }}
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'block',
+          touchAction: 'none', // Prevent browser touch handling
+        }}
         onCreated={(state) => {
-          console.log('🎬 Three.js scene initialized')
-          
+          console.log('🎬 Three.js scene initialized', isMobile ? '(mobile mode)' : '(desktop mode)')
+
           // Store canvas reference for screenshots
           if (state.gl.domElement) {
             canvasRef.current = state.gl.domElement
+            // Prevent default touch behaviors on canvas
+            if (isMobile) {
+              state.gl.domElement.style.touchAction = 'none'
+            }
+          }
+
+          // Mobile-specific optimizations
+          if (isMobile || isLowPower) {
+            // Reduce shadow map resolution
+            state.gl.shadowMap.enabled = mobileConfig.shadows
+            if (state.gl.shadowMap.enabled) {
+              state.gl.shadowMap.type = THREE.BasicShadowMap
+            }
+            // Reduce pixel ratio further if needed
+            state.gl.setPixelRatio(mobileConfig.dpr)
           }
         }}
-        gl={{ 
-          antialias: true,
+        gl={{
+          antialias: mobileConfig.antialias,
           alpha: false,
-          powerPreference: 'high-performance',
-          preserveDrawingBuffer: false
+          powerPreference: isMobile ? 'low-power' : 'high-performance',
+          preserveDrawingBuffer: false,
+          // Reduce precision on mobile
+          precision: isMobile ? 'mediump' : 'highp',
+          // Enable stencil buffer only on desktop
+          stencil: !isMobile,
+          // Reduce depth buffer precision on mobile
+          depth: true,
         }}
-        dpr={Math.min(window.devicePixelRatio, 2)}
-        frameloop="demand"
-        performance={{ min: 0.5 }}
+        dpr={mobileConfig.dpr}
+        frameloop={mobileConfig.frameloop}
+        performance={{ min: mobileConfig.performanceMin }}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-
+        // Touch event handling for mobile
+        onTouchStart={(e) => {
+          // Prevent default to stop scrolling/zooming interference
+          if (isMobile) {
+            e.stopPropagation()
+          }
+        }}
         onPointerMissed={(event) => {
           // Measurement now handled by direct object clicks - no ground clicking needed
         }}

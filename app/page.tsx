@@ -12,6 +12,7 @@ import MeasurementStatusBar from '@/components/MeasurementStatusBar'
 // Removed broken debug import
 import { SelectionInfoSystem } from '@/components/SelectionInfoSystem'
 import { useAppStore } from '@/lib/store'
+import { useMobile } from '@/lib/useMobile'
 
 // Import selection utilities to make them globally available
 import '@/lib/selection-utils'
@@ -28,8 +29,9 @@ const ThreeRenderer = dynamic(() => import('@/components/ThreeRenderer'), {
 export default function Home() {
   const [showLayersDropdown, setShowLayersDropdown] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  
-  const { 
+  const isMobile = useMobile()
+
+  const {
     // Legacy measurement variables removed
 
     selectedElements,
@@ -38,7 +40,7 @@ export default function Home() {
     toggleMeasurements,
     firstPersonMode,
     toggleFirstPersonMode,
-    
+
     // Layer visibility
     hiddenLayers,
     layerGroups,
@@ -69,10 +71,34 @@ export default function Home() {
     }
   }, [])
   
+  // Mobile: Full-screen edge-to-edge 3D view only
+  if (isMobile) {
+    return (
+      <div className="fixed inset-0 w-screen h-screen bg-gray-700 mobile-fullscreen">
+        <ClientOnly
+          fallback={
+            <div className="w-full h-full flex items-center justify-center bg-gray-700">
+              <div className="text-white text-xl">Initializing 3D...</div>
+            </div>
+          }
+        >
+          <Suspense fallback={
+            <div className="w-full h-full flex items-center justify-center bg-gray-700">
+              <div className="text-white">Loading 3D scene...</div>
+            </div>
+          }>
+            <ThreeRenderer />
+          </Suspense>
+        </ClientOnly>
+      </div>
+    )
+  }
+
+  // Desktop: Full UI with toolbars
   return (
     <div className="h-full w-full flex flex-col bg-gray-700">
       {/* VSCode-style thin header */}
-      <header className="flex-shrink-0 bg-[#2d2d2d] border-b border-[#3e3e3e] h-8 px-3">
+      <header className="flex-shrink-0 bg-[#2d2d2d] border-b border-[#3e3e3e] h-8 px-3 hide-on-mobile">
         <div className="flex items-center justify-between h-full">
           {/* Left: App name */}
           <div className="flex items-center">
