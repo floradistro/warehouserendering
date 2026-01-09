@@ -1,24 +1,34 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+
+// Get initial mobile state synchronously to prevent flash
+function getInitialMobileState(breakpoint: number): boolean {
+  if (typeof window === 'undefined') return false
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+  const isSmallScreen = window.innerWidth < breakpoint
+  return isTouchDevice || isSmallScreen
+}
 
 export function useMobile(breakpoint: number = 768): boolean {
-  const [isMobile, setIsMobile] = useState(false)
+  // Initialize with correct value immediately to prevent re-render flash
+  const [isMobile, setIsMobile] = useState(() => getInitialMobileState(breakpoint))
+  const initialized = useRef(false)
 
   useEffect(() => {
-    // Check if we're on the client
-    if (typeof window === 'undefined') return
+    // Skip first effect run since we already have the correct initial value
+    if (!initialized.current) {
+      initialized.current = true
+      return
+    }
 
-    // Initial check
+    // Only listen for resize/orientation changes after initial render
     const checkMobile = () => {
       const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
       const isSmallScreen = window.innerWidth < breakpoint
       setIsMobile(isTouchDevice || isSmallScreen)
     }
 
-    checkMobile()
-
-    // Listen for resize events
     window.addEventListener('resize', checkMobile)
     window.addEventListener('orientationchange', checkMobile)
 
@@ -39,25 +49,19 @@ export function isMobileDevice(): boolean {
   return isTouchDevice || isSmallScreen
 }
 
+// Get initial low power state synchronously
+function getInitialLowPowerState(): boolean {
+  if (typeof window === 'undefined') return false
+  const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+  const hasLowMemory = (navigator as any).deviceMemory && (navigator as any).deviceMemory < 4
+  const hasLowCores = navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4
+  const isSmallScreen = window.innerWidth < 768
+  return isMobile && (hasLowMemory || hasLowCores || isSmallScreen)
+}
+
 // Hook to detect if running on low-power mobile device
 export function useLowPowerMode(): boolean {
-  const [isLowPower, setIsLowPower] = useState(false)
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    // Check for low-end device indicators
-    const checkLowPower = () => {
-      const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-      const hasLowMemory = (navigator as any).deviceMemory && (navigator as any).deviceMemory < 4
-      const hasLowCores = navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4
-      const isSmallScreen = window.innerWidth < 768
-
-      setIsLowPower(isMobile && (hasLowMemory || hasLowCores || isSmallScreen))
-    }
-
-    checkLowPower()
-  }, [])
-
+  // Initialize with correct value immediately
+  const [isLowPower] = useState(() => getInitialLowPowerState())
   return isLowPower
 }

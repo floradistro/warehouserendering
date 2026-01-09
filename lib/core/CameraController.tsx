@@ -10,21 +10,17 @@ interface CameraControllerProps {
   [key: string]: any
 }
 
-// Detect mobile device
+// Get initial mobile state synchronously to prevent re-render flash
+function getInitialMobileState(): boolean {
+  if (typeof window === 'undefined') return false
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+  const isSmallScreen = window.innerWidth < 768
+  return isTouchDevice || isSmallScreen
+}
+
+// Detect mobile device - initialized immediately to prevent re-renders
 function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false)
-
-  useEffect(() => {
-    const checkMobile = () => {
-      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-      const isSmallScreen = window.innerWidth < 768
-      setIsMobile(isTouchDevice || isSmallScreen)
-    }
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
-
+  const [isMobile] = useState(() => getInitialMobileState())
   return isMobile
 }
 

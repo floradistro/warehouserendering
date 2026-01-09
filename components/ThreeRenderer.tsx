@@ -4906,19 +4906,22 @@ export default function ThreeRenderer() {
     }
   }, [isPlacing, activeSnapPoint, finalizePlacement])
 
-  // Mobile-optimized rendering settings
-  const mobileConfig = {
-    // Lower pixel ratio on mobile to prevent GPU overload (max 1.5 vs 2)
-    dpr: isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2),
-    // Disable antialiasing on mobile for performance
-    antialias: !isMobile,
-    // Use continuous rendering on mobile to prevent touch freezing
-    frameloop: isMobile ? 'always' as const : 'demand' as const,
-    // Lower performance threshold on mobile
-    performanceMin: isMobile ? 0.3 : 0.5,
-    // Disable shadows on low-power devices
-    shadows: !isLowPower,
-  }
+  // Mobile-optimized rendering settings - memoized to prevent re-renders
+  const mobileConfig = React.useMemo(() => {
+    const pixelRatio = typeof window !== 'undefined' ? window.devicePixelRatio : 1
+    return {
+      // Lower pixel ratio on mobile to prevent GPU overload (max 1.5 vs 2)
+      dpr: isMobile ? Math.min(pixelRatio, 1.5) : Math.min(pixelRatio, 2),
+      // Disable antialiasing on mobile for performance
+      antialias: !isMobile,
+      // Use continuous rendering on mobile to prevent touch freezing
+      frameloop: isMobile ? 'always' as const : 'demand' as const,
+      // Lower performance threshold on mobile
+      performanceMin: isMobile ? 0.3 : 0.5,
+      // Disable shadows on low-power devices
+      shadows: !isLowPower,
+    }
+  }, [isMobile, isLowPower])
 
   return (
     <div className={`w-full h-full bg-gray-700 relative ${isMobile ? 'touch-none' : ''}`}>
