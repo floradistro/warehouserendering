@@ -13,6 +13,7 @@ import MeasurementStatusBar from '@/components/MeasurementStatusBar'
 import { SelectionInfoSystem } from '@/components/SelectionInfoSystem'
 import { useAppStore } from '@/lib/store'
 import { useMobile } from '@/lib/useMobile'
+import MobileLayerControls from '@/components/MobileLayerControls'
 
 // Import selection utilities to make them globally available
 import '@/lib/selection-utils'
@@ -71,7 +72,7 @@ export default function Home() {
     }
   }, [])
   
-  // Mobile: Full-screen edge-to-edge 3D view only
+  // Mobile: Full-screen edge-to-edge 3D view with layer controls
   if (isMobile) {
     return (
       <div className="fixed inset-0 w-screen h-screen bg-gray-700 mobile-fullscreen">
@@ -89,6 +90,11 @@ export default function Home() {
           }>
             <ThreeRenderer />
           </Suspense>
+        </ClientOnly>
+
+        {/* Mobile Layer Controls - Floating Button + Modal */}
+        <ClientOnly fallback={null}>
+          <MobileLayerControls />
         </ClientOnly>
       </div>
     )
