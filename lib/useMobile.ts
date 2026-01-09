@@ -1,36 +1,46 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+
+// Cached mobile state - computed once on first client render, never changes
+let cachedIsMobile: boolean | null = null
+
+function computeIsMobile(breakpoint: number): boolean {
+  if (typeof window === 'undefined') return false
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+  const isSmallScreen = window.innerWidth < breakpoint
+  return isTouchDevice || isSmallScreen
+}
 
 export function useMobile(breakpoint: number = 768): boolean {
-  // Start with false for SSR, then update on client
+  // Use ref to track if we've initialized
+  const initialized = useRef(false)
   const [isMobile, setIsMobile] = useState(false)
-  const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
-    // Mark that we're on the client
-    setIsClient(true)
-
-    // Check mobile state
-    const checkMobile = () => {
-      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-      const isSmallScreen = window.innerWidth < breakpoint
-      setIsMobile(isTouchDevice || isSmallScreen)
+    // Only compute once per app lifetime
+    if (cachedIsMobile === null) {
+      cachedIsMobile = computeIsMobile(breakpoint)
     }
 
-    // Initial check
-    checkMobile()
-
-    // Listen for changes
-    window.addEventListener('resize', checkMobile)
-    window.addEventListener('orientationchange', checkMobile)
-
-    return () => {
-      window.removeEventListener('resize', checkMobile)
-      window.removeEventListener('orientationchange', checkMobile)
+    // Only update state once
+    if (!initialized.current) {
+      initialized.current = true
+      setIsMobile(cachedIsMobile)
     }
   }, [breakpoint])
 
+  return isMobile
+}
+
+// Stable hook that never changes after first render - use for Canvas props
+export function useStableMobile(breakpoint: number = 768): boolean {
+  const [isMobile] = useState(() => {
+    if (typeof window === 'undefined') return false
+    if (cachedIsMobile !== null) return cachedIsMobile
+    cachedIsMobile = computeIsMobile(breakpoint)
+    return cachedIsMobile
+  })
   return isMobile
 }
 

@@ -6,7 +6,7 @@ import { OrbitControls, Html } from '@react-three/drei'
 import { Suspense, useMemo, useRef, useEffect, useCallback, memo, useState } from 'react'
 import * as THREE from 'three'
 import { FloorplanData, FloorplanElement, useAppStore } from '@/lib/store'
-import { useMobile, useLowPowerMode } from '@/lib/useMobile'
+import { useStableMobile, useLowPowerMode } from '@/lib/useMobile'
 import { useMeasurementStore } from '@/lib/measurement/MeasurementStore'
 import { IntelligentWallSystem } from '@/lib/intelligent-wall-system'
 import { MAIN_WAREHOUSE_MODEL } from '@/lib/warehouse-models'
@@ -4152,8 +4152,8 @@ export default function ThreeRenderer() {
     selectElementGroup
   } = useAppStore()
 
-  // Mobile detection for performance optimizations
-  const isMobile = useMobile()
+  // Mobile detection for performance optimizations - stable to prevent Canvas re-render
+  const isMobile = useStableMobile()
   const isLowPower = useLowPowerMode()
 
   // Get measurement tool state
