@@ -4088,6 +4088,8 @@ export default function ThreeRenderer() {
   // Mobile devices crash with heavy WebGL scenes - must reduce quality
   const isMobile = useStableMobile()
 
+  console.log('🎬 ThreeRenderer render - isMobile:', isMobile)
+
   const {
     isPlacing,
     placementTemplate,

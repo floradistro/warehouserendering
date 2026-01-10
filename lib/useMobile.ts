@@ -2,8 +2,17 @@
 
 import { useState, useEffect, useRef } from 'react'
 
-// Cached mobile state - computed once on first client render, never changes
+// IMMEDIATELY compute mobile state when this module loads on client
+// This ensures consistent value before any React rendering
 let cachedIsMobile: boolean | null = null
+
+// Compute immediately on module load (client-side only)
+if (typeof window !== 'undefined') {
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+  const isSmallScreen = window.innerWidth < 768
+  cachedIsMobile = isTouchDevice || isSmallScreen
+  console.log(`📱 Mobile detection: ${cachedIsMobile} (touch: ${isTouchDevice}, small: ${isSmallScreen}, width: ${window.innerWidth})`)
+}
 
 function computeIsMobile(breakpoint: number): boolean {
   if (typeof window === 'undefined') return false
@@ -13,17 +22,15 @@ function computeIsMobile(breakpoint: number): boolean {
 }
 
 export function useMobile(breakpoint: number = 768): boolean {
-  // Use ref to track if we've initialized
   const initialized = useRef(false)
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState(cachedIsMobile ?? false)
 
   useEffect(() => {
-    // Only compute once per app lifetime
     if (cachedIsMobile === null) {
       cachedIsMobile = computeIsMobile(breakpoint)
+      console.log(`📱 useMobile computed: ${cachedIsMobile}`)
     }
 
-    // Only update state once
     if (!initialized.current) {
       initialized.current = true
       setIsMobile(cachedIsMobile)
@@ -33,12 +40,18 @@ export function useMobile(breakpoint: number = 768): boolean {
   return isMobile
 }
 
-// Stable hook that never changes after first render - use for Canvas props
+// Stable hook - returns cached value immediately, no state changes
 export function useStableMobile(breakpoint: number = 768): boolean {
+  // If cache exists, use it directly
+  if (cachedIsMobile !== null) {
+    return cachedIsMobile
+  }
+
+  // Compute on first call (should only happen on client)
   const [isMobile] = useState(() => {
     if (typeof window === 'undefined') return false
-    if (cachedIsMobile !== null) return cachedIsMobile
     cachedIsMobile = computeIsMobile(breakpoint)
+    console.log(`📱 useStableMobile computed: ${cachedIsMobile}`)
     return cachedIsMobile
   })
   return isMobile

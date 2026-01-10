@@ -13,6 +13,7 @@ import { SelectionInfoSystem } from '@/components/SelectionInfoSystem'
 import { useAppStore } from '@/lib/store'
 import { useStableMobile } from '@/lib/useMobile'
 import MobileLayerControls from '@/components/MobileLayerControls'
+import WebGLErrorBoundary, { checkWebGLSupport } from '@/components/WebGLErrorBoundary'
 
 import '@/lib/selection-utils'
 
@@ -27,8 +28,18 @@ const ThreeRenderer = dynamic(() => import('@/components/ThreeRenderer'), {
 
 export default function Home() {
   const [showLayersDropdown, setShowLayersDropdown] = useState(false)
+  const [webglSupported, setWebglSupported] = useState(true)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const isMobile = useStableMobile()
+
+  // Check WebGL support on mount
+  useEffect(() => {
+    const result = checkWebGLSupport()
+    console.log('🎮 WebGL check:', result)
+    setWebglSupported(result.supported)
+  }, [])
+
+  console.log('🏠 Home render - isMobile:', isMobile)
 
   const {
     selectedElements,
@@ -193,21 +204,32 @@ export default function Home() {
 
           {/* 3D Viewport - Always rendered, full screen on mobile */}
           <div className={`flex-1 min-h-0 relative ${isMobile ? 'fixed inset-0 z-10' : ''}`}>
-            <ClientOnly
-              fallback={
-                <div className="w-full h-full flex items-center justify-center bg-gray-700">
-                  <div className="text-white text-xl">Initializing 3D Renderer...</div>
+            {!webglSupported ? (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gray-800 text-white p-4">
+                <div className="text-xl mb-4">⚠️ WebGL Not Supported</div>
+                <div className="text-sm text-gray-400 text-center">
+                  Your browser does not support WebGL, which is required for the 3D view.
                 </div>
-              }
-            >
-              <Suspense fallback={
-                <div className="w-full h-full flex items-center justify-center bg-gray-700">
-                  <div className="text-white">Loading 3D scene...</div>
-                </div>
-              }>
-                <ThreeRenderer />
-              </Suspense>
-            </ClientOnly>
+              </div>
+            ) : (
+              <ClientOnly
+                fallback={
+                  <div className="w-full h-full flex items-center justify-center bg-gray-700">
+                    <div className="text-white text-xl">Initializing 3D Renderer...</div>
+                  </div>
+                }
+              >
+                <WebGLErrorBoundary>
+                  <Suspense fallback={
+                    <div className="w-full h-full flex items-center justify-center bg-gray-700">
+                      <div className="text-white">Loading 3D scene...</div>
+                    </div>
+                  }>
+                    <ThreeRenderer />
+                  </Suspense>
+                </WebGLErrorBoundary>
+              </ClientOnly>
+            )}
           </div>
         </div>
 
