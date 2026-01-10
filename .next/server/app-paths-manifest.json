@@ -1,7 +1,7 @@
 {
   "/_not-found": "app/_not-found.js",
-  "/api/exit-analysis/route": "app/api/exit-analysis/route.js",
-  "/api/selection/route": "app/api/selection/route.js",
   "/page": "app/page.js",
-  "/exit-analysis/page": "app/exit-analysis/page.js"
+  "/api/selection/route": "app/api/selection/route.js",
+  "/exit-analysis/page": "app/exit-analysis/page.js",
+  "/api/exit-analysis/route": "app/api/exit-analysis/route.js"
 }

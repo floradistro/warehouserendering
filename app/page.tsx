@@ -17,11 +17,22 @@ import WebGLErrorBoundary, { checkWebGLSupport } from '@/components/WebGLErrorBo
 
 import '@/lib/selection-utils'
 
+// Desktop: Full featured renderer
 const ThreeRenderer = dynamic(() => import('@/components/ThreeRenderer'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-700">
       <div className="text-white text-xl">Loading 3D Renderer...</div>
+    </div>
+  ),
+})
+
+// Mobile: Simplified renderer that won't crash
+const MobileRenderer = dynamic(() => import('@/components/MobileRenderer'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-gray-800">
+      <div className="text-white text-xl">Loading...</div>
     </div>
   ),
 })
@@ -202,7 +213,7 @@ export default function Home() {
             </ClientOnly>
           </div>
 
-          {/* 3D Viewport - Always rendered, full screen on mobile */}
+          {/* 3D Viewport - Full screen on mobile, uses simplified renderer */}
           <div className={`flex-1 min-h-0 relative ${isMobile ? 'fixed inset-0 z-10' : ''}`}>
             {!webglSupported ? (
               <div className="w-full h-full flex flex-col items-center justify-center bg-gray-800 text-white p-4">
@@ -211,7 +222,11 @@ export default function Home() {
                   Your browser does not support WebGL, which is required for the 3D view.
                 </div>
               </div>
+            ) : isMobile ? (
+              /* Mobile: Use simplified renderer for stability */
+              <MobileRenderer />
             ) : (
+              /* Desktop: Full featured renderer */
               <ClientOnly
                 fallback={
                   <div className="w-full h-full flex items-center justify-center bg-gray-700">
