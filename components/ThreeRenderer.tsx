@@ -62,7 +62,7 @@ function formatMeasurement(decimalFeet: number): string {
 }
 import { SelectionBox } from '@/lib/core/SelectionManager'
 import { initializeWarehouseCAD } from '@/lib/integration/WarehouseCADIntegration'
-import { Background3DGrid } from '@/lib/core/RenderingUtils'
+import { Background3DGrid, GroundPlane } from '@/lib/core/RenderingUtils'
 import SimplePipeSystem from './SimplePipeSystem'
 
 // WASD-enabled Orbit Controls - DEPRECATED: Use CameraController instead
@@ -233,12 +233,12 @@ interface FloorplanElementProps {
   measurementToolActive: boolean
 }
 
-const FloorplanElementMesh = memo(({ 
-  element, 
-  isSelected, 
-  onSelect, 
+const FloorplanElementMesh = memo(({
+  element,
+  isSelected,
+  onSelect,
   onToggleSelect,
-  showMeasurements, 
+  showMeasurements,
   // Legacy measurement props removed
   onStartEdit,
   onStartDrag,
@@ -250,11 +250,22 @@ const FloorplanElementMesh = memo(({
   showInsulation = false,
   showPEX = false,
   lockedTarget,
-  measurementToolActive
-}: FloorplanElementProps & { showFraming?: boolean, showDrywall?: boolean, showInsulation?: boolean, showPEX?: boolean, lockedTarget: string | null }) => {
-  // Load brick texture for walls
-  const brickTexture = useLoader(THREE.TextureLoader, '/textures/materials/concrete/Brick/bricktexture.jpg')
-  const concreteTexture = useLoader(THREE.TextureLoader, '/textures/materials/concrete/Textured Dark Concrete Surface.png')
+  measurementToolActive,
+  isMobile = false
+}: FloorplanElementProps & { showFraming?: boolean, showDrywall?: boolean, showInsulation?: boolean, showPEX?: boolean, lockedTarget: string | null, isMobile?: boolean }) => {
+  // Tiny 1x1 pixel data URLs for mobile (avoids loading large textures)
+  const MOBILE_BRICK_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+  const MOBILE_CONCRETE_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mOsr6+vBwAERgHBpBGqHAAAAABJRU5ErkJggg=='
+
+  // On mobile, load tiny placeholder images instead of large textures
+  const brickTexture = useLoader(
+    THREE.TextureLoader,
+    isMobile ? MOBILE_BRICK_URL : '/textures/materials/concrete/Brick/bricktexture.jpg'
+  )
+  const concreteTexture = useLoader(
+    THREE.TextureLoader,
+    isMobile ? MOBILE_CONCRETE_URL : '/textures/materials/concrete/Textured Dark Concrete Surface.png'
+  )
   
   // Get camera for LOD calculations
   const { camera } = useThree()
@@ -2091,36 +2102,7 @@ const FloorplanElementMesh = memo(({
 
 
 // Background3DGrid function removed - using imported version from RenderingUtils
-
-function GroundPlane({ width, height }: { width: number; height: number }) {
-  // Load concrete texture
-  const concreteTexture = useLoader(THREE.TextureLoader, '/textures/materials/concrete/Textured Dark Concrete Surface.png')
-  
-  const material = useMemo(() => {
-    // Configure texture tiling
-    concreteTexture.wrapS = concreteTexture.wrapT = THREE.RepeatWrapping
-    concreteTexture.repeat.set(width / 10, height / 10) // Tile every 10 feet
-    
-    return new THREE.MeshStandardMaterial({
-      map: concreteTexture,
-      roughness: 0.8,
-      metalness: 0.1,
-    })
-  }, [concreteTexture, width, height])
-  
-  return (
-    <mesh
-      position={[width / 2, -0.1, height / 2]}
-      rotation={[-Math.PI / 2, 0, 0]}
-      receiveShadow={true}
-      castShadow={false}
-      renderOrder={-1}
-    >
-      <planeGeometry args={[width + 20, height + 20]} />
-      <primitive object={material} />
-    </mesh>
-  )
-}
+// GroundPlane function removed - using imported version from RenderingUtils
 
 // Room-specific floor component for white epoxy flooring
 function RoomFloor({ 
@@ -3661,9 +3643,10 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, showI
       />
 
       {/* Ground plane with concrete texture */}
-      <GroundPlane 
-        width={floorplan.dimensions.width} 
-        height={floorplan.dimensions.height} 
+      <GroundPlane
+        width={floorplan.dimensions.width}
+        height={floorplan.dimensions.height}
+        isMobile={isMobile}
       />
 
       {/* White epoxy floors for rooms 2-6 */}
@@ -3855,11 +3838,10 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, showI
         <FloorplanElementMesh
           key={element.id}
           element={element}
-            isSelected={isSelected}
-            onSelect={handleDoubleClickSelect}
-            onToggleSelect={toggleElementSelection}
+          isSelected={isSelected}
+          onSelect={handleDoubleClickSelect}
+          onToggleSelect={toggleElementSelection}
           showMeasurements={showMeasurements}
-          // Legacy measurement props removed
           onStartEdit={startElementEdit}
           onStartDrag={startDrag}
           isEditing={isEditing}
@@ -3871,6 +3853,7 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, showI
           showPEX={showPEX}
           lockedTarget={lockedTarget}
           measurementToolActive={toolActive}
+          isMobile={isMobile}
         />
         )
       })}

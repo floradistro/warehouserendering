@@ -62,27 +62,34 @@ export function Background3DGrid({ centerX, centerY, size = 500 }: Background3DG
 interface GroundPlaneProps {
   width: number
   height: number
+  isMobile?: boolean
 }
 
-export function GroundPlane({ width, height }: GroundPlaneProps) {
-  // Load concrete texture
-  const concreteTexture = useLoader(THREE.TextureLoader, '/textures/materials/concrete/Textured Dark Concrete Surface.png')
-  
-  // Configure texture
+// Tiny 1x1 pixel data URL for mobile
+const MOBILE_CONCRETE_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mOsr6+vBwAERgHBpBGqHAAAAABJRU5ErkJggg=='
+
+export function GroundPlane({ width, height, isMobile = false }: GroundPlaneProps) {
+  // On mobile, use tiny placeholder to avoid loading large texture
+  const concreteTexture = useLoader(
+    THREE.TextureLoader,
+    isMobile ? MOBILE_CONCRETE_URL : '/textures/materials/concrete/Textured Dark Concrete Surface.png'
+  )
+
+  // Configure texture (only for desktop)
   useMemo(() => {
-    if (concreteTexture) {
+    if (concreteTexture && !isMobile) {
       concreteTexture.wrapS = THREE.RepeatWrapping
       concreteTexture.wrapT = THREE.RepeatWrapping
-      concreteTexture.repeat.set(width / 20, height / 20) // Scale texture appropriately
+      concreteTexture.repeat.set(width / 20, height / 20)
     }
-  }, [concreteTexture, width, height])
+  }, [concreteTexture, width, height, isMobile])
 
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]} receiveShadow={!isMobile}>
       <planeGeometry args={[width, height]} />
-      <meshLambertMaterial 
-        map={concreteTexture}
-        color="#cccccc"
+      <meshLambertMaterial
+        map={isMobile ? null : concreteTexture}
+        color={isMobile ? '#555555' : '#cccccc'}
       />
     </mesh>
   )

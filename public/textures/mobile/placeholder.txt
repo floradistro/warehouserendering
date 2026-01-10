@@ -1,0 +1,2 @@
+This directory contains tiny placeholder textures for mobile.
+They will be created as data URLs in the code.
