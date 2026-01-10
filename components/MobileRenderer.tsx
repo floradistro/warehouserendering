@@ -9,7 +9,7 @@ import { MAIN_WAREHOUSE_MODEL } from '@/lib/warehouse-models'
 
 // Ultra-simple mobile 3D renderer - minimal features for stability
 export default function MobileRenderer() {
-  const { currentFloorplan, isLayerVisible, loadCurrentModel } = useAppStore()
+  const { currentFloorplan, loadCurrentModel } = useAppStore()
 
   // Load the warehouse model on mount
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function MobileRenderer() {
         style={{ touchAction: 'none' }}
       >
         <Suspense fallback={null}>
-          <SimpleScene floorplan={floorplan} isLayerVisible={isLayerVisible} />
+          <SimpleScene floorplan={floorplan} />
         </Suspense>
       </Canvas>
     </div>
@@ -51,7 +51,7 @@ export default function MobileRenderer() {
 }
 
 // Minimal scene with just basic shapes
-function SimpleScene({ floorplan, isLayerVisible }: { floorplan: any, isLayerVisible: (id: string) => boolean }) {
+function SimpleScene({ floorplan }: { floorplan: any }) {
   const controlsRef = useRef<any>()
 
   return (
@@ -72,15 +72,9 @@ function SimpleScene({ floorplan, isLayerVisible }: { floorplan: any, isLayerVis
         position={[floorplan.dimensions.width / 2, 0, floorplan.dimensions.height / 2]}
       />
 
-      {/* Render only wall elements as simple boxes */}
+      {/* Render all wall elements as simple boxes */}
       {floorplan.elements
         .filter((el: any) => el.type === 'wall')
-        .filter((el: any) => {
-          // Check layer visibility
-          if (el.metadata?.category === 'exterior' && !isLayerVisible('category-exterior')) return false
-          if (el.metadata?.category === 'interior' && !isLayerVisible('category-interior')) return false
-          return true
-        })
         .map((element: any) => (
           <SimpleWall key={element.id} element={element} />
         ))}
