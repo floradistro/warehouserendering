@@ -19,6 +19,7 @@ import FirstPersonControls from './FirstPersonControls'
 import SnapIndicators from './SnapIndicators'
 import EnhancedLighting from './EnhancedLighting'
 import { CameraController, CameraCapture } from '@/lib/core/CameraController'
+import { useStableMobile } from '@/lib/useMobile'
 // Professional measurement system imports  
 import SimpleMeasurementDisplay from './SimpleMeasurementDisplay'
 import SelectionIndicators from './SelectionIndicators'
@@ -3569,16 +3570,17 @@ function RoofPanel({
 // Legacy sample floorplan (kept for fallback compatibility)
 const sampleFloorplan = MAIN_WAREHOUSE_MODEL
 
-function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, showInsulation, showPEX, cameraTarget, lockedTarget, measurementToolActive }: { 
-  onCameraReady: (camera: THREE.Camera) => void, 
-  snapPointsCache: any[], 
+function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, showInsulation, showPEX, cameraTarget, lockedTarget, measurementToolActive, isMobile = false }: {
+  onCameraReady: (camera: THREE.Camera) => void,
+  snapPointsCache: any[],
   showFraming: boolean,
   showDrywall: boolean,
   showInsulation: boolean,
   showPEX: boolean,
   cameraTarget: [number, number, number],
   lockedTarget: string | null,
-  measurementToolActive: boolean
+  measurementToolActive: boolean,
+  isMobile?: boolean
 }) {
   const {
     currentFloorplan,
@@ -3652,10 +3654,10 @@ function Scene({ onCameraReady, snapPointsCache, showFraming, showDrywall, showI
         size={300}
       />
 
-      {/* Enhanced Lighting System for Realistic Rendering */}
-      <EnhancedLighting 
-        enableShadows={true} 
-        quality="ultra" 
+      {/* Enhanced Lighting System - reduced quality on mobile to prevent crash */}
+      <EnhancedLighting
+        enableShadows={!isMobile}
+        quality={isMobile ? 'low' : 'ultra'}
       />
 
       {/* Ground plane with concrete texture */}
@@ -4099,8 +4101,12 @@ function SnapPointIndicator({
 // CameraCapture function removed - using imported version from CameraController
 
 export default function ThreeRenderer() {
-  const { 
-    isPlacing, 
+  // CRITICAL: Mobile detection for performance optimization
+  // Mobile devices crash with heavy WebGL scenes - must reduce quality
+  const isMobile = useStableMobile()
+
+  const {
+    isPlacing,
     placementTemplate,
     placementRotation,
     placementDimensions,
@@ -4109,8 +4115,8 @@ export default function ThreeRenderer() {
     activeSnapPoint,
     showSnapIndicators,
     snapTolerance,
-    finalizePlacement, 
-    cancelPlacement, 
+    finalizePlacement,
+    cancelPlacement,
     updatePreview,
     updateSnapPoints,
     rotatePlacementElement,
@@ -4136,13 +4142,13 @@ export default function ThreeRenderer() {
     updateElement,
     startDrag,
     // Legacy measurement variables removed
-    
+
     // Camera state
     cameraPosition,
     cameraTarget,
     lockedTarget,
     setLockedTarget,
-    
+
     // Layer visibility
     hiddenLayers,
     layerGroups,
@@ -4906,10 +4912,10 @@ export default function ThreeRenderer() {
     <div className="w-full h-full bg-gray-700 relative touch-none">
       <Canvas
         camera={{
-          position: [150, 100, 200],
-          fov: 65,
+          position: isMobile ? [180, 120, 250] : [150, 100, 200],
+          fov: isMobile ? 70 : 65,
         }}
-        shadows
+        shadows={!isMobile}
         className="w-full h-full bg-gray-700"
         style={{
           width: '100%',
@@ -4918,20 +4924,21 @@ export default function ThreeRenderer() {
           touchAction: 'none',
         }}
         onCreated={(state) => {
-          console.log('🎬 Three.js scene initialized')
+          console.log(`🎬 Three.js scene initialized (mobile: ${isMobile})`)
           if (state.gl.domElement) {
             canvasRef.current = state.gl.domElement
             state.gl.domElement.style.touchAction = 'none'
           }
         }}
         gl={{
-          antialias: true,
+          antialias: !isMobile,
           alpha: false,
-          powerPreference: 'default',
+          powerPreference: isMobile ? 'low-power' : 'default',
           preserveDrawingBuffer: false,
+          failIfMajorPerformanceCaveat: false,
         }}
-        dpr={[1, 2]}
-        frameloop="always"
+        dpr={isMobile ? 1 : [1, 2]}
+        frameloop={isMobile ? 'demand' : 'always'}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerMissed={() => {}}
@@ -4941,9 +4948,9 @@ export default function ThreeRenderer() {
             <div className="text-white text-lg">Loading 3D Scene...</div>
           </Html>
         }>
-          <Scene 
-            onCameraReady={handleCameraReady} 
-            snapPointsCache={snapPointsCache} 
+          <Scene
+            onCameraReady={handleCameraReady}
+            snapPointsCache={snapPointsCache}
             showFraming={showFraming}
             showDrywall={showDrywall}
             showInsulation={showInsulation}
@@ -4951,6 +4958,7 @@ export default function ThreeRenderer() {
             cameraTarget={cameraTarget}
             lockedTarget={lockedTarget}
             measurementToolActive={measurementToolActive}
+            isMobile={isMobile}
           />
           
           {/* Simple Pipe System */}

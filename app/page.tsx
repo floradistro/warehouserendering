@@ -11,7 +11,7 @@ import GeometryCalculatorPanel from '@/components/GeometryCalculatorPanel'
 import MeasurementStatusBar from '@/components/MeasurementStatusBar'
 import { SelectionInfoSystem } from '@/components/SelectionInfoSystem'
 import { useAppStore } from '@/lib/store'
-import { useMobile } from '@/lib/useMobile'
+import { useStableMobile } from '@/lib/useMobile'
 import MobileLayerControls from '@/components/MobileLayerControls'
 
 import '@/lib/selection-utils'
@@ -28,7 +28,7 @@ const ThreeRenderer = dynamic(() => import('@/components/ThreeRenderer'), {
 export default function Home() {
   const [showLayersDropdown, setShowLayersDropdown] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const isMobile = useMobile()
+  const isMobile = useStableMobile()
 
   const {
     selectedElements,
