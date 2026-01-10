@@ -1,20 +1,25 @@
 'use client'
 
-import React, { Suspense, useRef } from 'react'
+import React, { Suspense, useRef, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 import { useAppStore } from '@/lib/store'
+import { MAIN_WAREHOUSE_MODEL } from '@/lib/warehouse-models'
 
 // Ultra-simple mobile 3D renderer - minimal features for stability
 export default function MobileRenderer() {
-  const { currentFloorplan, isLayerVisible } = useAppStore()
+  const { currentFloorplan, isLayerVisible, loadCurrentModel } = useAppStore()
 
-  // Use sample data if no floorplan
-  const floorplan = currentFloorplan || {
-    dimensions: { width: 140, height: 250 },
-    elements: []
-  }
+  // Load the warehouse model on mount
+  useEffect(() => {
+    if (!currentFloorplan) {
+      loadCurrentModel()
+    }
+  }, [currentFloorplan, loadCurrentModel])
+
+  // Use the warehouse model directly as fallback
+  const floorplan = currentFloorplan || MAIN_WAREHOUSE_MODEL
 
   return (
     <div className="w-full h-full bg-gray-800 touch-none">
